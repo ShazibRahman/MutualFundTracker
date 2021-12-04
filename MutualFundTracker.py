@@ -11,7 +11,7 @@ class MutualFund:
     def __init__(self) -> None:
         self.Units = {
             # icici shortTerm
-            '120754': [89.058, 4500],
+
 
         }
         self.unitsKeyList = list(self.Units.keys())
@@ -24,9 +24,11 @@ class MutualFund:
 
         self.summaryTable.add_column(
             'invested', justify='center', no_wrap=True)
-        self.summaryTable.add_column('current', justify='center', no_wrap=True)
+        self.summaryTable.add_column('current', justify='right', no_wrap=True)
         self.summaryTable.add_column(
-            'total returns', justify='center', no_wrap=True)
+            'total returns', justify='right', no_wrap=True)
+        self.summaryTable.add_column(
+            'lastUpdated and NAV date', justify='center', no_wrap=True)
 
         self.TableMutualFund.add_column(
             'SCHEME NAME', justify='center')
@@ -43,7 +45,10 @@ class MutualFund:
         self.navallfile = self.directoryString+"/data/"+"NAVAll.txt"
         self.navMyfile = self.directoryString+"/data/"+"nav.txt"
         self.dayChangeJsonFileString = self.directoryString+"/data/dayChange.json"
-        self.jsonData = json.load(open(self.dayChangeJsonFileString))
+        try:
+            self.jsonData = json.load(open(self.dayChangeJsonFileString))
+        except:
+            self.jsonData = {}  # initialize to an empty dic inCase the JsonFile Doesn't exist
         self.whetherToWrite = False
         self.grepString = self.getGrepString()
         self.formatString = "%d-%b-%Y"
@@ -55,18 +60,20 @@ class MutualFund:
     def getfp(self, number):
         return f'[green]({number}%)[/green]' if number >= 0 else f'[red]({number})%[/red]'
 
-    def summaryTableEdit(self):
+    def summaryTableEdit(self, latestNavDate):
+        lastUpdated = self.jsonData['lastUpdated']
         current = self.jsonData['sumTotal']
         invested = self.jsonData['totalInvested']
         totalProfitPercentage = self.jsonData['toalProfitPercentage']
         totalProfit = self.jsonData['totalProfit']
 
         investedString = f'Invested\n\n[bold]₹{invested}[/bold]'
-        currentColor = f'[green]₹{current}[/green]' if current >= invested else f'[red]{current}[/red]'
+        currentColor = f'[green]₹{current}[/green]' if current >= invested else f'[red]₹{current}[/red]'
         currentString = f'Current\n\n[bold]{currentColor}[/bold]'
         totalReturnString = f'Total Returns\n\n[bold]{self.getfv(totalProfit)} {self.getfp(totalProfitPercentage)}[/bold]'
+        lastUpdatedString = f'NAV Date\t{latestNavDate}\n\nLast Updated {lastUpdated}'
         self.summaryTable.add_row(
-            investedString, currentString, totalReturnString)
+            investedString, currentString, totalReturnString, lastUpdatedString)
 
     def MutualFundTableEdit(self, id: str):
         preMF = self.jsonData[id]
@@ -185,9 +192,14 @@ class MutualFund:
 
     def getCurrentValues(self):
         cur_json = self.jsonData
+        latestDate = None
 
         if self.download:
             self.OsrealatedStuff(self.grepString)
+            lastUpdated = datetime.now().strftime(self.formatString+" %X")
+            self.jsonData['lastUpdated'] = lastUpdated
+            self.whetherToWrite = True
+
         change = False
         file = open(self.navMyfile)
         sumTotal = 0
@@ -202,6 +214,7 @@ class MutualFund:
             temp = line.strip().split(";")
             id, name, nav, date = temp[0], temp[3].split(
                 '-')[0].strip(), float(temp[4]), temp[5]
+            latestDate = date
 
             cur_json_id = self.jsonData[id]
 
@@ -224,6 +237,7 @@ class MutualFund:
                     id, current-invested, date)
                 totalDaychange += dayChange
                 change = True
+
             self.MutualFundTableEdit(id)
 
         if not change:
@@ -244,8 +258,9 @@ class MutualFund:
             cur_json['totalInvested'] = totalInvested
             cur_json['toalProfitPercentage'] = totalProfitPercentage
             cur_json['totalDayChange'] = totalDaychange
-            self.whetherToWrite = change
-        self.summaryTableEdit()
+
+            self.whetherToWrite = True
+        self.summaryTableEdit(latestDate)
         print(end="\n\n")
         self.console.print(self.summaryTable)
 
