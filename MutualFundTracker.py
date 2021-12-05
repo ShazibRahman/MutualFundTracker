@@ -7,15 +7,39 @@ import time
 import plotext as plt
 
 
+def getfv(number):
+    return f'[green]+₹{number}[/green]' if number >= 0 else f'[red]-₹{-(number)}[/red]'
+
+
+def getfp(number):
+    return f'[green]({number}%)[/green]' if number >= 0 else f'[red]({number})%[/red]'
+
+
 class MutualFund:
     def __init__(self) -> None:
         self.Units = {
             # icici shortTerm
-
-
+            '120754': [89.058, 4500],
         }
-        self.unitsKeyList = list(self.Units.keys())
+        self.console = None
+        self.TableMutualFund = None
+        self.summaryTable = None
 
+        self.initializeTables()
+        self.unitsKeyList = list(self.Units.keys())
+        self.download = False
+        self.directoryString = os.path.dirname(__file__)
+        self.navallfile = self.directoryString + "/data/" + "NAVAll.txt"
+        self.navMyfile = self.directoryString + "/data/" + "nav.txt"
+        self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
+        try:
+            self.jsonData = json.load(open(self.dayChangeJsonFileString))
+        except:
+            self.jsonData = {}  # initialize to an empty dic inCase the JsonFile Doesn't exist
+        self.formatString = "%d-%b-%Y"
+        self.responseTime = 0
+
+    def initializeTables(self):
         self.console = Console()
         self.TableMutualFund = Table(
             expand=True)
@@ -39,56 +63,44 @@ class MutualFund:
         self.TableMutualFund.add_column(
             'CURRENT', justify='center')
 
-        self.download = False
-
-        self.directoryString = os.path.dirname(__file__)
-        self.navallfile = self.directoryString+"/data/"+"NAVAll.txt"
-        self.navMyfile = self.directoryString+"/data/"+"nav.txt"
-        self.dayChangeJsonFileString = self.directoryString+"/data/dayChange.json"
+    def summaryTableEdit(self):
         try:
-            self.jsonData = json.load(open(self.dayChangeJsonFileString))
-        except:
-            self.jsonData = {}  # initialize to an empty dic inCase the JsonFile Doesn't exist
-        self.whetherToWrite = False
-        self.grepString = self.getGrepString()
-        self.formatString = "%d-%b-%Y"
-        self.responseTime = 0
-
-    def getfv(self, number):
-        return f'[green]+₹{number}[/green]' if number >= 0 else f'[red]-₹{-(number)}[/red]'
-
-    def getfp(self, number):
-        return f'[green]({number}%)[/green]' if number >= 0 else f'[red]({number})%[/red]'
-
-    def summaryTableEdit(self, latestNavDate):
-        lastUpdated = self.jsonData['lastUpdated']
-        current = self.jsonData['sumTotal']
-        invested = self.jsonData['totalInvested']
-        totalProfitPercentage = self.jsonData['toalProfitPercentage']
-        totalProfit = self.jsonData['totalProfit']
+            lastUpdated = self.jsonData['lastUpdated']
+            current = self.jsonData['sumTotal']
+            invested = self.jsonData['totalInvested']
+            totalProfitPercentage = self.jsonData['toalProfitPercentage']
+            totalProfit = self.jsonData['totalProfit']
+        except Exception as e:
+            self.console.print(
+                'Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option')
+            exit()
 
         investedString = f'Invested\n\n[bold]₹{invested}[/bold]'
         currentColor = f'[green]₹{current}[/green]' if current >= invested else f'[red]₹{current}[/red]'
         currentString = f'Current\n\n[bold]{currentColor}[/bold]'
-        totalReturnString = f'Total Returns\n\n[bold]{self.getfv(totalProfit)} {self.getfp(totalProfitPercentage)}[/bold]'
-        lastUpdatedString = f'NAV Date\t{latestNavDate}\n\nLast Updated {lastUpdated}'
+        totalReturnString = f'Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]'
+        lastUpdatedString = f'Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]'
         self.summaryTable.add_row(
             investedString, currentString, totalReturnString, lastUpdatedString)
 
     def MutualFundTableEdit(self, id: str):
-        preMF = self.jsonData[id]
-        SchemeName = preMF['name']
-        dayChange = preMF['dayChange']
-        current = preMF['current']
-        invested = preMF['invested']
+        try:
+            preMF = self.jsonData[id]
+            SchemeName = preMF['name']
+            dayChange = preMF['dayChange']
+            current = preMF['current']
+            invested = preMF['invested']
+        except Exception as e:
+            self.console.print(
+                'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option')
+            exit()
+        dayChangePercentage = round(dayChange / invested * 100, 3)
+        returns = round(current - invested, 3)
 
-        dayChangePercentage = round(dayChange/invested*100, 3)
-        returns = round(current-invested, 3)
+        returnsPercentage = round(returns / invested * 100, 3)
 
-        returnsPercentage = round(returns/invested*100, 3)
-
-        dayChangeString = f'{dayChangePercentage}%\n\n{self.getfv(dayChange)}'
-        returnString = f'₹{returns}\n\n{self.getfp(returnsPercentage)}'
+        dayChangeString = f'{dayChangePercentage}%\n\n{getfv(dayChange)}'
+        returnString = f'₹{returns}\n\n{getfp(returnsPercentage)}'
         currentString = f'₹{current}\n\n₹{invested}'
 
         self.TableMutualFund.add_row(
@@ -96,7 +108,7 @@ class MutualFund:
 
     def writeToJsonFile(self) -> None:
 
-        if (self.whetherToWrite):
+        if self.download:
             with open(self.dayChangeJsonFileString, 'w') as outfile:
                 json.dump(self.jsonData, outfile, indent=4)
 
@@ -107,13 +119,13 @@ class MutualFund:
             if i == 0:
                 grepSearchString += self.unitsKeyList[i]
             else:
-                grepSearchString += '\|'+self.unitsKeyList[i]
+                grepSearchString += '\|' + self.unitsKeyList[i]
         return grepSearchString
 
     def drawGraph(self):
         plt.datetime.set_datetime_form(date_form=self.formatString)
-        for id, value in self.jsonData.items():
-            if id.isnumeric():
+        for ids, value in self.jsonData.items():
+            if ids.isnumeric():
                 print()
                 x = value['nav'].keys()
                 y = value['nav'].values()
@@ -130,7 +142,7 @@ class MutualFund:
         print()
 
     def OsrealatedStuff(self, greString: str) -> None:
-        start = time.time()
+
         var = os.system(
             f'''
             wget  -q   "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
@@ -144,25 +156,23 @@ class MutualFund:
 
             '''
         )
-        self.responseTime = time.time() - start
 
-    def dayChangeMethod(self, id: str, todayProfit: int, latestNavDate: str) -> float:
+    def dayChangeMethod(self, ids: str, todayProfit: int, latestNavDate: str) -> float:
 
         dayChange = 0.0
 
         todayProfit = round(todayProfit, 3)
-        if not self.jsonData.__contains__(id):
-            self.jsonData[id] = {}
-            self.jsonData[id]['nav'] = {}
-            self.jsonData[id]['nav'][latestNavDate] = todayProfit
-            self.whetherToWrite = True
+        if not self.jsonData.__contains__(ids):
+            self.jsonData[ids] = {}
+            self.jsonData[ids]['nav'] = {}
+            self.jsonData[ids]['nav'][latestNavDate] = todayProfit
+
             # print('No previous date found to calculate for above Mutual fund')
 
         else:
 
             try:
-                data = self.jsonData[id]['nav']
-                self.whetherToWrite = True
+                data = self.jsonData[ids]['nav']
                 latestDate = datetime.strptime(
                     latestNavDate, self.formatString)
 
@@ -174,7 +184,7 @@ class MutualFund:
 
                 prevDayProfit = data[prevDayNavDate]
                 dayChange = round(todayProfit - prevDayProfit, 3)
-                self.jsonData[id]['dayChange'] = dayChange
+                self.jsonData[ids]['dayChange'] = dayChange
                 data[latestNavDate] = todayProfit
 
             except Exception as e:
@@ -188,67 +198,44 @@ class MutualFund:
         for key in keys:
             if key not in self.Units:
                 del self.jsonData[key]
-        self.whetherToWrite = True
 
     def getCurrentValues(self):
         cur_json = self.jsonData
-        latestDate = None
-
         if self.download:
-            self.OsrealatedStuff(self.grepString)
-            lastUpdated = datetime.now().strftime(self.formatString+" %X")
+            self.OsrealatedStuff(self.getGrepString())
+            lastUpdated = datetime.now().strftime(self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
-            self.whetherToWrite = True
+            sumTotal = 0
+            totalInvested = 0
+            totalDaychange = 0
+            totalProfit = 0
+            totalProfitPercentage = 0
+            file = open(self.navMyfile)
 
-        change = False
-        file = open(self.navMyfile)
-        sumTotal = 0
-        totalInvested = 0
-        totalDaychange = 0
-        totalProfit = 0
-        totalProfitPercentage = 0
-        for line in file:
-            current = 0
-            dayChange = 0
+            for line in file:
+                current = 0
+                dayChange = 0
 
-            temp = line.strip().split(";")
-            id, name, nav, date = temp[0], temp[3].split(
-                '-')[0].strip(), float(temp[4]), temp[5]
-            latestDate = date
+                temp = line.strip().split(";")
+                id, name, nav, date = temp[0], temp[3].split(
+                    '-')[0].strip(), float(temp[4]), temp[5]
 
-            cur_json_id = self.jsonData[id]
-
-            if 'name' not in cur_json_id:
+                cur_json_id = self.jsonData[id]
                 cur_json_id['name'] = name
-                self.whetherToWrite = True
-            if date in cur_json_id['nav']:
-                current = cur_json_id['current']
-                invested = cur_json_id['invested']
-                dayChange = cur_json_id['dayChange']
-
-            else:
-                current = round(self.Units[id][0]*nav, 3)
+                current = round(self.Units[id][0] * nav, 3)
                 invested = self.Units[id][1]
                 cur_json_id['current'] = current
                 cur_json_id['invested'] = invested
+
                 sumTotal += current
                 totalInvested += invested
                 dayChange = self.dayChangeMethod(
-                    id, current-invested, date)
+                    id, current - invested, date)
                 totalDaychange += dayChange
-                change = True
 
-            self.MutualFundTableEdit(id)
-
-        if not change:
-            totalProfit = cur_json['totalProfit']
-            sumTotal = cur_json['sumTotal']
-            totalInvested = cur_json['totalInvested']
-            totalProfitPercentage = cur_json['toalProfitPercentage']
-            totalDaychange = cur_json['totalDayChange']
-        else:
+                self.MutualFundTableEdit(id)
             totalProfit = sumTotal - totalInvested
-            totalProfitPercentage = totalProfit/totalInvested*100
+            totalProfitPercentage = totalProfit / totalInvested * 100
 
             totalProfitPercentage = round(totalProfitPercentage, 3)
             totalProfit = round(totalProfit, 3)
@@ -258,20 +245,23 @@ class MutualFund:
             cur_json['totalInvested'] = totalInvested
             cur_json['toalProfitPercentage'] = totalProfitPercentage
             cur_json['totalDayChange'] = totalDaychange
+            file.close()
 
-            self.whetherToWrite = True
-        self.summaryTableEdit(latestDate)
+        else:
+            for id in self.unitsKeyList:
+                self.MutualFundTableEdit(id)
+
+        self.summaryTableEdit()
         print(end="\n\n")
+
         self.console.print(self.summaryTable)
-
         self.console.print(self.TableMutualFund)
-        print("\n\n")
 
-        file.close()
+        print("\n\n")
 
 
 if __name__ == "__main__":
-    start = time .time()
+    start = time.time()
     tracker = MutualFund()
     tracker.getCurrentValues()
     tracker.writeToJsonFile()
