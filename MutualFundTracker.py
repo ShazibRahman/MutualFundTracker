@@ -3,28 +3,28 @@ from datetime import datetime, timedelta
 from rich.console import Console
 from rich.table import Table
 import os
-import time
 import plotext as plt
 
 
 def getfv(number: float) -> str:
-    return f'[green]+₹{number}[/green]' if number >= 0 else f'[red]-₹{-(number)}[/red]'
+    return f'[green]+₹{number}[/green]' if number >= 0 else f'[red]-₹{abs(number)}[/red]'
 
 
-def getfp(number: float) -> str:
-    return f'[green]({number}%)[/green]' if number >= 0 else f'[red]({number})%[/red]'
+def getfp(percentage: float) -> str:
+    return f'[green]({percentage}%)[/green]' if percentage >= 0 else f'[red]({percentage})%[/red]'
 
 
 class MutualFund:
     def __init__(self) -> None:
         self.Units = {
             # icici shortTerm
-            '120754': [89.058, 4500],
+            '120754': [89.058, 4500]
         }
+
+        self.console = None
         self.TableMutualFund = None
         self.summaryTable = None
 
-        self.initializeTables()
         self.unitsKeyList = list(self.Units.keys())
         self.directoryString = os.path.dirname(__file__)
         self.navallfile = self.directoryString + "/data/" + "NAVAll.txt"
@@ -35,12 +35,10 @@ class MutualFund:
         except:
             self.jsonData = {}  # initialize to an empty dic inCase the JsonFile Doesn't exist
         self.formatString = "%d-%b-%Y"
-        self.responseTime = 0
 
     def initializeTables(self) -> None:
         self.TableMutualFund = Table(
-            expand=True)
-
+            expand=True, show_lines=True)
         self.summaryTable = Table.grid(expand=True)
 
         self.summaryTable.add_column(
@@ -75,7 +73,7 @@ class MutualFund:
         investedString = f'Invested\n\n[bold]₹{invested}[/bold]'
         currentColor = f'[green]₹{current}[/green]' if current >= invested else f'[red]₹{current}[/red]'
         currentString = f'Current\n\n[bold]{currentColor}[/bold]'
-        totalReturnString = f'Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]'
+        totalReturnString = f'[yellow]•[/yellow] Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]'
         lastUpdatedString = f'Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]'
         self.summaryTable.add_row(
             investedString, currentString, totalReturnString, lastUpdatedString)
@@ -91,26 +89,32 @@ class MutualFund:
             self.console.print(
                 'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option')
             exit()
-        dayChangePercentage = round(dayChange / invested * 100, 3)
+        if dayChange != 'N.A.':
+            dayChangePercentage = round(dayChange / invested * 100, 3)
+            dayChangeString = f'{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]'
+        else:
+            dayChangeString = f'N.A.\n\n[b]N.A.[/b]'
+
         returns = round(current - invested, 3)
 
         returnsPercentage = round(returns / invested * 100, 3)
 
-        dayChangeString = f'{dayChangePercentage}%\n\n{getfv(dayChange)}'
-        returnString = f'₹{returns}\n\n{getfp(returnsPercentage)}'
-        currentString = f'₹{current}\n\n₹{invested}'
+        returnString = f'₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]'
+        currentString = f'₹{current}\n\n[b]₹{invested}[/b]'
 
         self.TableMutualFund.add_row(
             SchemeName, dayChangeString, returnString, currentString)
 
     def drawTable(self):
-        console = Console()
+        self.initializeTables()
+        self.console = Console()
+
         self.summaryTableEdit()
         print(end="\n\n")
-        console.print(self.summaryTable)
+        self.console.print(self.summaryTable)
         for ids in self.unitsKeyList:
             self.MutualFundTableEdit(ids)
-        console.print(self.TableMutualFund)
+        self.console.print(self.TableMutualFund)
         print(end="\n\n")
 
     def writeToJsonFile(self) -> None:
@@ -171,9 +175,17 @@ class MutualFund:
 
         prevDayNavDate = datetime.strftime(
             latestDate - timedelta(1), self.formatString)
-        if prevDayNavDate not in data:  # only if nav object is empty or contains latestNavDate only
-            data[latestNavDate] = todayProfit
-            return dayChange
+
+        if prevDayNavDate not in data:
+            key_list = list(data.keys())
+            length = len(key_list)
+            if length == 0:
+                data[latestNavDate] = todayProfit
+                return 'N.A.'
+            elif length == 1 and key_list[-1] == latestNavDate:
+                return 'N.A.'
+            elif key_list[-1] == latestNavDate:
+                prevDayNavDate = key_list[-2]
 
         prevDayProfit = data[prevDayNavDate]
         dayChange = round(todayProfit - prevDayProfit, 3)
@@ -191,13 +203,17 @@ class MutualFund:
     def cleanUp(self) -> None:
         keys = list(self.jsonData.keys())
         for key in keys:
-            if key not in self.Units:
+            if key.isnumeric() and key not in self.Units:
                 del self.jsonData[key]
 
-    def getCurrentValues(self) -> None:
+        self.writeToJsonFile()
+
+    def getCurrentValues(self, download: bool) -> None:
         cur_json = self.jsonData
-        self.OsrealatedStuff(self.getGrepString())
-        lastUpdated = datetime.now().strftime(self.formatString + " %X")
+        if download:
+            self.OsrealatedStuff(self.getGrepString())
+            lastUpdated = datetime.now().strftime(self.formatString + " %X")
+            self.jsonData['lastUpdated'] = lastUpdated
 
         sumTotal = 0
         totalInvested = 0
@@ -222,10 +238,9 @@ class MutualFund:
 
             dayChange = self.dayChangeMethod(
                 id, todayProfit, date, name)
-            totalDaychange += dayChange
+            totalDaychange += dayChange if dayChange != 'N.A.' else 0.00
 
             cur_json_id = cur_json[id]
-            cur_json_id['name'] = name
             cur_json_id['current'] = current
             cur_json_id['invested'] = invested
             cur_json_id['dayChange'] = dayChange
@@ -241,16 +256,13 @@ class MutualFund:
         cur_json['totalInvested'] = totalInvested
         cur_json['toalProfitPercentage'] = totalProfitPercentage
         cur_json['totalDayChange'] = totalDaychange
-        self.jsonData['lastUpdated'] = lastUpdated
-        self.drawTable()
+
         self.writeToJsonFile()
         file.close()
 
 
 if __name__ == "__main__":
-    start = time.time()
     tracker = MutualFund()
-    tracker.download = True
-    tracker.getCurrentValues()
-    tracker.writeToJsonFile()
+    # tracker.cleanUp()
+    tracker.getCurrentValues(False)
     # tracker.drawGraph()
