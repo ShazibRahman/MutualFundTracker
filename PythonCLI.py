@@ -10,10 +10,16 @@ def callMutualFund():
         return
     if args.d == 'y':
         tracker.getCurrentValues(True)
+        tracker.drawTable()
+        return
     if args.g != 'o':
         tracker.drawTable()
     if args.g == 'y' or args.g == 'o':
         tracker.drawGraph()
+        return
+    if args.dc == 'y':
+        tracker.printAllDayGains()
+        return
 
 
 if __name__ == '__main__':
@@ -40,5 +46,7 @@ if __name__ == '__main__':
                         type=str,
                         default='n',
                         choices=['y', 'n'])
+    parser.add_argument("-dc",
+                        type=str, choices=['y', 'n'], default='n')
     args = parser.parse_args()
     callMutualFund()

@@ -149,6 +149,29 @@ class MutualFund:
             plt.show()
         print()
 
+    def printAllDayGains(self):
+        daily_table = Table(title='Day Change table', show_lines=True)
+        daily_table.add_column('SCHEME NAME', justify='center', no_wrap=True)
+        daily_table.add_column('NAV', justify='center', no_wrap=True)
+        daily_table.add_column('DayChange', justify='center', no_wrap=True)
+
+        for key in self.unitsKeyList:
+            value = self.jsonData[key]['nav']
+            name = self.jsonData[key]['name']
+            nav_col = ''
+            daychange_col = ''
+            prevdayChange = 0.0
+            for nav, daychange in value.items():
+                nav_col += f'[yellow]{nav}[/yellow]\n'
+                daychange_col += f'{getfv(round(daychange-prevdayChange,3))}\n'
+                prevdayChange = daychange
+            daily_table.add_row(name, nav_col, daychange_col)
+        if not self.console:
+            self.console = Console()
+        print("\n")
+        self.console.print(daily_table)
+        print("\n")
+
     def OsrealatedStuff(self, greString: str) -> None:
 
         var = os.system(
@@ -264,5 +287,6 @@ class MutualFund:
 if __name__ == "__main__":
     tracker = MutualFund()
     # tracker.cleanUp()
-    tracker.getCurrentValues(False)
+    # tracker.getCurrentValues(False)
+    tracker.printAllDayGains()
     # tracker.drawGraph()
