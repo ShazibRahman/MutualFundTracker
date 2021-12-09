@@ -6,19 +6,16 @@ def callMutualFund():
     tracker = MutualFund()
     if args.r == 'y':
         tracker.getCurrentValues(False)
-        tracker.drawTable()
-        return
+
     if args.d == 'y':
         tracker.getCurrentValues(True)
-        tracker.drawTable()
-        return
     if args.g != 'o':
         tracker.drawTable()
     if args.g == 'y' or args.g == 'o':
         tracker.drawGraph()
         return
     if args.dc == 'y':
-        tracker.printAllDayGains()
+        tracker.DayChangeTable()
         return
 
 

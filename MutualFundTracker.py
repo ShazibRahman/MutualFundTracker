@@ -27,13 +27,14 @@ class MutualFund:
 
         self.unitsKeyList = list(self.Units.keys())
         self.directoryString = os.path.dirname(__file__)
-        self.navallfile = self.directoryString + "/data/" + "NAVAll.txt"
-        self.navMyfile = self.directoryString + "/data/" + "nav.txt"
+        self.navallfile = self.directoryString + "/data/NAVAll.txt"
+        self.navMyfile = self.directoryString + "/data/nav.txt"
         self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
         try:
             self.jsonData = json.load(open(self.dayChangeJsonFileString))
         except:
-            self.jsonData = {}  # initialize to an empty dic inCase the JsonFile Doesn't exist
+            # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
+            self.jsonData = {}
         self.formatString = "%d-%b-%Y"
 
     def initializeTables(self) -> None:
@@ -73,7 +74,7 @@ class MutualFund:
         investedString = f'Invested\n\n[bold]₹{invested}[/bold]'
         currentColor = f'[green]₹{current}[/green]' if current >= invested else f'[red]₹{current}[/red]'
         currentString = f'Current\n\n[bold]{currentColor}[/bold]'
-        totalReturnString = f'[yellow]•[/yellow] Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]'
+        totalReturnString = f'[yellow]•[/yellow]Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]'
         lastUpdatedString = f'Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]'
         self.summaryTable.add_row(
             investedString, currentString, totalReturnString, lastUpdatedString)
@@ -149,15 +150,28 @@ class MutualFund:
             plt.show()
         print()
 
-    def printAllDayGains(self):
-        daily_table = Table(title='Day Change table', show_lines=True)
+    def updateMyNaVFile(self):
+
+        os.system(
+            f'''
+            grep -wi '{self.getGrepString()}' {self.navallfile} > {self.navMyfile}
+
+            '''
+        )
+
+    def DayChangeTable(self):
+        daily_table = Table(title='Day Change table',
+                            show_lines=True, expand=True)
         daily_table.add_column('SCHEME NAME', justify='center', no_wrap=True)
         daily_table.add_column('NAV', justify='center', no_wrap=True)
         daily_table.add_column('DayChange', justify='center', no_wrap=True)
 
         for key in self.unitsKeyList:
+            if not self.jsonData.__contains__(key):
+                self.getCurrentValues(False)
             value = self.jsonData[key]['nav']
             name = self.jsonData[key]['name']
+
             nav_col = ''
             daychange_col = ''
             prevdayChange = 0.0
@@ -172,21 +186,27 @@ class MutualFund:
         self.console.print(daily_table)
         print("\n")
 
-    def OsrealatedStuff(self, greString: str) -> None:
+    def downloadAllNavFile(self) -> None:
 
         var = os.system(
             f'''
-            wget  -q   "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
+            mv {self.navallfile} {self.navallfile+'.bak'}
+            wget  -q --timeout=1 --tries=5 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
         '''
         )
         if var:
             print('something went wrong can\'t download the file')
-        os.system(
-            f'''
-            grep -wi '{greString}' {self.navallfile} > {self.navMyfile}
-
-            '''
-        )
+            os.system(
+                f'''
+                mv {self.navallfile+'.bak'} {self.navallfile}
+                '''
+            )
+        else:
+            lastUpdated = datetime.now().strftime(self.formatString + " %X")
+            self.jsonData['lastUpdated'] = lastUpdated
+            os.system(
+                f"rm -f {self.navallfile+'.bak'}"
+            )
 
     def dayChangeMethod(self, ids: str, todayProfit: float, latestNavDate: str, name: str) -> float:
 
@@ -234,9 +254,8 @@ class MutualFund:
     def getCurrentValues(self, download: bool) -> None:
         cur_json = self.jsonData
         if download:
-            self.OsrealatedStuff(self.getGrepString())
-            lastUpdated = datetime.now().strftime(self.formatString + " %X")
-            self.jsonData['lastUpdated'] = lastUpdated
+            self.downloadAllNavFile()
+        self.updateMyNaVFile()
 
         sumTotal = 0
         totalInvested = 0
@@ -286,7 +305,4 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    # tracker.cleanUp()
-    # tracker.getCurrentValues(False)
-    tracker.printAllDayGains()
-    # tracker.drawGraph()
+    tracker.DayChangeTable()
