@@ -17,15 +17,16 @@ def getfp(percentage: float) -> str:
 class MutualFund:
     def __init__(self) -> None:
         self.Units = {
-            # icici shortTerm
-            '120754': [89.058, 4500]
         }
+        if not self.Units:
+            print('No mutual Fund specified to track')
+            exit()
 
+        self.unitsKeyList = list(self.Units.keys())
         self.console = None
         self.TableMutualFund = None
         self.summaryTable = None
 
-        self.unitsKeyList = list(self.Units.keys())
         self.directoryString = os.path.dirname(__file__)
         self.navallfile = self.directoryString + "/data/NAVAll.txt"
         self.navMyfile = self.directoryString + "/data/nav.txt"
@@ -38,9 +39,12 @@ class MutualFund:
         self.formatString = "%d-%b-%Y"
 
     def initializeTables(self) -> None:
+        if len(self.unitsKeyList) == 0:
+            print('no Mutual Fund found')
+            exit()
         self.TableMutualFund = Table(
-            expand=True, show_lines=True)
-        self.summaryTable = Table.grid(expand=True)
+            expand=True, show_lines=True,)
+        self.summaryTable = Table.grid(expand=True, pad_edge=True, padding=2)
 
         self.summaryTable.add_column(
             'invested', justify='center', no_wrap=True)
@@ -48,7 +52,7 @@ class MutualFund:
         self.summaryTable.add_column(
             'total returns', justify='right', no_wrap=True)
         self.summaryTable.add_column(
-            'lastUpdated and NAV date', justify='center', no_wrap=True)
+            'lastUpdated', justify='right', no_wrap=True)
 
         self.TableMutualFund.add_column(
             'SCHEME NAME', justify='center')
@@ -58,6 +62,8 @@ class MutualFund:
             'RETURNS', justify='center')
         self.TableMutualFund.add_column(
             'CURRENT', justify='center')
+        self.TableMutualFund.add_column(
+            'NAV', justify='center')
 
     def summaryTableEdit(self) -> None:
         try:
@@ -86,6 +92,7 @@ class MutualFund:
             dayChange = preMF['dayChange']
             current = preMF['current']
             invested = preMF['invested']
+            date = preMF['latestNavDate']
         except Exception as e:
             self.console.print(
                 'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option')
@@ -102,21 +109,53 @@ class MutualFund:
 
         returnString = f'₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]'
         currentString = f'₹{current}\n\n[b]₹{invested}[/b]'
+        nav_date = f'[b][yellow]{date}[/yellow][/b]'
 
         self.TableMutualFund.add_row(
-            SchemeName, dayChangeString, returnString, currentString)
+            SchemeName, dayChangeString, returnString, currentString, nav_date)
+
+    def DayChangeTable(self):
+        daily_table = Table(title='Day Change table',
+                            show_lines=True, expand=True)
+        daily_table.add_column('SCHEME NAME', justify='center', no_wrap=True)
+        daily_table.add_column('NAV', justify='center', no_wrap=True)
+        daily_table.add_column('DayChange', justify='center', no_wrap=True)
+
+        for key in self.unitsKeyList:
+            if not self.jsonData.__contains__(key):
+                self.getCurrentValues(False)
+            value: dict = self.jsonData[key]['nav']
+            name = self.jsonData[key]['name']
+            units: float = self.Units[key][0]
+            nav_col = ''
+            daychange_col = ''
+            i = True
+            prevdayChange = 0.0
+            for nav, daychange in value.items():
+                if i:
+                    prevdayChange = units*daychange
+                    i = False
+                    continue
+                nav_col += f'[yellow]{nav}[/yellow]\n'
+                daychangeData = daychange*units
+                daychange_col += f'{getfv(round(daychangeData-prevdayChange,3))}\n'
+                prevdayChange = daychangeData
+
+            daily_table.add_row(name, nav_col, daychange_col)
+        if not self.console:
+            self.console = Console()
+        print("\n")
+        self.console.print(daily_table)
+        print("\n")
 
     def drawTable(self):
         self.initializeTables()
         self.console = Console()
-
         self.summaryTableEdit()
-        print(end="\n\n")
         self.console.print(self.summaryTable)
         for ids in self.unitsKeyList:
             self.MutualFundTableEdit(ids)
         self.console.print(self.TableMutualFund)
-        print(end="\n\n")
 
     def writeToJsonFile(self) -> None:
         with open(self.dayChangeJsonFileString, 'w') as outfile:
@@ -145,7 +184,7 @@ class MutualFund:
             plt.ylabel('profit', yside='left')
 
             plt.plot_date(x, y, color='green',
-                          label='profit plot')
+                          label='Nav Plot')
             # plt.plot([0])
             plt.show()
         print()
@@ -158,33 +197,6 @@ class MutualFund:
 
             '''
         )
-
-    def DayChangeTable(self):
-        daily_table = Table(title='Day Change table',
-                            show_lines=True, expand=True)
-        daily_table.add_column('SCHEME NAME', justify='center', no_wrap=True)
-        daily_table.add_column('NAV', justify='center', no_wrap=True)
-        daily_table.add_column('DayChange', justify='center', no_wrap=True)
-
-        for key in self.unitsKeyList:
-            if not self.jsonData.__contains__(key):
-                self.getCurrentValues(False)
-            value = self.jsonData[key]['nav']
-            name = self.jsonData[key]['name']
-
-            nav_col = ''
-            daychange_col = ''
-            prevdayChange = 0.0
-            for nav, daychange in value.items():
-                nav_col += f'[yellow]{nav}[/yellow]\n'
-                daychange_col += f'{getfv(round(daychange-prevdayChange,3))}\n'
-                prevdayChange = daychange
-            daily_table.add_row(name, nav_col, daychange_col)
-        if not self.console:
-            self.console = Console()
-        print("\n")
-        self.console.print(daily_table)
-        print("\n")
 
     def downloadAllNavFile(self) -> None:
 
@@ -208,10 +220,10 @@ class MutualFund:
                 f"rm -f {self.navallfile+'.bak'}"
             )
 
-    def dayChangeMethod(self, ids: str, todayProfit: float, latestNavDate: str, name: str) -> float:
+    def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str, name: str) -> float:
 
         dayChange = 0.0
-        self.isExistingId(ids, name, latestNavDate, todayProfit)
+        self.isExistingId(ids, name, latestNavDate, todayNav)
         data = self.jsonData[ids]['nav']
         latestDate = datetime.strptime(
             latestNavDate, self.formatString)
@@ -223,25 +235,29 @@ class MutualFund:
             key_list = list(data.keys())
             length = len(key_list)
             if length == 0:
-                data[latestNavDate] = todayProfit
+                data[latestNavDate] = todayNav
                 return 'N.A.'
             elif length == 1 and key_list[-1] == latestNavDate:
                 return 'N.A.'
             elif key_list[-1] == latestNavDate:
                 prevDayNavDate = key_list[-2]
+            else:
+                prevDayNavDate = key_list[-1]
+        units: float = self.Units[ids][0]
 
-        prevDayProfit = data[prevDayNavDate]
-        dayChange = round(todayProfit - prevDayProfit, 3)
+        prevDaySum: float = data[prevDayNavDate]*units
+        dayChange: float = round(todayNav*units - prevDaySum, 3)
         self.jsonData[ids]['dayChange'] = dayChange
-        data[latestNavDate] = todayProfit
+        data[latestNavDate] = todayNav
         return dayChange
 
-    def isExistingId(self, ids: str, name: str, latestNavDate: str, todayProfit: float) -> None:
+    def isExistingId(self, ids: str, name: str, latestNavDate: str, todayNav: float) -> None:
         if not self.jsonData.__contains__(ids):
             self.jsonData[ids] = {}
             self.jsonData[ids]['name'] = name
             self.jsonData[ids]['nav'] = {}
-            self.jsonData[ids]['nav'][latestNavDate] = todayProfit
+            self.jsonData[ids]['nav'][latestNavDate] = todayNav
+            self.jsonData[ids]['latestNavDate'] = latestNavDate
 
     def cleanUp(self) -> None:
         keys = list(self.jsonData.keys())
@@ -274,15 +290,16 @@ class MutualFund:
 
             current = round(self.Units[id][0] * nav, 3)
             invested = self.Units[id][1]
-            todayProfit = round(current-invested, 3)
             sumTotal += current
             totalInvested += invested
 
             dayChange = self.dayChangeMethod(
-                id, todayProfit, date, name)
+                id, nav, date, name)
+
             totalDaychange += dayChange if dayChange != 'N.A.' else 0.00
 
-            cur_json_id = cur_json[id]
+            cur_json_id: dict = cur_json[id]
+            cur_json_id['latestNavDate'] = date
             cur_json_id['current'] = current
             cur_json_id['invested'] = invested
             cur_json_id['dayChange'] = dayChange

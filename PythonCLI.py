@@ -2,7 +2,7 @@ import argparse
 from MutualFundTracker import MutualFund
 
 
-def callMutualFund():
+def callMutualFund() -> None:
     tracker = MutualFund()
     if args.r == 'y':
         tracker.getCurrentValues(False)
