@@ -17,6 +17,7 @@ def getfp(percentage: float) -> str:
 class MutualFund:
     def __init__(self) -> None:
         self.Units = {
+
         }
         if not self.Units:
             print('No mutual Fund specified to track')
@@ -114,12 +115,29 @@ class MutualFund:
         self.TableMutualFund.add_row(
             SchemeName, dayChangeString, returnString, currentString, nav_date)
 
+    def dayChangeTableAll(self, dic: dict):
+        all_daily_table = Table(title='Day Change Total',
+                                show_lines=True, expand=True)
+        all_daily_table.add_column('NAV', justify='center', no_wrap=True)
+        all_daily_table.add_column('DayChange', justify='center', no_wrap=True)
+
+        nav_col = ''
+        dayChange_col = ''
+        for nav, dayChange in dic.items():
+            nav_col += f'[yellow]{nav}[/yellow]\n'
+
+            dayChange_col += f'{getfv(dayChange)}\n'
+            all_daily_table.add_row(nav_col, dayChange_col)
+        self.console.print(all_daily_table)
+
     def DayChangeTable(self):
         daily_table = Table(title='Day Change table',
                             show_lines=True, expand=True)
         daily_table.add_column('SCHEME NAME', justify='center', no_wrap=True)
         daily_table.add_column('NAV', justify='center', no_wrap=True)
         daily_table.add_column('DayChange', justify='center', no_wrap=True)
+
+        sumDayChange: dict = {}
 
         for key in self.unitsKeyList:
             if not self.jsonData.__contains__(key):
@@ -136,17 +154,26 @@ class MutualFund:
                     prevdayChange = units*daychange
                     i = False
                     continue
+                daychange: float = units*daychange
+                daychangeData: float = round(daychange-prevdayChange, 3)
+
+                if nav in sumDayChange:
+                    sumDayChange[nav] += daychangeData
+                else:
+                    sumDayChange[nav] = daychangeData
                 nav_col += f'[yellow]{nav}[/yellow]\n'
-                daychangeData = daychange*units
-                daychange_col += f'{getfv(round(daychangeData-prevdayChange,3))}\n'
-                prevdayChange = daychangeData
+
+                daychange_col += f'{getfv(daychangeData)}\n'
+                prevdayChange = daychange
 
             daily_table.add_row(name, nav_col, daychange_col)
+
         if not self.console:
             self.console = Console()
         print("\n")
         self.console.print(daily_table)
         print("\n")
+        self.dayChangeTableAll(sumDayChange)
 
     def drawTable(self):
         self.initializeTables()
@@ -322,4 +349,5 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    tracker.DayChangeTable()
+    # tracker.DayChangeTable()
+    tracker.cleanUp()
