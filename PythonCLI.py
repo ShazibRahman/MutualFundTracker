@@ -4,6 +4,10 @@ from MutualFundTracker import MutualFund
 
 def callMutualFund() -> None:
     tracker = MutualFund()
+    if args.dc == 'y':
+        tracker.DayChangeTable()
+        return
+
     if args.r == 'y':
         tracker.getCurrentValues(False)
 

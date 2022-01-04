@@ -16,9 +16,9 @@ def getfp(percentage: float) -> str:
 
 class MutualFund:
     def __init__(self) -> None:
-        self.Units = {
+        self.directoryString = os.path.dirname(__file__)
+        self.Units = json.load(open(self.directoryString+"/data/units.json"))
 
-        }
         if not self.Units:
             print('No mutual Fund specified to track')
             exit()
@@ -28,7 +28,6 @@ class MutualFund:
         self.TableMutualFund = None
         self.summaryTable = None
 
-        self.directoryString = os.path.dirname(__file__)
         self.navallfile = self.directoryString + "/data/NAVAll.txt"
         self.navMyfile = self.directoryString + "/data/nav.txt"
         self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
@@ -38,6 +37,8 @@ class MutualFund:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.jsonData = {}
         self.formatString = "%d-%b-%Y"
+        plt.datetime.set_datetime_form(date_form=self.formatString)
+
 
     def initializeTables(self) -> None:
         if len(self.unitsKeyList) == 0:
@@ -110,7 +111,7 @@ class MutualFund:
 
         returnString = f'₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]'
         currentString = f'₹{current}\n\n[b]₹{invested}[/b]'
-        nav_date = f'[b][yellow]{date}[/yellow][/b]'
+        nav_date = f'[yellow]{date}[/yellow]\n\n[b]{preMF["nav"][date]}[/b]'
 
         self.TableMutualFund.add_row(
             SchemeName, dayChangeString, returnString, currentString, nav_date)
@@ -125,10 +126,23 @@ class MutualFund:
         dayChange_col = ''
         for nav, dayChange in dic.items():
             nav_col += f'[yellow]{nav}[/yellow]\n'
-
             dayChange_col += f'{getfv(dayChange)}\n'
-            all_daily_table.add_row(nav_col, dayChange_col)
+        all_daily_table.add_row(nav_col, dayChange_col)
         self.console.print(all_daily_table)
+        print(end="\n\n")
+        dates : list =list (dic.keys())
+        dayChangeList : list = list(dic.values())
+        plt.clear_figure()
+        plt.plot_size(100, 30)
+        plt.title('Day Change')
+        plt.xlabel('Date', xside='upper')
+        plt.ylabel('profit', yside='left')
+
+        plt.plot_date(dates, dayChangeList, color='green',
+                        label='DayChange Plot')
+        plt.clear_color()
+        plt.show()
+       
 
     def DayChangeTable(self):
         daily_table = Table(title='Day Change table',
@@ -199,7 +213,6 @@ class MutualFund:
         return grepSearchString
 
     def drawGraph(self) -> None:
-        plt.datetime.set_datetime_form(date_form=self.formatString)
         for ids in self.unitsKeyList:
             value = self.jsonData[ids]
             print()
@@ -212,8 +225,10 @@ class MutualFund:
 
             plt.plot_date(x, y, color='green',
                           label='Nav Plot')
-            # plt.plot([0])
+            plt.clear_color()
+
             plt.show()
+            plt.clear_figure()
         print()
 
     def updateMyNaVFile(self):
@@ -230,7 +245,7 @@ class MutualFund:
         var = os.system(
             f'''
             mv {self.navallfile} {self.navallfile+'.bak'}
-            wget  -q --timeout=1 --tries=5 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
+            wget  -q --timeout=10 --tries=5 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
         '''
         )
         if var:
