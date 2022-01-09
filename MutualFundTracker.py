@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from json.decoder import JSONDecodeError
 from rich.console import Console
 from rich.table import Table
 import os
@@ -17,29 +18,49 @@ def getfp(percentage: float) -> str:
 class MutualFund:
     def __init__(self) -> None:
         self.directoryString = os.path.dirname(__file__)
-        self.Units = json.load(open(self.directoryString+"/data/units.json"))
+
+        self.navallfile = self.directoryString + "/data/NAVAll.txt"
+        self.navMyfile = self.directoryString + "/data/nav.txt"
+        self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
+        self.unitsFile =  self.directoryString+"/data/units.json"
+        try:
+            self.Units = json.load(open(self.unitsFile))
+        except :
+            # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
+            self.Units = {}
+            self.runOnceInitialization(self.unitsFile)
+
 
         if not self.Units:
-            print('No mutual Fund specified to track')
+            print(f'No mutual Fund specified to track please Add something in {self.unitsFile} file to track something')
             exit()
+
+        try:
+            self.jsonData = json.load(open(self.dayChangeJsonFileString))
+        except FileNotFoundError:
+            # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
+            self.runOnceInitialization(None)
+        except JSONDecodeError:
+            self.runOnceInitialization(None)
 
         self.unitsKeyList = list(self.Units.keys())
         self.console = None
         self.TableMutualFund = None
         self.summaryTable = None
-
-        self.navallfile = self.directoryString + "/data/NAVAll.txt"
-        self.navMyfile = self.directoryString + "/data/nav.txt"
-        self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
-        try:
-            self.jsonData = json.load(open(self.dayChangeJsonFileString))
-        except:
-            # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
-            self.jsonData = {}
         self.formatString = "%d-%b-%Y"
         plt.datetime.set_datetime_form(date_form=self.formatString)
+    
+    def runOnceInitialization(self , file):
+        if not os.path.isdir(self.directoryString+'/data'):
+            os.system(f'''mkdir {self.directoryString+"/data"} 
+            ''')
+        if file is not None:
+            os.system(f'echo {"{}"} > {file}')
+        else:
+            os.system(f'cp {self.dayChangeJsonFileString+".bak"} {self.dayChangeJsonFileString}')
+            self.jsonData = json.load(open(self.dayChangeJsonFileString))
 
-
+    
     def initializeTables(self) -> None:
         if len(self.unitsKeyList) == 0:
             print('no Mutual Fund found')
@@ -232,19 +253,25 @@ class MutualFund:
         print()
 
     def updateMyNaVFile(self):
+        if not  os.path.isfile(self.navallfile):
+            self.downloadAllNavFile()
 
-        os.system(
+        var =  os.system(
             f'''
             grep -wi '{self.getGrepString()}' {self.navallfile} > {self.navMyfile}
 
             '''
         )
+        if var :
+            print('something went wrong')
+            exit()
 
     def downloadAllNavFile(self) -> None:
 
         var = os.system(
             f'''
             mv {self.navallfile} {self.navallfile+'.bak'}
+            cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileString+".bak"}
             wget  -q --timeout=10 --tries=5 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
         '''
         )
@@ -364,5 +391,5 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    # tracker.DayChangeTable()
-    tracker.cleanUp()
+    tracker.getCurrentValues(False)
+    # tracker.cleanUp()

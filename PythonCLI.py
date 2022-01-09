@@ -18,9 +18,6 @@ def callMutualFund() -> None:
     if args.g == 'y' or args.g == 'o':
         tracker.drawGraph()
         return
-    if args.dc == 'y':
-        tracker.DayChangeTable()
-        return
 
 
 if __name__ == '__main__':
