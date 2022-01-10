@@ -1,10 +1,16 @@
-import json
-from datetime import datetime, timedelta
-from json.decoder import JSONDecodeError
-from rich.console import Console
-from rich.table import Table
-import os
-import plotext as plt
+try:
+    import json
+    from datetime import datetime, timedelta
+    from json.decoder import JSONDecodeError
+    from rich.console import Console
+    from rich.table import Table
+    import os
+    import plotext as plt
+except:
+    print('''please go to the project folder and run this commmand 
+    'pip install -r requirements.txt'
+    ''')
+    exit()
 
 
 def getfv(number: float) -> str:
