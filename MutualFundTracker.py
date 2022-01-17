@@ -259,7 +259,7 @@ class MutualFund:
         print()
 
     def updateMyNaVFile(self):
-        if not  os.path.isfile(self.navallfile):
+        if not os.path.isfile(self.navallfile):
             self.downloadAllNavFile()
 
         var =  os.system(
@@ -278,7 +278,7 @@ class MutualFund:
             f'''
             mv {self.navallfile} {self.navallfile+'.bak'}
             cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileString+".bak"}
-            wget  -q --timeout=10 --tries=5 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
+            wget  -q --timeout=20 --tries=10 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
         '''
         )
         if var:
@@ -371,8 +371,6 @@ class MutualFund:
             dayChange = self.dayChangeMethod(
                 id, nav, date, name)
 
-            totalDaychange += dayChange if dayChange != 'N.A.' else 0.00
-
             cur_json_id: dict = cur_json[id]
             cur_json_id['latestNavDate'] = date
             cur_json_id['current'] = current
@@ -389,7 +387,6 @@ class MutualFund:
         cur_json['sumTotal'] = round(sumTotal, 3)
         cur_json['totalInvested'] = totalInvested
         cur_json['toalProfitPercentage'] = totalProfitPercentage
-        cur_json['totalDayChange'] = totalDaychange
 
         self.writeToJsonFile()
         file.close()
@@ -397,5 +394,6 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    tracker.getCurrentValues(False)
+    # tracker.getCurrentValues(False)
+    tracker.drawTable()
     # tracker.cleanUp()
