@@ -12,13 +12,15 @@ except:
     ''')
     exit()
 
+def roundUp3(number:float) -> float:
+    return round(number,3)
 
 def getfv(number: float) -> str:
-    return f'[green]+₹{number}[/green]' if number >= 0 else f'[red]-₹{abs(number)}[/red]'
+    return f'[green]+₹{roundUp3(number)}[/green]' if number >= 0 else f'[red]-₹{abs(roundUp3(number))}[/red]'
 
 
 def getfp(percentage: float) -> str:
-    return f'[green]({percentage}%)[/green]' if percentage >= 0 else f'[red]({percentage})%[/red]'
+    return f'[green]({roundUp3(percentage)}%)[/green]' if percentage >= 0 else f'[red]({roundUp3(percentage)})%[/red]'
 
 
 class MutualFund:
@@ -28,6 +30,7 @@ class MutualFund:
         self.navallfile = self.directoryString + "/data/NAVAll.txt"
         self.navMyfile = self.directoryString + "/data/nav.txt"
         self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
+        self.dayChangeJsonFileStringBackupFile = self.dayChangeJsonFileString+".bak"
         self.unitsFile =  self.directoryString+"/data/units.json"
         try:
             self.Units = json.load(open(self.unitsFile))
@@ -63,8 +66,13 @@ class MutualFund:
         if file is not None:
             os.system(f'echo {"{}"} > {file}')
         else:
-            os.system(f'cp {self.dayChangeJsonFileString+".bak"} {self.dayChangeJsonFileString}')
-            self.jsonData = json.load(open(self.dayChangeJsonFileString))
+            if os.path.isfile(self.dayChangeJsonFileStringBackupFile):
+                os.system(f'cp {self.dayChangeJsonFileStringBackupFile} {self.dayChangeJsonFileString}')
+                self.jsonData = json.load(open(self.dayChangeJsonFileString))
+            else:
+                os.system(f'echo {"{}"} > {self.dayChangeJsonFileStringBackupFile}')
+                self.jsonData ={}
+                
 
     
     def initializeTables(self) -> None:
@@ -127,14 +135,14 @@ class MutualFund:
                 'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option')
             exit()
         if dayChange != 'N.A.':
-            dayChangePercentage = round(dayChange / invested * 100, 3)
+            dayChangePercentage:float = roundUp3(dayChange / invested * 100)
             dayChangeString = f'{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]'
         else:
             dayChangeString = f'N.A.\n\n[b]N.A.[/b]'
 
-        returns = round(current - invested, 3)
+        returns =  roundUp3(  current - invested)
 
-        returnsPercentage = round(returns / invested * 100, 3)
+        returnsPercentage = returns / invested * 100
 
         returnString = f'₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]'
         currentString = f'₹{current}\n\n[b]₹{invested}[/b]'
@@ -277,7 +285,7 @@ class MutualFund:
         var = os.system(
             f'''
             mv {self.navallfile} {self.navallfile+'.bak'}
-            cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileString+".bak"}
+            cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
             wget  -q --timeout=20 --tries=10 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
         '''
         )
