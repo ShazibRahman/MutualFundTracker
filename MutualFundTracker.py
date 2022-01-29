@@ -1,3 +1,8 @@
+from os import MFD_ALLOW_SEALING
+from re import A
+from typing import Dict
+
+
 try:
     import json
     from datetime import datetime, timedelta
@@ -28,6 +33,7 @@ class MutualFund:
         self.directoryString = os.path.dirname(__file__)
 
         self.navallfile = self.directoryString + "/data/NAVAll.txt"
+        self.orderfile = self.directoryString+"/data/order.json"
         self.navMyfile = self.directoryString + "/data/nav.txt"
         self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
         self.dayChangeJsonFileStringBackupFile = self.dayChangeJsonFileString+".bak"
@@ -38,6 +44,11 @@ class MutualFund:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.Units = {}
             self.runOnceInitialization(self.unitsFile)
+        try:
+            self.Orders = json.load((open(self.orderfile)))
+        except:
+            self.Orders ={}
+            self.runOnceInitialization(self.orderfile)
 
 
         if not self.Units:
@@ -59,6 +70,57 @@ class MutualFund:
         self.formatString = "%d-%b-%Y"
         plt.datetime.set_datetime_form(date_form=self.formatString)
     
+    def writeToFile(self , filePath, Jsondata):
+        with open(filePath, 'w') as outfile:
+            json.dump(Jsondata, outfile, indent=4)
+    
+    def addToUnits(self,mfid,date):
+        if self.Orders.__contains__(mfid) and self.Orders.__contains__(date):
+            OrderData = self.Orders[mfid].pop(date)
+            data = self.Units[mfid]
+            data[0]+=OrderData[0]
+            data[1]+=OrderData[1]
+            
+        self.writeToFile(self.unitsFile,self.Units)
+
+    def addToUnitsNotPreEXisting(self):
+        key_list = list(self.Orders.keys())
+        for i in key_list:
+            if i not in self.Units:
+                self.Units[i] =[0,0]
+                dateList = list(self.Orders[i].keys())
+                for date in dateList:
+                   dateData = self.Orders[i].pop(date)
+                   self.Units[i][0]+=dateData[0]
+                   self.Units[i][1]+=dateData[1]
+           
+        self.writeToFile(self.unitsFile,self.Units)
+        self.writeToFile(self.orderfile, self.Orders)
+                    
+
+    
+    def searchMutualFund(self , string:str):
+        os.system(
+        f'''
+        grep -wi '{string}' {self.navallfile} 
+
+        ''')
+
+
+    def addOrder(self,MFID, unit , amount, date):
+        if self.Orders.__contains__(MFID) and self.Orders[MFID].__contains__(date)  :
+            data = self.Orders[MFID][date]
+            data[0] +=unit
+            data[1] += amount
+        elif self.Orders.__contains__(MFID):
+            self.Orders[MFID][date] = [unit, amount]
+        else:
+            self.Orders[MFID] = {}
+            self.Orders[MFID][date] = [unit , amount] 
+        
+        self.writeToFile(self.orderfile , self.Orders)
+
+        
     def runOnceInitialization(self , file):
         if not os.path.isdir(self.directoryString+'/data'):
             os.system(f'''mkdir {self.directoryString+"/data"} 
@@ -178,6 +240,8 @@ class MutualFund:
         plt.clear_color()
         plt.show()
        
+    def UpdateKeyList(self):
+        self.unitsKeyList = self.Units.keys()
 
     def DayChangeTable(self):
         daily_table = Table(title='Day Change table',
@@ -187,7 +251,7 @@ class MutualFund:
         daily_table.add_column('DayChange', justify='center', no_wrap=True)
 
         sumDayChange: dict = {}
-
+        self.UpdateKeyList()
         for key in self.unitsKeyList:
             if not self.jsonData.__contains__(key):
                 self.getCurrentValues(False)
@@ -229,6 +293,7 @@ class MutualFund:
         self.console = Console()
         self.summaryTableEdit()
         self.console.print(self.summaryTable)
+        self.UpdateKeyList()
         for ids in self.unitsKeyList:
             self.MutualFundTableEdit(ids)
         self.console.print(self.TableMutualFund)
@@ -238,13 +303,14 @@ class MutualFund:
             json.dump(self.jsonData, outfile, indent=4)
 
     def getGrepString(self) -> str:
+        unitKeyList = list(self.Units.keys())
 
         grepSearchString = ''
-        for i in range(len(self.unitsKeyList)):
+        for i in range(len(unitKeyList)):
             if i == 0:
-                grepSearchString += self.unitsKeyList[i]
+                grepSearchString += unitKeyList[i]
             else:
-                grepSearchString += '\|' + self.unitsKeyList[i]
+                grepSearchString += '\|' +unitKeyList[i]
         return grepSearchString
 
     def drawGraph(self) -> None:
@@ -326,6 +392,7 @@ class MutualFund:
                 prevDayNavDate = key_list[-2]
             else:
                 prevDayNavDate = key_list[-1]
+        self.addToUnits(ids ,prevDayNavDate)
         units: float = self.Units[ids][0]
 
         prevDaySum: float = data[prevDayNavDate]*units
@@ -353,6 +420,7 @@ class MutualFund:
     def getCurrentValues(self, download: bool) -> None:
         cur_json = self.jsonData
         if download:
+            self.addToUnitsNotPreEXisting()
             self.downloadAllNavFile()
         self.updateMyNaVFile()
 
@@ -370,14 +438,16 @@ class MutualFund:
             temp = line.strip().split(";")
             id, name, nav, date = temp[0], temp[3].split(
                 '-')[0].strip(), float(temp[4]), temp[5]
+            
+            dayChange = self.dayChangeMethod(
+                id, nav, date, name)
 
             current = round(self.Units[id][0] * nav, 3)
             invested = self.Units[id][1]
             sumTotal += current
             totalInvested += invested
 
-            dayChange = self.dayChangeMethod(
-                id, nav, date, name)
+
 
             cur_json_id: dict = cur_json[id]
             cur_json_id['latestNavDate'] = date
@@ -402,6 +472,6 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    # tracker.getCurrentValues(False)
-    tracker.drawTable()
-    # tracker.cleanUp()
+    tracker.searchMutualFund('Icici prudential technology')
+    # tracker.addToUnitsNotPreEXisting()
+    tracker.cleanUp()
