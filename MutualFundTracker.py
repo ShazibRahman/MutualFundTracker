@@ -75,13 +75,15 @@ class MutualFund:
             json.dump(Jsondata, outfile, indent=4)
     
     def addToUnits(self,mfid,date):
-        if self.Orders.__contains__(mfid) and self.Orders.__contains__(date):
+        if self.Orders.__contains__(mfid) and self.Orders[mfid].__contains__(date):
             OrderData = self.Orders[mfid].pop(date)
             data = self.Units[mfid]
             data[0]+=OrderData[0]
             data[1]+=OrderData[1]
-            
+            print(mfid,date,data)
+   
         self.writeToFile(self.unitsFile,self.Units)
+        self.writeToFile(self.orderfile, self.Orders)
 
     def addToUnitsNotPreEXisting(self):
         key_list = list(self.Orders.keys())
