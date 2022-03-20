@@ -4,6 +4,9 @@ from MutualFundTracker import MutualFund
 
 def callMutualFund() -> None:
     tracker = MutualFund()
+    if(args.add is not None):
+        tracker.addOrder(args.add[0],int(args.add[1]),float(args.add[2]),args.add[3])
+        return
     if args.dc == 'y':
         tracker.DayChangeTable()
         return
@@ -46,5 +49,6 @@ if __name__ == '__main__':
                         choices=['y', 'n'])
     parser.add_argument("-dc",
                         type=str, choices=['y', 'n'], default='n')
+    parser.add_argument("-add",nargs="+", type=str)
     args = parser.parse_args()
     callMutualFund()

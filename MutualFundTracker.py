@@ -1,6 +1,7 @@
 from os import MFD_ALLOW_SEALING
 from re import A
 from typing import Dict
+import logging
 
 
 try:
@@ -16,6 +17,7 @@ except:
     'pip install -r requirements.txt'
     ''')
     exit()
+logging.basicConfig(filename=os.path.dirname(__file__)+'/data/logger.log', filemode='a', level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 def roundUp3(number:float) -> float:
     return round(number,3)
@@ -30,6 +32,7 @@ def getfp(percentage: float) -> str:
 
 class MutualFund:
     def __init__(self) -> None:
+        logging.info("--Application has started---")
         self.directoryString = os.path.dirname(__file__)
 
         self.navallfile = self.directoryString + "/data/NAVAll.txt"
@@ -71,21 +74,23 @@ class MutualFund:
         plt.datetime.set_datetime_form(date_form=self.formatString)
     
     def writeToFile(self , filePath, Jsondata):
+        logging.info(f"--writing to file {filePath}--")
         with open(filePath, 'w') as outfile:
             json.dump(Jsondata, outfile, indent=4)
     
     def addToUnits(self,mfid,date):
+        logging.info("--updating the units--")
         if self.Orders.__contains__(mfid) and self.Orders[mfid].__contains__(date):
             OrderData = self.Orders[mfid].pop(date)
             data = self.Units[mfid]
             data[0]+=OrderData[0]
             data[1]+=OrderData[1]
-            print(mfid,date,data)
    
         self.writeToFile(self.unitsFile,self.Units)
         self.writeToFile(self.orderfile, self.Orders)
 
     def addToUnitsNotPreEXisting(self):
+        logging.info("--adding new MF units to Unit file")
         key_list = list(self.Orders.keys())
         for i in key_list:
             if i not in self.Units:
@@ -110,6 +115,7 @@ class MutualFund:
 
 
     def addOrder(self,MFID, unit , amount, date):
+        logging.info(f"--adding order to Unit file--")
         if self.Orders.__contains__(MFID) and self.Orders[MFID].__contains__(date)  :
             data = self.Orders[MFID][date]
             data[0] +=unit
@@ -119,7 +125,7 @@ class MutualFund:
         else:
             self.Orders[MFID] = {}
             self.Orders[MFID][date] = [unit , amount] 
-        
+        logging.info(f"--Adding  Units={unit}, amount={amount}, date={date} to {self.jsonData[MFID]['name']}--")
         self.writeToFile(self.orderfile , self.Orders)
 
         
@@ -246,6 +252,7 @@ class MutualFund:
         self.unitsKeyList = self.Units.keys()
 
     def DayChangeTable(self):
+        logging.info("--rendering day change table--")
         daily_table = Table(title='Day Change table',
                             show_lines=True, expand=True)
         daily_table.add_column('SCHEME NAME', justify='center', no_wrap=True)
@@ -349,6 +356,7 @@ class MutualFund:
             exit()
 
     def downloadAllNavFile(self) -> None:
+        logging.info("--downloading the NAV file from server--")
 
         var = os.system(
             f'''
@@ -359,6 +367,7 @@ class MutualFund:
         )
         if var:
             print('something went wrong can\'t download the file')
+            logging.info("")
             os.system(
                 f'''
                 mv {self.navallfile+'.bak'} {self.navallfile}
@@ -420,6 +429,7 @@ class MutualFund:
         self.writeToJsonFile()
 
     def getCurrentValues(self, download: bool) -> None:
+        logging.info("--Main calculation--")
         cur_json = self.jsonData
         if download:
             self.addToUnitsNotPreEXisting()
