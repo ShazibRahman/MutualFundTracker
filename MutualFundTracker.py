@@ -86,8 +86,10 @@ class MutualFund:
             data[0]+=OrderData[0]
             data[1]+=OrderData[1]
    
-        self.writeToFile(self.unitsFile,self.Units)
-        self.writeToFile(self.orderfile, self.Orders)
+            self.writeToFile(self.unitsFile,self.Units)
+            self.writeToFile(self.orderfile, self.Orders)
+        else:
+            logging.info("--No new Orders were found--")
 
     def addToUnitsNotPreEXisting(self):
         logging.info("--adding new MF units to Unit file")
@@ -101,8 +103,14 @@ class MutualFund:
                    self.Units[i][0]+=dateData[0]
                    self.Units[i][1]+=dateData[1]
            
-        self.writeToFile(self.unitsFile,self.Units)
-        self.writeToFile(self.orderfile, self.Orders)
+                self.writeToFile(self.unitsFile,self.Units)
+                self.writeToFile(self.orderfile, self.Orders)
+            else:
+                logging.info("--No new Mutual fund was found in Order--")
+        else:
+            logging.info("--No new Mutual fund was found in Order--")
+
+
                     
 
     
@@ -308,6 +316,7 @@ class MutualFund:
         self.console.print(self.TableMutualFund)
 
     def writeToJsonFile(self) -> None:
+        logging.info("--writing to the dayChange file--")
         with open(self.dayChangeJsonFileString, 'w') as outfile:
             json.dump(self.jsonData, outfile, indent=4)
 
@@ -484,6 +493,4 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    tracker.searchMutualFund('Icici prudential technology')
-    # tracker.addToUnitsNotPreEXisting()
-    tracker.cleanUp()
+    tracker.getLogs()

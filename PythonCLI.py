@@ -1,8 +1,25 @@
 import argparse
+from asyncio.log import logger
 from MutualFundTracker import MutualFund
+import os
+loggerPath = os.path.dirname(__file__)+"/data/logger.log"
+def readLogs():
+    file = open(loggerPath)
+    print(file.read())
+    file.close()
+    return
 
+def clearLogs():
+    file= open(loggerPath,'w')
+    return
 
 def callMutualFund() -> None:
+    if(args.logs =="show"):
+        readLogs()
+        return
+    if(args.logs=="clear"):
+        clearLogs()
+        return
     tracker = MutualFund()
     if(args.add is not None):
         tracker.addOrder(args.add[0],int(args.add[1]),float(args.add[2]),args.add[3])
@@ -24,12 +41,13 @@ def callMutualFund() -> None:
 
 
 if __name__ == '__main__':
+    choices = ['y','n']
     parser = argparse.ArgumentParser()
     parser.add_argument('-d',
                         type=str,
                         default='n',
                         help='set whether to download new files',
-                        choices=['y', 'n']
+                        choices=choices
                         )
     parser.add_argument('-g',
                         type=str,
@@ -41,14 +59,15 @@ if __name__ == '__main__':
                         type=str,
                         default='y',
                         help='Render the tables',
-                        choices=['y', 'n']
+                        choices=choices
                         )
     parser.add_argument("-r",
                         type=str,
                         default='n',
                         choices=['y', 'n'])
     parser.add_argument("-dc",
-                        type=str, choices=['y', 'n'], default='n')
+                        type=str, choices=choices, default='n')
     parser.add_argument("-add",nargs="+", type=str)
+    parser.add_argument("--logs",type=str,choices=['show','clear','n'],default='n')
     args = parser.parse_args()
     callMutualFund()
