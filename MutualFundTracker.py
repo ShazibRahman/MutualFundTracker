@@ -1,8 +1,6 @@
-from os import MFD_ALLOW_SEALING
-from re import A
-from typing import Dict
 import logging
-
+import hashlib
+import time
 
 try:
     import json
@@ -79,7 +77,6 @@ class MutualFund:
             json.dump(Jsondata, outfile, indent=4)
     
     def addToUnits(self,mfid,date):
-        logging.info("--updating the units--")
         if self.Orders.__contains__(mfid) and self.Orders[mfid].__contains__(date):
             OrderData = self.Orders[mfid].pop(date)
             data = self.Units[mfid]
@@ -89,7 +86,7 @@ class MutualFund:
             self.writeToFile(self.unitsFile,self.Units)
             self.writeToFile(self.orderfile, self.Orders)
         else:
-            logging.info("--No new Orders were found--")
+            logging.info(f"--No new Orders were found for {self.jsonData[mfid]['name']}--")
 
     def addToUnitsNotPreEXisting(self):
         logging.info("--adding new MF units to Unit file")
@@ -366,6 +363,7 @@ class MutualFund:
 
     def downloadAllNavFile(self) -> None:
         logging.info("--downloading the NAV file from server--")
+        start = time.time()
 
         var = os.system(
             f'''
@@ -376,13 +374,20 @@ class MutualFund:
         )
         if var:
             print('something went wrong can\'t download the file')
-            logging.info("")
+            logging.info("something went wrong can\'t download the file Rolling back to previous NAV file")
             os.system(
                 f'''
                 mv {self.navallfile+'.bak'} {self.navallfile}
                 '''
             )
         else:
+            logging.info(f"took {round(time.time()-start,2)} Secs to download the file")
+            new_hash = hashlib.md5(open(self.navallfile,'rb').read()).hexdigest()
+            if self.jsonData.__contains__('hash'):
+                prev_hash = self.jsonData['hash']
+                if prev_hash == new_hash:
+                    logging.info("--No changes found in the new NAV file--")
+            self.jsonData['hash'] = new_hash
             lastUpdated = datetime.now().strftime(self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
             os.system(
