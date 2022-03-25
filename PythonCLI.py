@@ -3,26 +3,31 @@ from MutualFundTracker import MutualFund
 import os
 
 loggerPath = os.path.dirname(__file__)+"/data/logger.log"
+
+
 def readLogs():
     file = open(loggerPath)
     print(file.read())
     file.close()
     return
 
+
 def clearLogs():
-    file= open(loggerPath,'w')
+    file = open(loggerPath, 'w')
     return
 
+
 def callMutualFund() -> None:
-    if(args.logs =="show"):
+    if(args.logs == "show"):
         readLogs()
         return
-    if(args.logs=="clear"):
+    if(args.logs == "clear"):
         clearLogs()
         return
     tracker = MutualFund()
     if(args.add is not None):
-        tracker.addOrder(args.add[0],int(args.add[1]),float(args.add[2]),args.add[3])
+        tracker.addOrder(args.add[0], int(args.add[1]),
+                         float(args.add[2]), args.add[3])
         return
     if args.dc == 'y':
         tracker.DayChangeTable()
@@ -41,7 +46,7 @@ def callMutualFund() -> None:
 
 
 if __name__ == '__main__':
-    choices = ['y','n']
+    choices = ['y', 'n']
     parser = argparse.ArgumentParser()
     parser.add_argument('-d',
                         type=str,
@@ -67,7 +72,8 @@ if __name__ == '__main__':
                         choices=['y', 'n'])
     parser.add_argument("-dc",
                         type=str, choices=choices, default='n')
-    parser.add_argument("-add",nargs="+", type=str)
-    parser.add_argument("--logs",type=str,choices=['show','clear','n'],default='n')
+    parser.add_argument("-add", nargs="+", type=str)
+    parser.add_argument("--logs", type=str,
+                        choices=['show', 'clear', 'n'], default='n')
     args = parser.parse_args()
     callMutualFund()
