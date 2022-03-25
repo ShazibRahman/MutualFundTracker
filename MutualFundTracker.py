@@ -37,8 +37,8 @@ class MutualFund:
         logging.info("--Application has started---")
         self.directoryString = os.path.dirname(__file__)
 
-        self.navallfile = self.directoryString + "/data/NAVAll.txt"
-        self.orderfile = self.directoryString+"/data/order.json"
+        self.navallfile:str = self.directoryString + "/data/NAVAll.txt"
+        self.orderfile:str = self.directoryString+"/data/order.json"
         self.navMyfile = self.directoryString + "/data/nav.txt"
         self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
         self.dayChangeJsonFileStringBackupFile = self.dayChangeJsonFileString+".bak"
@@ -50,7 +50,7 @@ class MutualFund:
             self.Units = {}
             self.runOnceInitialization(self.unitsFile)
         try:
-            self.Orders = json.load((open(self.orderfile)))
+            self.Orders:dict = json.load((open(self.orderfile)))
         except:
             self.Orders = {}
             self.runOnceInitialization(self.orderfile)
