@@ -1,7 +1,7 @@
 import argparse
-from asyncio.log import logger
 from MutualFundTracker import MutualFund
 import os
+
 loggerPath = os.path.dirname(__file__)+"/data/logger.log"
 def readLogs():
     file = open(loggerPath)

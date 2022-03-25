@@ -10,15 +10,19 @@ try:
     from rich.table import Table
     import os
     import plotext as plt
-except:
+except Exception as e:
     print('''please go to the project folder and run this commmand 
     'pip install -r requirements.txt'
     ''')
+    print(e)
     exit()
-logging.basicConfig(filename=os.path.dirname(__file__)+'/data/logger.log', filemode='a', level=logging.DEBUG,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+logging.basicConfig(filename=os.path.dirname(__file__)+'/data/logger.log', filemode='a',
+                    level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
-def roundUp3(number:float) -> float:
-    return round(number,3)
+
+def roundUp3(number: float) -> float:
+    return round(number, 3)
+
 
 def getfv(number: float) -> str:
     return f'[green]+₹{roundUp3(number)}[/green]' if number >= 0 else f'[red]-₹{abs(roundUp3(number))}[/red]'
@@ -38,22 +42,22 @@ class MutualFund:
         self.navMyfile = self.directoryString + "/data/nav.txt"
         self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
         self.dayChangeJsonFileStringBackupFile = self.dayChangeJsonFileString+".bak"
-        self.unitsFile =  self.directoryString+"/data/units.json"
+        self.unitsFile = self.directoryString+"/data/units.json"
         try:
             self.Units = json.load(open(self.unitsFile))
-        except :
+        except:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.Units = {}
             self.runOnceInitialization(self.unitsFile)
         try:
             self.Orders = json.load((open(self.orderfile)))
         except:
-            self.Orders ={}
+            self.Orders = {}
             self.runOnceInitialization(self.orderfile)
 
-
         if not self.Units:
-            print(f'No mutual Fund specified to track please Add something in {self.unitsFile} file to track something')
+            print(
+                f'No mutual Fund specified to track please Add something in {self.unitsFile} file to track something')
             exit()
 
         try:
@@ -70,71 +74,67 @@ class MutualFund:
         self.summaryTable = None
         self.formatString = "%d-%b-%Y"
         plt.datetime.set_datetime_form(date_form=self.formatString)
-    
-    def writeToFile(self , filePath, Jsondata):
+
+    def writeToFile(self, filePath, Jsondata):
         logging.info(f"--writing to file {filePath}--")
         with open(filePath, 'w') as outfile:
             json.dump(Jsondata, outfile, indent=4)
-    
-    def addToUnits(self,mfid,date):
+
+    def addToUnits(self, mfid, date):
         if self.Orders.__contains__(mfid) and self.Orders[mfid].__contains__(date):
             OrderData = self.Orders[mfid].pop(date)
             data = self.Units[mfid]
-            data[0]+=OrderData[0]
-            data[1]+=OrderData[1]
-   
-            self.writeToFile(self.unitsFile,self.Units)
+            data[0] += OrderData[0]
+            data[1] += OrderData[1]
+
+            self.writeToFile(self.unitsFile, self.Units)
             self.writeToFile(self.orderfile, self.Orders)
         else:
-            logging.info(f"--No new Orders were found for {self.jsonData[mfid]['name']}--")
+            logging.info(
+                f"--No new Orders were found for {self.jsonData[mfid]['name']}--")
 
     def addToUnitsNotPreEXisting(self):
         logging.info("--adding new MF units to Unit file")
         key_list = list(self.Orders.keys())
         for i in key_list:
             if i not in self.Units:
-                self.Units[i] =[0,0]
+                self.Units[i] = [0, 0]
                 dateList = list(self.Orders[i].keys())
                 for date in dateList:
-                   dateData = self.Orders[i].pop(date)
-                   self.Units[i][0]+=dateData[0]
-                   self.Units[i][1]+=dateData[1]
-           
-                self.writeToFile(self.unitsFile,self.Units)
+                    dateData = self.Orders[i].pop(date)
+                    self.Units[i][0] += dateData[0]
+                    self.Units[i][1] += dateData[1]
+
+                self.writeToFile(self.unitsFile, self.Units)
                 self.writeToFile(self.orderfile, self.Orders)
             else:
                 logging.info("--No new Mutual fund was found in Order--")
         else:
             logging.info("--No new Mutual fund was found in Order--")
 
-
-                    
-
-    
-    def searchMutualFund(self , string:str):
+    def searchMutualFund(self, string: str):
         os.system(
-        f'''
+            f'''
         grep -wi '{string}' {self.navallfile} 
 
         ''')
 
-
-    def addOrder(self,MFID, unit , amount, date):
+    def addOrder(self, MFID, unit, amount, date):
         logging.info(f"--adding order to Unit file--")
-        if self.Orders.__contains__(MFID) and self.Orders[MFID].__contains__(date)  :
+        if self.Orders.__contains__(MFID) and self.Orders[MFID].__contains__(date):
             data = self.Orders[MFID][date]
-            data[0] +=unit
+            data[0] += unit
             data[1] += amount
         elif self.Orders.__contains__(MFID):
             self.Orders[MFID][date] = [unit, amount]
         else:
             self.Orders[MFID] = {}
-            self.Orders[MFID][date] = [unit , amount] 
-        logging.info(f"--Adding  Units={unit}, amount={amount}, date={date} to {self.jsonData[MFID]['name']}--")
-        self.writeToFile(self.orderfile , self.Orders)
+            self.Orders[MFID][date] = [unit, amount]
+        logging.info(
+            f"--Adding  Units={unit}, amount={amount}, date={date} to {self.jsonData[MFID]['name']}--")
+        self.writeToFile(self.orderfile, self.Orders)
 
-        
-    def runOnceInitialization(self , file):
+    def runOnceInitialization(self, file):
         if not os.path.isdir(self.directoryString+'/data'):
             os.system(f'''mkdir {self.directoryString+"/data"} 
             ''')
@@ -142,14 +142,14 @@ class MutualFund:
             os.system(f'echo {"{}"} > {file}')
         else:
             if os.path.isfile(self.dayChangeJsonFileStringBackupFile):
-                os.system(f'cp {self.dayChangeJsonFileStringBackupFile} {self.dayChangeJsonFileString}')
+                os.system(
+                    f'cp {self.dayChangeJsonFileStringBackupFile} {self.dayChangeJsonFileString}')
                 self.jsonData = json.load(open(self.dayChangeJsonFileString))
             else:
-                os.system(f'echo {"{}"} > {self.dayChangeJsonFileStringBackupFile}')
-                self.jsonData ={}
-                
+                os.system(
+                    f'echo {"{}"} > {self.dayChangeJsonFileStringBackupFile}')
+                self.jsonData = {}
 
-    
     def initializeTables(self) -> None:
         if len(self.unitsKeyList) == 0:
             print('no Mutual Fund found')
@@ -210,12 +210,12 @@ class MutualFund:
                 'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option')
             exit()
         if dayChange != 'N.A.':
-            dayChangePercentage:float = roundUp3(dayChange / invested * 100)
+            dayChangePercentage: float = roundUp3(dayChange / invested * 100)
             dayChangeString = f'{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]'
         else:
             dayChangeString = f'N.A.\n\n[b]N.A.[/b]'
 
-        returns =  roundUp3(  current - invested)
+        returns = roundUp3(current - invested)
 
         returnsPercentage = returns / invested * 100
 
@@ -240,8 +240,8 @@ class MutualFund:
         all_daily_table.add_row(nav_col, dayChange_col)
         self.console.print(all_daily_table)
         print(end="\n\n")
-        dates : list =list (dic.keys())
-        dayChangeList : list = list(dic.values())
+        dates: list = list(dic.keys())
+        dayChangeList: list = list(dic.values())
         plt.clear_figure()
         plt.plot_size(100, 30)
         plt.title('Day Change')
@@ -249,10 +249,10 @@ class MutualFund:
         plt.ylabel('profit', yside='left')
 
         plt.plot_date(dates, dayChangeList, color='green',
-                        label='DayChange Plot')
+                      label='DayChange Plot')
         plt.clear_color()
         plt.show()
-       
+
     def UpdateKeyList(self):
         self.unitsKeyList = self.Units.keys()
 
@@ -325,7 +325,7 @@ class MutualFund:
             if i == 0:
                 grepSearchString += unitKeyList[i]
             else:
-                grepSearchString += '\|' +unitKeyList[i]
+                grepSearchString += '\|' + unitKeyList[i]
         return grepSearchString
 
     def drawGraph(self) -> None:
@@ -351,13 +351,13 @@ class MutualFund:
         if not os.path.isfile(self.navallfile):
             self.downloadAllNavFile()
 
-        var =  os.system(
+        var = os.system(
             f'''
             grep -wi '{self.getGrepString()}' {self.navallfile} > {self.navMyfile}
 
             '''
         )
-        if var :
+        if var:
             print('something went wrong')
             exit()
 
@@ -374,15 +374,18 @@ class MutualFund:
         )
         if var:
             print('something went wrong can\'t download the file')
-            logging.info("something went wrong can\'t download the file Rolling back to previous NAV file")
+            logging.info(
+                "something went wrong can\'t download the file Rolling back to previous NAV file")
             os.system(
                 f'''
                 mv {self.navallfile+'.bak'} {self.navallfile}
                 '''
             )
         else:
-            logging.info(f"took {round(time.time()-start,2)} Secs to download the file")
-            new_hash = hashlib.md5(open(self.navallfile,'rb').read()).hexdigest()
+            logging.info(
+                f"took {round(time.time()-start,2)} Secs to download the file")
+            new_hash = hashlib.md5(
+                open(self.navallfile, 'rb').read()).hexdigest()
             if self.jsonData.__contains__('hash'):
                 prev_hash = self.jsonData['hash']
                 if prev_hash == new_hash:
@@ -417,7 +420,7 @@ class MutualFund:
                 prevDayNavDate = key_list[-2]
             else:
                 prevDayNavDate = key_list[-1]
-        self.addToUnits(ids ,prevDayNavDate)
+        self.addToUnits(ids, prevDayNavDate)
         units: float = self.Units[ids][0]
 
         prevDaySum: float = data[prevDayNavDate]*units
@@ -464,7 +467,7 @@ class MutualFund:
             temp = line.strip().split(";")
             id, name, nav, date = temp[0], temp[3].split(
                 '-')[0].strip(), float(temp[4]), temp[5]
-            
+
             dayChange = self.dayChangeMethod(
                 id, nav, date, name)
 
@@ -472,8 +475,6 @@ class MutualFund:
             invested = self.Units[id][1]
             sumTotal += current
             totalInvested += invested
-
-
 
             cur_json_id: dict = cur_json[id]
             cur_json_id['latestNavDate'] = date
@@ -498,4 +499,3 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
-    tracker.getLogs()
