@@ -35,6 +35,7 @@ def getfp(percentage: float) -> str:
 class MutualFund:
     def __init__(self) -> None:
         logging.info("--Application has started---")
+        logging.info(f"--Logged in as {os.environ.get('USER')}")
         self.directoryString = os.path.dirname(__file__)
 
         self.navallfile:str = self.directoryString + "/data/NAVAll.txt"
@@ -80,12 +81,32 @@ class MutualFund:
         with open(filePath, 'w') as outfile:
             json.dump(Jsondata, outfile, indent=4)
 
+    def checkPastdates(self,NavDate:str ,orderDate):
+        '''
+        to check whether the order date is equal or smaller than the (nav date - 1)
+        orders date = 13-may
+        nav -1 date = 13-may
+        in this case the orders should move to units
+
+        scenario 2 
+
+        order date = 12-May
+        nav - 1 date = 13-May
+
+        in this case orders should move to units file
+        '''
+        NavDateForamt  = datetime.strptime(NavDate,self.formatString)
+        orderDateFormat = datetime.strptime(orderDate,self.formatString)
+        return orderDateFormat <= NavDateForamt
+
     def addToUnits(self, mfid, date):
-        if self.Orders.__contains__(mfid) and self.Orders[mfid].__contains__(date):
-            OrderData = self.Orders[mfid].pop(date)
-            data = self.Units[mfid]
-            data[0] += OrderData[0]
-            data[1] += OrderData[1]
+        if self.Orders.__contains__(mfid):
+            for keys  in self.Orders[mfid].keys():
+                if self.checkPastdates(date, keys):
+                    OrderData = self.Orders[mfid].pop(date)
+                    data = self.Units[mfid]
+                    data[0] += OrderData[0]
+                    data[1] += OrderData[1]
 
             self.writeToFile(self.unitsFile, self.Units)
             self.writeToFile(self.orderfile, self.Orders)
@@ -120,6 +141,9 @@ class MutualFund:
         ''')
 
     def addOrder(self, MFID, unit, amount, date):
+        '''
+        mfid , unit : float , amount :float , date : for ex 07-May-2022
+        '''
         logging.info(f"--adding order to Unit file--")
         if self.Orders.__contains__(MFID) and self.Orders[MFID].__contains__(date):
             data = self.Orders[MFID][date]

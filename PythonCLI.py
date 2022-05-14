@@ -26,7 +26,7 @@ def callMutualFund() -> None:
         return
     tracker = MutualFund()
     if(args.add is not None):
-        tracker.addOrder(args.add[0], int(args.add[1]),
+        tracker.addOrder(args.add[0], float(args.add[1]),
                          float(args.add[2]), args.add[3])
         return
     if args.dc == 'y':
