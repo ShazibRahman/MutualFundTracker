@@ -100,25 +100,33 @@ class MutualFund:
         return orderDateFormat <= NavDateForamt
 
     def addToUnits(self, mfid, date):
+        found =False
         if self.Orders.__contains__(mfid):
-            for keys  in self.Orders[mfid].keys():
-                if self.checkPastdates(date, keys):
-                    OrderData = self.Orders[mfid].pop(date)
-                    data = self.Units[mfid]
-                    data[0] += OrderData[0]
-                    data[1] += OrderData[1]
+            keys_list = list(self.Orders[mfid].keys())
+            if len(keys_list)>0:
+                for  key  in keys_list:
+                    if self.checkPastdates(date, key):
+                        OrderData = self.Orders[mfid].pop(date)
+                        data = self.Units[mfid]
+                        data[0] += OrderData[0]
+                        data[1] += OrderData[1]
+                        found=True
 
-            self.writeToFile(self.unitsFile, self.Units)
-            self.writeToFile(self.orderfile, self.Orders)
-        else:
+                self.writeToFile(self.unitsFile, self.Units)
+                self.writeToFile(self.orderfile, self.Orders)   
+        if not found:
             logging.info(
                 f"--No new Orders were found for {self.jsonData[mfid]['name']}--")
+        
 
     def addToUnitsNotPreEXisting(self):
         logging.info("--adding new MF units to Unit file")
         key_list = list(self.Orders.keys())
+        found  =False
         for i in key_list:
+            found =False
             if i not in self.Units:
+                found = True
                 self.Units[i] = [0, 0]
                 dateList = list(self.Orders[i].keys())
                 for date in dateList:
@@ -128,9 +136,7 @@ class MutualFund:
 
                 self.writeToFile(self.unitsFile, self.Units)
                 self.writeToFile(self.orderfile, self.Orders)
-            else:
-                logging.info("--No new Mutual fund was found in Order--")
-        else:
+        if len(key_list)==0 or not found:
             logging.info("--No new Mutual fund was found in Order--")
 
     def searchMutualFund(self, string: str):
