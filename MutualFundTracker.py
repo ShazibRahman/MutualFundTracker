@@ -58,7 +58,7 @@ class MutualFund:
 
         if not self.Units:
             print(
-                f'No mutual Fund specified to track please Add something in {self.unitsFile} file to track something')
+                f'No mutual Fund specified to track please Add something in {self.unitsFile} file to track')
             exit()
 
         try:
@@ -403,7 +403,6 @@ class MutualFund:
         '''
         )
         if var:
-            print('something went wrong can\'t download the file')
             logging.info(
                 "something went wrong can\'t download the file Rolling back to previous NAV file")
             os.system(
