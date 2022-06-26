@@ -111,9 +111,9 @@ class MutualFund:
                         data[0] += OrderData[0]
                         data[1] += OrderData[1]
                         found=True
-
-                self.writeToFile(self.unitsFile, self.Units)
-                self.writeToFile(self.orderfile, self.Orders)   
+        if found:
+            self.writeToFile(self.unitsFile, self.Units)
+            self.writeToFile(self.orderfile, self.Orders)   
         if not found:
             logging.info(
                 f"--No new Orders were found for {self.jsonData[mfid]['name']}--")

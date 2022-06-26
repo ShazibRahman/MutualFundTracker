@@ -72,7 +72,7 @@ if __name__ == '__main__':
                         choices=['y', 'n'])
     parser.add_argument("-dc",
                         type=str, choices=choices, default='n')
-    parser.add_argument("-add", nargs="+", type=str)
+    parser.add_argument("-add", nargs="+", type=str , help="Mf unit amount date [dd-mon-yyyy]")
     parser.add_argument("--logs", type=str,
                         choices=['show', 'clear', 'n'], default='n')
     args = parser.parse_args()
