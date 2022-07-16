@@ -7,7 +7,7 @@ loggerPath = os.path.dirname(__file__)+"/data/logger.log"
 
 def readLogs():
     file = open(loggerPath)
-    print(file.read())
+    print(file.read(),end="")
     file.close()
     return
 
