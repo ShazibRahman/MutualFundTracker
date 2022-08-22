@@ -40,16 +40,16 @@ class MutualFund:
     def __init__(self) -> None:
         logging.info("--Application has started---")
         logging.info(f"--Logged in as {os.environ.get('USER')}")
-        self.directoryString = os.path.dirname(__file__)
+        self.directoryString: str = os.path.dirname(__file__)
 
         self.navallfile: str = self.directoryString + "/data/NAVAll.txt"
         self.orderfile: str = self.directoryString + "/data/order.json"
-        self.navMyfile = self.directoryString + "/data/nav.txt"
-        self.dayChangeJsonFileString = self.directoryString + "/data/dayChange.json"
-        self.dayChangeJsonFileStringBackupFile = self.dayChangeJsonFileString + ".bak"
-        self.unitsFile = self.directoryString + "/data/units.json"
+        self.navMyfile: str = self.directoryString + "/data/nav.txt"
+        self.dayChangeJsonFileString: str = self.directoryString + "/data/dayChange.json"
+        self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
+        self.unitsFile: str = self.directoryString + "/data/units.json"
         try:
-            self.Units = json.load(open(self.unitsFile))
+            self.Units: dict = json.load(open(self.unitsFile))
         except:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.Units = {}
@@ -67,7 +67,7 @@ class MutualFund:
             exit()
 
         try:
-            self.jsonData = json.load(open(self.dayChangeJsonFileString))
+            self.jsonData: dict = json.load(open(self.dayChangeJsonFileString))
         except FileNotFoundError:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.runOnceInitialization(None)
@@ -86,7 +86,7 @@ class MutualFund:
         with open(filePath, 'w') as outfile:
             json.dump(Jsondata, outfile, indent=4)
 
-    def checkPastdates(self, NavDate: str, orderDate):
+    def checkPastdates(self, NavDate: str, orderDate) -> bool:
         '''
         to check whether the order date is equal or smaller than the (nav date - 1)
         orders date = 13-may
@@ -104,7 +104,7 @@ class MutualFund:
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         return orderDateFormat <= NavDateForamt
 
-    def addToUnits(self, mfid, date):
+    def addToUnits(self, mfid, date) -> None:
         found = False
         if self.Orders.__contains__(mfid):
             keys_list = list(self.Orders[mfid].keys())
@@ -119,12 +119,12 @@ class MutualFund:
         if found:
             self.writeToFile(self.unitsFile, self.Units)
             self.writeToFile(self.orderfile, self.Orders)
-        if not found:
+        else:
             logging.info(
                 f"--No new Orders were found for {self.jsonData[mfid]['name']}--"
             )
 
-    def addToUnitsNotPreEXisting(self):
+    def addToUnitsNotPreEXisting(self) -> None:
         logging.info("--adding new MF units to Unit file")
         key_list = list(self.Orders.keys())
         found = False
@@ -144,13 +144,13 @@ class MutualFund:
         if len(key_list) == 0 or not found:
             logging.info("--No new Mutual fund was found in Order--")
 
-    def searchMutualFund(self, string: str):
+    def searchMutualFund(self, string: str) -> None:
         os.system(f'''
         grep -wi '{string}' {self.navallfile} 
 
         ''')
 
-    def addOrder(self, MFID, unit, amount, date):
+    def addOrder(self, MFID, unit, amount, date) -> None:
         '''
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         '''
@@ -312,8 +312,8 @@ class MutualFund:
         for key in self.unitsKeyList:
             if not self.jsonData.__contains__(key):
                 self.getCurrentValues(False)
-            value: dict = self.jsonData[key]['nav']
-            name = self.jsonData[key]['name']
+            value: dict[str, float] = self.jsonData[key]['nav']
+            name: str = self.jsonData[key]['name']
             units: float = self.Units[key][0]
             nav_col = ''
             daychange_col = ''
