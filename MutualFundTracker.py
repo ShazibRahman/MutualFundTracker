@@ -1,21 +1,28 @@
 import logging
 import hashlib
 import time
+import json
+from datetime import datetime, timedelta
+from json.decoder import JSONDecodeError
+import os
 
 try:
-    import json
-    from datetime import datetime, timedelta
-    from json.decoder import JSONDecodeError
     from rich.console import Console
     from rich.table import Table
-    import os
     import plotext as plt
 except Exception as e:
-    print('''please go to the project folder and run this commmand 
-    'pip install -r requirements.txt'
-    ''')
-    print(e)
-    exit()
+    # print('''please go to the project folder and run this commmand
+    # 'pip install -r requirements.txt'
+    # ''')
+    # print(e)
+    if os.name == 'nt':
+        os.system('pip install -r requirements.txt')
+    else:
+        os.system('pip3 install -r requirements.txt')
+    from rich.console import Console
+    from rich.table import Table
+    import plotext as plt
+
 logging.basicConfig(filename=os.path.dirname(__file__) + '/data/logger.log',
                     filemode='a',
                     level=logging.DEBUG,

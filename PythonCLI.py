@@ -6,14 +6,14 @@ loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 
 
 def readLogs():
-    file = open(loggerPath)
-    print(file.read(), end="")
-    file.close()
+    file = open(loggerPath, 'r')
+    print(file.read(), end='')
     return
 
 
 def clearLogs():
     file = open(loggerPath, 'w')
+    file.close()
     return
 
 
@@ -70,6 +70,10 @@ if __name__ == '__main__':
                         type=str,
                         help="Mf unit amount date [dd-mon-yyyy]")
     parser.add_argument("--logs",
+                        type=str,
+                        choices=['show', 'clear', 'n'],
+                        default='n')
+    parser.add_argument("-logs",
                         type=str,
                         choices=['show', 'clear', 'n'],
                         default='n')
