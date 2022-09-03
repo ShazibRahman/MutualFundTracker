@@ -1,3 +1,4 @@
+from calendar import TUESDAY
 import logging
 import hashlib
 import time
@@ -5,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 import os
+from typing import Tuple
 
 try:
     from rich.console import Console
@@ -226,7 +228,7 @@ class MutualFund:
             lastUpdated = self.jsonData['lastUpdated']
             current = self.jsonData['sumTotal']
             invested = self.jsonData['totalInvested']
-            totalProfitPercentage = self.jsonData['toalProfitPercentage']
+            totalProfitPercentage = self.jsonData['totalProfitPercentage']
             totalProfit = self.jsonData['totalProfit']
         except Exception as e:
             self.console.print(
@@ -487,41 +489,50 @@ class MutualFund:
 
         self.writeToJsonFile()
 
+    def readMyNavFile(self) -> Tuple[float, float, float]:
+        '''
+        returns sumtotal, totalinvested , totaldaychange'''
+        with open(self.navMyfile, 'r') as file:
+            sumTotal = 0
+            totalInvested = 0
+            totalDayChange = 0
+
+            for line in file:
+                current = 0
+                dayChange = 0
+
+                temp = line.strip().split(";")
+                id, name, nav, date = temp[0], temp[3].split(
+                    '-')[0].strip(), float(temp[4]), temp[5]
+
+                dayChange = self.dayChangeMethod(id, nav, date, name)
+
+                current = round(self.Units[id][0] * nav, 3)
+                invested = self.Units[id][1]
+                sumTotal += current
+                totalInvested += invested
+                if dayChange != 'N.A.':
+                    totalDayChange += dayChange
+
+                cur_json_id: dict = self.jsonData[id]
+                cur_json_id['latestNavDate'] = date
+                cur_json_id['current'] = current
+                cur_json_id['invested'] = invested
+                cur_json_id['dayChange'] = dayChange
+        return sumTotal, totalInvested, totalDayChange
+
     def getCurrentValues(self, download: bool) -> None:
         logging.info("--Main calculation--")
-        cur_json = self.jsonData
+        self.jsonData
         if download:
             self.addToUnitsNotPreEXisting()
             self.downloadAllNavFile()
         self.updateMyNaVFile()
 
-        sumTotal = 0
-        totalInvested = 0
         totalDaychange = 0
         totalProfit = 0
         totalProfitPercentage = 0
-        file = open(self.navMyfile)
-
-        for line in file:
-            current = 0
-            dayChange = 0
-
-            temp = line.strip().split(";")
-            id, name, nav, date = temp[0], temp[3].split(
-                '-')[0].strip(), float(temp[4]), temp[5]
-
-            dayChange = self.dayChangeMethod(id, nav, date, name)
-
-            current = round(self.Units[id][0] * nav, 3)
-            invested = self.Units[id][1]
-            sumTotal += current
-            totalInvested += invested
-
-            cur_json_id: dict = cur_json[id]
-            cur_json_id['latestNavDate'] = date
-            cur_json_id['current'] = current
-            cur_json_id['invested'] = invested
-            cur_json_id['dayChange'] = dayChange
+        sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
 
         totalProfit = sumTotal - totalInvested
         totalProfitPercentage = totalProfit / totalInvested * 100
@@ -529,13 +540,13 @@ class MutualFund:
         totalProfitPercentage = round(totalProfitPercentage, 3)
         totalProfit = round(totalProfit, 3)
         totalDaychange = round(totalDaychange, 3)
-        cur_json['totalProfit'] = totalProfit
-        cur_json['sumTotal'] = round(sumTotal, 3)
-        cur_json['totalInvested'] = totalInvested
-        cur_json['toalProfitPercentage'] = totalProfitPercentage
+        self.jsonData['totalProfit'] = totalProfit
+        self.jsonData['sumTotal'] = round(sumTotal, 3)
+        self.jsonData['totalInvested'] = totalInvested
+        self.jsonData['totalProfitPercentage'] = totalProfitPercentage
+        self.jsonData['totalDaychange'] = totalDaychange
 
         self.writeToJsonFile()
-        file.close()
 
 
 if __name__ == "__main__":
