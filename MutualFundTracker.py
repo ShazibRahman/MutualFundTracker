@@ -47,6 +47,9 @@ def getfp(percentage: float) -> str:
 class MutualFund:
 
     def __init__(self) -> None:
+        if os.environ.get("USER") is not None and os.environ.get("USER") == "shazib":
+            logging.info = print
+
         logging.info("--Application has started---")
         logging.info(f"--Logged in as {os.environ.get('USER')}")
         self.directoryString: str = os.path.dirname(__file__)
@@ -91,7 +94,7 @@ class MutualFund:
         plt.datetime.set_datetime_form(date_form=self.formatString)
 
     def writeToFile(self, filePath, Jsondata):
-        logging.info(f"--writing to file {filePath}--")
+        logging.info(f"--writing to file {filePath = }--")
         with open(filePath, 'w') as outfile:
             json.dump(Jsondata, outfile, indent=4)
 
@@ -365,7 +368,8 @@ class MutualFund:
         self.console.print(self.TableMutualFund)
 
     def writeToJsonFile(self) -> None:
-        logging.info("--writing to the dayChange file--")
+        logging.info(
+            f"--writing to the dayChange {self.dayChangeJsonFileString = }--")
         with open(self.dayChangeJsonFileString, 'w') as outfile:
             json.dump(self.jsonData, outfile, indent=4)
 
@@ -428,7 +432,7 @@ class MutualFund:
                 ''')
         else:
             logging.info(
-                f"took {round(time.time()-start,2)} Secs to download the file")
+                f"--took {(time.time()-start):.2f} Secs to download the file")
             new_hash = hashlib.md5(open(self.navallfile,
                                         'rb').read()).hexdigest()
             if self.jsonData.__contains__('hash'):
@@ -551,3 +555,4 @@ class MutualFund:
 
 if __name__ == "__main__":
     tracker = MutualFund()
+    tracker.getCurrentValues(download=True)
