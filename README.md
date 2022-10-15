@@ -1,3 +1,6 @@
 # MutualFundTracker
+To install the dependencies run the following command:
+ ```bash
+pip install -r requirements.txt
+``` 
 
-run `pip3 install -r requirementx.txt` to install the dependencies.  
