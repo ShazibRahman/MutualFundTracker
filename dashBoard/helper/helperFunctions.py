@@ -2,6 +2,10 @@ from datetime import date, datetime, timedelta
 import json
 from typing import List
 import nsepy
+import os
+
+
+data_path = os.path.join(os.path.dirname(__file__)+"/../../")
 
 
 def roundup3(x):
@@ -13,8 +17,34 @@ def readJsonFile(filename):
         return json.load(f)
 
 
-units_json = readJsonFile('data/units.json')
-daychange_json = readJsonFile('data/dayChange.json')
+def writeJsonFile(filename, data):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
+
+
+units_json = readJsonFile(data_path+'data/units.json')
+daychange_json = readJsonFile(data_path+'data/dayChange.json')
+Orders = readJsonFile(data_path+'data/order.json')
+
+
+def addOrder(MFID, unit, amount, date) -> None:
+    '''
+        mfid , unit : float , amount :float , date : for ex 07-May-2022
+    '''
+    print("called with id: ", MFID, " and value: ",
+          daychange_json[MFID]['name'])
+    if Orders.__contains__(MFID) and Orders[MFID].__contains__(
+            date):
+        data = Orders[MFID][date]
+        data[0] += unit
+        data[1] += amount
+    elif Orders.__contains__(MFID):
+        Orders[MFID][date] = [unit, amount]
+    else:
+        Orders[MFID] = {}
+        Orders[MFID][date] = [unit, amount]
+    writeJsonFile(data_path+'data/order.json', Orders)
+
 
 mutual_funds_dic = {daychange_json[unit]['name']: unit for unit in units_json}
 mutual_funds = list(mutual_funds_dic.keys())
@@ -131,6 +161,7 @@ def getMainTableData():
     return summaryTable, mutual_fund_table
 
 
-def getQuote(symbol, days: int = 30):
-    return nsepy.get_history(symbol, start=date.today() -
-                             timedelta(days), end=date.today())
+def getQuote(symbol, start, end):
+    start_date = datetime.strptime(start, '%Y-%m-%d')
+    end_date = datetime.strptime(end, '%Y-%m-%d')
+    return nsepy.get_history(symbol, start=start_date, end=end_date)

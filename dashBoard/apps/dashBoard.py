@@ -1,4 +1,4 @@
-from re import S
+from datetime import date
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -7,11 +7,12 @@ import helper.helperFunctions as helper
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from app import app
 
 
-def getPieChart(value: dict) -> px.pie:
+def getPieChart(value: dict, name: str) -> px.pie:
     return px.pie(pd.DataFrame(list(value.items()), columns=[
-        'Funds', 'Amount']), values='Amount', names='Funds', title='Investment Distribution Current', width=700, height=700)
+        'Funds', 'Amount']), values='Amount', names='Funds', title='Investment Distribution '+name, width=700, height=700)
 
 
 def getFont(text, dict: dict) -> html.Font:
@@ -102,11 +103,7 @@ def prepareTable() -> dbc.Table:
     return [sum_tab, html.Br(), html.Br(), mut_tab]
 
 
-app = dash.Dash(__name__, external_stylesheets=[
-    dbc.themes.BOOTSTRAP, ])
-
-
-app.layout = dbc.Container(children=[
+layout = dbc.Container(children=[
     html.H1(children='Mutual Funds Dashboard'),
 
     html.Div(children=[dcc.Dropdown(
@@ -161,11 +158,11 @@ app.layout = dbc.Container(children=[
         html.H3("Mutual Fund Investment Distribution"),
         dbc.Row(children=[
             dbc.Col(children=[
-                dcc.Graph(id='my-graph4', figure=getPieChart(helper.getInvestmentDistribution()[0])
+                dcc.Graph(id='my-graph4', figure=getPieChart(helper.getInvestmentDistribution()[0], "initial")
                           )
             ], className="col-12 col-md-6"),
             dbc.Col(children=[
-                dcc.Graph(id='my-graph5', figure=getPieChart(helper.getInvestmentDistribution()[1])
+                dcc.Graph(id='my-graph5', figure=getPieChart(helper.getInvestmentDistribution()[1], "current")
                           )], className="col-12 col-md-6")
 
         ]),
@@ -177,7 +174,7 @@ app.layout = dbc.Container(children=[
         dbc.Row([
             dbc.Col([dbc.Input(id="input-1", placeholder="Enter a value...", className="form-control me-sm-2"),
                      ]),
-            dbc.Col([dbc.Input(id="input-2", placeholder="Enter a value...",  className="form-control me-sm-2"),
+            dbc.Col([dcc.DatePickerRange(id="input-2", min_date_allowed=date(2015, 8, 5), max_date_allowed=date.today(), initial_visible_month=date(2021, 8, 23), start_date=date(2021, 8, 23), end_date=date(2021, 8, 23)),
                      ]),
             dbc.Col([dbc.Button("Submit", id="button",
                     color="primary", className="ml-2", n_clicks=0)])
@@ -261,22 +258,23 @@ def update_output_2(value):
     dash.dependencies.Output('my-graph6', 'figure'),
     [dash.dependencies.Input('button', 'n_clicks')],
     [dash.dependencies.State('input-1', 'value'),
-     dash.dependencies.State('input-2', 'value')],
+     dash.dependencies.State('input-2', 'start_date'),
+     dash.dependencies.State('input-2', 'end_date')
+
+     ],
     prevent_initial_call=True
 )
-def add_graph(n_clicks, input1, input2):
-    if input1 is None or input1 == "" or input2 is None or input2 == "":
+def add_graph(n_clicks, input1, start_date, end_date):
+    print(start_date, end_date)
+    if input1 is None or input1 == "" or start_date is None or end_date is None or start_date == end_date:
+
         raise dash.exceptions.PreventUpdate
-    else:
-        try:
-            input2 = int(input2)
-        except:
-            raise dash.exceptions.PreventUpdate
-    plots = helper.getQuote(input1, int(input2))
+
+    plots = helper.getQuote(input1, start_date, end_date)
     return {
-        'data': [go.Line(x=plots.index, y=plots['Close'], mode='lines')],
+        'data': [go.Scatter(x=plots.index, y=plots['Close'], mode='lines')],
         'layout': {
-            'title': input1,
+            'title': input1+" Quote Graph",
             'xaxis': {'title': 'Date'},
             'yaxis': {'title': 'CLosed Price'},
             'hovermode': 'closest',
@@ -287,7 +285,3 @@ def add_graph(n_clicks, input1, input2):
 
         }
     }
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True, port=3000)
