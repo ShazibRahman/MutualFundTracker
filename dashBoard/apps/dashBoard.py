@@ -202,7 +202,7 @@ layout = dbc.Container(children=[
 ], className="container")
 
 
-@ app.callback(
+@app.callback(
     dash.dependencies.Output('my-graph', 'figure'),
     [dash.dependencies.Input('my-dropdown', 'value')],
     prevent_initial_call=True)
@@ -227,7 +227,7 @@ def update_output(value):
     }
 
 
-@ app.callback(
+@app.callback(
     dash.dependencies.Output('my-graph3', 'figure'),
     [dash.dependencies.Input('my-dropdown', 'value')],
     prevent_initial_call=True)
@@ -254,7 +254,7 @@ def update_output_2(value):
     }
 
 
-@ app.callback(
+@app.callback(
     dash.dependencies.Output('my-graph6', 'figure'),
     [dash.dependencies.Input('button', 'n_clicks')],
     [dash.dependencies.State('input-1', 'value'),
@@ -270,7 +270,7 @@ def add_graph(n_clicks, input1, start_date, end_date):
 
         raise dash.exceptions.PreventUpdate
 
-    plots = helper.getQuote(input1, start_date, end_date)
+    plots = helper.get_history(input1, start_date, end_date)
     return {
         'data': [go.Scatter(x=plots.index, y=plots['Close'], mode='lines')],
         'layout': {

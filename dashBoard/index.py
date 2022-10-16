@@ -15,9 +15,9 @@ app.layout = html.Div([
 
     dbc.Nav(children=[
         dbc.NavItem(dbc.NavLink(
-            "DashBoard", href="/apps/dashBoard", className="nav-link")),
+            "DashBoard", id="dasboardLink", href="/apps/dashBoard", className="")),
         dbc.NavItem(dbc.NavLink(
-            "Add Order", href="/apps/addOrder", className="nav-link")),
+            "Add Order", id="addOrder", href="/apps/addOrder", className="")),
     ], style={'width': '100%', 'height': '50px', 'background-color': '#f8f9fa', 'margin-bottom': '20px'}),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
@@ -25,14 +25,16 @@ app.layout = html.Div([
 
 
 @app.callback(Output('page-content', 'children'),
+              Output("dasboardLink", component_property="style"),
+              Output("addOrder", component_property="style"),
               [Input('url', 'pathname')])
 def display_page(pathname):
     if pathname == '/apps/dashBoard':
-        return dashBoard.layout
+        return dashBoard.layout, {}, {'color': "grey"}
     elif pathname == '/apps/addOrder':
-        return addOrder.layout
+        return addOrder.layout, {'color': "grey"}, {}
     else:
-        return '/apps/dashBoard'
+        return dashBoard.layout, {}, {'color': "grey"}
 
 
 if __name__ == '__main__':

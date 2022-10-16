@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta
 import json
-from typing import List
+from typing import Dict, List
 import nsepy
 import os
 
@@ -161,7 +161,7 @@ def getMainTableData():
     return summaryTable, mutual_fund_table
 
 
-def getQuote(symbol, start, end):
+def get_history(symbol: str, start: str, end: str) -> Dict:
     start_date = datetime.strptime(start, '%Y-%m-%d')
     end_date = datetime.strptime(end, '%Y-%m-%d')
     return nsepy.get_history(symbol, start=start_date, end=end_date)
