@@ -7,7 +7,6 @@ import helper.helperFunctions as helper
 from dash.dependencies import Input, Output, State
 
 from app import app
-from app import server
 
 # layout = dbc.Container(["container for add order"], className="container")
 layout = html.Div([
