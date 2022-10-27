@@ -1,4 +1,3 @@
-from calendar import TUESDAY
 import logging
 import hashlib
 import time
@@ -20,6 +19,7 @@ except Exception as e:
     if os.name == 'nt':
         os.system('pip install -r requirements.txt')
     else:
+        print('Installing requirements for you')
         os.system('pip3 install -r requirements.txt')
     from rich.console import Console
     from rich.table import Table

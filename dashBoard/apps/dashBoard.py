@@ -1,4 +1,4 @@
-from datetime import date
+from typing import List
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -6,29 +6,28 @@ import dash_bootstrap_components as dbc
 import helper.helperFunctions as helper
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from app import app
 
 
 def getPieChart(value: dict, name: str) -> px.pie:
     return px.pie(pd.DataFrame(list(value.items()), columns=[
-        'Funds', 'Amount']), values='Amount', names='Funds', title='Investment Distribution '+name, width=700, height=700)
+        'Fund', 'Amount']), values='Amount', names='Fund', title='Investment Distribution '+name, width=700, height=700)
 
 
 def getFont(text, dict: dict) -> html.Font:
     return html.Font(text, style=dict)
 
 
-def number(string: str):
+def number(string: str) -> html.Font:
     return html.Font("+₹"+string if float(string) > 0 else "-₹" + string.replace("-", ""), style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
 
 
-def percentage(string: str):
+def percentage(string: str) -> html.Font:
     string = string.replace("%", "")
     return html.Font(f"({string})%" if float(string) > 0 else f"({string})%", style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
 
 
-def prepareTable() -> dbc.Table:
+def prepareTable() -> List[dbc.Table]:
     summary_table, MutualFund_table = helper.getMainTableData()
     # return [dbc.Table.from_dataframe(pd.DataFrame(summary_table, columns=['Invested', 'Current', '•|Total Returns', 'Last UpDated']), striped=True, bordered=True, hover=True), dbc.Table.from_dataframe(pd.DataFrame(MutualFund_table, columns="SCHEME NAME,DAY CHANGE,RETURNS,CURRENT,NAV".split(",")), striped=True, bordered=True, hover=True)]
     children_sum_tab = []
@@ -106,37 +105,46 @@ def prepareTable() -> dbc.Table:
 layout = dbc.Container(children=[
     html.H1(children='Mutual Funds Dashboard'),
 
-    html.Div(children=[dcc.Dropdown(
+    dbc.Container(children=[dcc.Dropdown(
         id='my-dropdown',
         options=helper.get_options(),
         value='',
         placeholder="Select a graph"
     ), ], className="dropdown"),
-    html.Div(children=[dcc.Graph(id='my-graph', figure={
-        'layout': {
-            'title': 'Mutual Fund Graph',
-            'xaxis': {'title': 'Date'},
-            'yaxis': {'title': 'NAV'},
-            'hovermode': 'closest',
-            'legend': {'x': 0, 'y': 1},
-            'transition': {'duration': 500},
-            'clickmode': 'event+select',
-             'plot_bgcolor': '#e6ecf3'
-             }
-    }), ], className="graph"),
-    html.Div(children=[dcc.Graph(id='my-graph3', figure={
-        'layout': {
-            'title': 'Daily Change',
-            'xaxis': {'title': 'Date'},
-            'yaxis': {'title': 'Change'},
-            'hovermode': 'closest',
-            'legend': {'x': 0, 'y': 1},
-            'transition': {'duration': 500},
-            'clickmode': 'event+select',
-             'plot_bgcolor': '#e6ecf3'
-             }
-    }),
-    ], className="container mt-5 mb-5"),
+    dbc.Row([
+        dbc.Col(
+
+            [dcc.Graph(id='my-graph', figure={
+                'layout': {
+                    'title': 'Mutual Fund Graph',
+                    'xaxis': {'title': 'Date'},
+                    'yaxis': {'title': 'NAV'},
+                    'hovermode': 'closest',
+                    'legend': {'x': 0, 'y': 1},
+                    'transition': {'duration': 500},
+                    'clickmode': 'event+select',
+                    'plot_bgcolor': '#e6ecf3',
+
+                }
+            }), ]
+        ),
+        dbc.Col([dcc.Graph(id='my-graph3', figure={
+            'layout': {
+                'title': 'Daily Change',
+                'xaxis': {'title': 'Date'},
+                'yaxis': {'title': 'Change'},
+                'hovermode': 'closest',
+                'legend': {'x': 0, 'y': 1},
+                'transition': {'duration': 500},
+                'clickmode': 'event+select',
+                'plot_bgcolor': '#e6ecf3',
+
+            }
+        }), ])
+
+    ]),
+
+
 
     html.Div(children=[
         dcc.Graph(id='my-graph2', figure={
@@ -176,7 +184,7 @@ layout = dbc.Container(children=[
 ], className="container")
 
 
-@app.callback(
+@ app.callback(
     dash.dependencies.Output('my-graph', 'figure'),
     [dash.dependencies.Input('my-dropdown', 'value')],
     prevent_initial_call=True)
@@ -201,7 +209,7 @@ def update_output(value):
     }
 
 
-@app.callback(
+@ app.callback(
     dash.dependencies.Output('my-graph3', 'figure'),
     [dash.dependencies.Input('my-dropdown', 'value')],
     prevent_initial_call=True)

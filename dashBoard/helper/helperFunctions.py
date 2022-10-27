@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import datetime
 import json
 from typing import Dict, List
 import nsepy
@@ -31,8 +31,8 @@ def addOrder(MFID, unit, amount, date) -> None:
     '''
         mfid , unit : float , amount :float , date : for ex 07-May-2022
     '''
-    print("called with id: ", MFID, " and value: ",
-          daychange_json[MFID]['name'])
+    # print("called with id: ", MFID, " and value: ",
+    #       daychange_json[MFID]['name'])
     if Orders.__contains__(MFID) and Orders[MFID].__contains__(
             date):
         data = Orders[MFID][date]
@@ -70,11 +70,11 @@ def getDailyChange():
             else:
                 sumDayChange[nav] = daychangeData
             prevdayChange = daychange
-        return [{'x': list(sumDayChange.keys()), 'y': list(sumDayChange.values()), 'type': 'line', 'name': 'Daily Change'}]
+    return [{'x': list(sumDayChange.keys()), 'y': list(sumDayChange.values()), 'type': 'line', 'name': 'Daily Change'}]
 
 
 def dailyChangePerMutualFund(id):
-    print("called with id: ", id, " and value: ", daychange_json[id]['name'])
+    # print("called with id: ", id, " and value: ", daychange_json[id]['name'])
     sumDayChange: dict = {}
     units: float = units_json[id][0]
     value = daychange_json[id]['nav']
