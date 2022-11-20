@@ -1,6 +1,11 @@
 # MutualFundTracker
-To install the dependencies run the following command:
+## To install the dependencies run the following command:<br>
+### on linux
  ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ``` 
+### on windows
+ ```
+ pip install -r requirements.txt
+ ```
 
