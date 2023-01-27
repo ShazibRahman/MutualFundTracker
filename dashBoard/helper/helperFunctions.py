@@ -113,6 +113,10 @@ def get_options():
     return [{"label": x, "value": mutual_funds_dic[x]} for x in mutual_funds]
 
 
+def get_id_name_dic():
+    return {unit: daychange_json[unit]['name'] for unit in units_json}
+
+
 def getInvestmentDistribution():
     data_at_time_of_investment = {}
     data_current = {}

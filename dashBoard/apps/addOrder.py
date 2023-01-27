@@ -15,7 +15,7 @@ layout = html.Div([
             dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_options(
             ), value='Select a product', multi=False, placeholder='Select a product', className="dropdown", style={"width": "100%"}),
         ]),
-        dbc.Col([dbc.Input(id='units', type='number',
+        dbc.Col([dbc.Input(id='units', type='float',
                 placeholder='Enter units',  min=1, className="input")],),
         dbc.Col([dbc.Input(id='amount', type='number',
                 placeholder='Enter amount', min=1, className="input")]),
@@ -42,9 +42,9 @@ layout = html.Div([
 )
 def add_order(n_clicks, units, amount, date, product):
     print(product, units, amount, date)
-    if product is None or product == "" or units is None or units < 1 or amount is None or amount < 1 or date is None:
+    if product is None or product == "" or units is None or float(units) <= 0 or amount is None or amount < 1 or date is None:
         return "Please fill all the fields"
     else:
         date_object = datetime.strptime(date, '%Y-%m-%d').strftime("%d-%b-%Y")
-        helper.addOrder(product, units, amount, date_object)
-        return f"Order added for {units} units of {product} at {amount} on {date_object}"
+        helper.addOrder(product, float(units), amount, date_object)
+        return f"Order added for {units} units of {helper.get_id_name_dic()[product]} at {amount} on {date_object}"
