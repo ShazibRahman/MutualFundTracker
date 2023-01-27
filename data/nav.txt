@@ -1,0 +1,5 @@
+120754;INF109K013N3;-;ICICI Prudential Short Term Fund - Direct Plan - Growth Option;53.6139;25-Jan-2023
+122639;INF879O01027;-;Parag Parikh Flexi Cap Fund - Direct Plan - Growth;51.8560;27-Jan-2023
+118269;INF760K01FR2;-;CANARA ROBECO BLUE CHIP EQUITY FUND - DIRECT PLAN - GROWTH OPTION;46.4200;25-Jan-2023
+120594;INF109K01Z48;-;ICICI Prudential Technology Fund - Direct Plan -  Growth;149.80;25-Jan-2023
+149219;INF109KC1U50;-;ICICI Prudential NASDAQ 100 Index Fund - Direct Plan - Growth;8.3795;25-Jan-2023
