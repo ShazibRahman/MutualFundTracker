@@ -1,11 +1,11 @@
 {
-    "lastUpdated": "27-Jan-2023 22:17:02",
-    "sumTotal": 35053.078,
+    "lastUpdated": "29-Jan-2023 22:17:02",
+    "sumTotal": 35052.944,
     "totalProfitPercentage": 3.097,
-    "totalDaychange": -58.939,
+    "totalDaychange": -18.185,
     "totalInvested": 34000.0,
-    "totalProfit": 1053.078,
-    "hash": "b29bb1e365aaf2e016e8da35b9cf73d3",
+    "totalProfit": 1052.944,
+    "hash": "cbfec0d6c0786fd362e61bcf519fa5ed",
     "122639": {
         "name": "Parag Parikh Flexi Cap Fund",
         "nav": {
@@ -525,12 +525,13 @@
             "20-Jan-2023": 8.2013,
             "23-Jan-2023": 8.3847,
             "24-Jan-2023": 8.3995,
-            "25-Jan-2023": 8.3795
+            "25-Jan-2023": 8.3795,
+            "27-Jan-2023": 8.6196
         },
-        "latestNavDate": "25-Jan-2023",
-        "current": 1765.368,
+        "latestNavDate": "27-Jan-2023",
+        "current": 1815.951,
         "invested": 2000,
-        "dayChange": -4.214
+        "dayChange": 50.584
     },
     "120594": {
         "name": "ICICI Prudential Technology Fund",
@@ -743,12 +744,13 @@
             "20-Jan-2023": 147.92,
             "23-Jan-2023": 149.88,
             "24-Jan-2023": 150.84,
-            "25-Jan-2023": 149.8
+            "25-Jan-2023": 149.8,
+            "27-Jan-2023": 148.27
         },
-        "latestNavDate": "25-Jan-2023",
-        "current": 2091.807,
+        "latestNavDate": "27-Jan-2023",
+        "current": 2070.442,
         "invested": 2000.0,
-        "dayChange": -14.523
+        "dayChange": -21.365
     },
     "120754": {
         "name": "ICICI Prudential Short Term Fund",
@@ -915,12 +917,13 @@
             "20-Jan-2023": 53.5826,
             "23-Jan-2023": 53.5982,
             "24-Jan-2023": 53.6,
-            "25-Jan-2023": 53.6139
+            "25-Jan-2023": 53.6139,
+            "27-Jan-2023": 53.6078
         },
-        "latestNavDate": "25-Jan-2023",
-        "current": 20554.497,
+        "latestNavDate": "27-Jan-2023",
+        "current": 20552.158,
         "invested": 20000.0,
-        "dayChange": 5.329
+        "dayChange": -2.339
     },
     "118269": {
         "name": "CANARA ROBECO BLUE CHIP EQUITY FUND",
@@ -1091,11 +1094,12 @@
             "20-Jan-2023": 46.82,
             "23-Jan-2023": 47.01,
             "24-Jan-2023": 47.01,
-            "25-Jan-2023": 46.42
+            "25-Jan-2023": 46.42,
+            "27-Jan-2023": 45.84
         },
-        "latestNavDate": "25-Jan-2023",
-        "current": 2161.965,
+        "latestNavDate": "27-Jan-2023",
+        "current": 2134.952,
         "invested": 2000,
-        "dayChange": -27.479
+        "dayChange": -27.013
     }
 }
