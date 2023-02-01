@@ -3,6 +3,7 @@ import json
 from typing import Dict, List
 import nsepy
 import os
+import pickle
 
 
 data_path = os.path.join(os.path.dirname(__file__)+"/../../")
@@ -110,6 +111,7 @@ def return_data(value):
 
 
 def get_options():
+    # print(mutual_funds_dic)
     return [{"label": x, "value": mutual_funds_dic[x]} for x in mutual_funds]
 
 
@@ -169,3 +171,24 @@ def get_history(symbol: str, start: str, end: str) -> Dict:
     start_date = datetime.strptime(start, '%Y-%m-%d')
     end_date = datetime.strptime(end, '%Y-%m-%d')
     return nsepy.get_history(symbol, start=start_date, end=end_date)
+
+
+def create_index_all_mutual_fund():
+    index_all_mutual_fund = {}
+    with open(data_path+"data/NAVAll.txt", "r") as f:
+        for line in f:
+            if line[0].isdigit():
+                data = line.split(";")
+                index_all_mutual_fund[data[3]] = data[0]
+    with open(data_path+"data/NAVAll.json", "w") as f:
+        json.dump(index_all_mutual_fund, f, indent=4)
+
+
+def get_index_all_mutual_fund():
+    with open(data_path+"data/NAVAll.json", "r") as f:
+        json_data = json.load(f)
+        return [{"label": x, "value": json_data[x]} for x in json_data]
+
+
+if __name__ == "__main__":
+    create_index_all_mutual_fund()

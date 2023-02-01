@@ -10,11 +10,13 @@ from app import app
 
 # layout = dbc.Container(["container for add order"], className="container")
 layout = html.Div([
+    dbc.Col([
+        dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_index_all_mutual_fund(
+        ), value='Select a product', multi=False, placeholder='Select a product', className="dropdown", style={"width": "100%", "margin-bottom": "20px"}),
+    ]),
+
     dbc.Row([
-        dbc.Col([
-            dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_options(
-            ), value='Select a product', multi=False, placeholder='Select a product', className="dropdown", style={"width": "100%"}),
-        ]),
+
         dbc.Col([dbc.Input(id='units', type='float',
                 placeholder='Enter units',  min=1, className="input")],),
         dbc.Col([dbc.Input(id='amount', type='number',
@@ -22,9 +24,14 @@ layout = html.Div([
         dbc.Col([dcc.DatePickerSingle(
             id='date', date=date.today(), className="date")]),
         dbc.Col([dbc.Button("Add", id='add', color="primary",
-                n_clicks=0, className="button")]),
+                n_clicks=0, className="button", style={
+                    "width": "100%",
 
-    ], className="row"),
+                })]),
+
+    ], className="row", style={
+        "padding": "0px"
+    }),
     html.Div(id='output', className="output"),
 
 ], className="container")
