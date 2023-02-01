@@ -12,7 +12,7 @@ from app import app
 layout = html.Div([
     dbc.Col([
         dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_index_all_mutual_fund(
-        ), value='Select a product', multi=False, placeholder='Select a product', className="dropdown", style={"width": "100%", "margin-bottom": "20px"}),
+        ), value='', multi=False, placeholder='Select a product', className="dropdown", style={"width": "100%", "margin-bottom": "20px"}),
     ]),
 
     dbc.Row([
@@ -54,4 +54,4 @@ def add_order(n_clicks, units, amount, date, product):
     else:
         date_object = datetime.strptime(date, '%Y-%m-%d').strftime("%d-%b-%Y")
         helper.addOrder(product, float(units), amount, date_object)
-        return f"Order added for {units} units of {helper.get_id_name_dic()[product]} at {amount} on {date_object}"
+        return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"

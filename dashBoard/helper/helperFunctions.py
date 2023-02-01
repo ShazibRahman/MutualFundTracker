@@ -26,14 +26,16 @@ def writeJsonFile(filename, data):
 units_json = readJsonFile(data_path+'data/units.json')
 daychange_json = readJsonFile(data_path+'data/dayChange.json')
 Orders = readJsonFile(data_path+'data/order.json')
+json_data = readJsonFile(data_path+"data/NAVAll.json")
 
 
-def addOrder(MFID, unit, amount, date) -> None:
+def addOrder(MFID, unit, amount, date) -> str:
     '''
         mfid , unit : float , amount :float , date : for ex 07-May-2022
     '''
     # print("called with id: ", MFID, " and value: ",
     #       daychange_json[MFID]['name'])
+    value = "old"
     if Orders.__contains__(MFID) and Orders[MFID].__contains__(
             date):
         data = Orders[MFID][date]
@@ -44,7 +46,9 @@ def addOrder(MFID, unit, amount, date) -> None:
     else:
         Orders[MFID] = {}
         Orders[MFID][date] = [unit, amount]
+        value = "new"
     writeJsonFile(data_path+'data/order.json', Orders)
+    return value
 
 
 mutual_funds_dic = {daychange_json[unit]['name']: unit for unit in units_json}
@@ -115,10 +119,6 @@ def get_options():
     return [{"label": x, "value": mutual_funds_dic[x]} for x in mutual_funds]
 
 
-def get_id_name_dic():
-    return {unit: daychange_json[unit]['name'] for unit in units_json}
-
-
 def getInvestmentDistribution():
     data_at_time_of_investment = {}
     data_current = {}
@@ -185,9 +185,13 @@ def create_index_all_mutual_fund():
 
 
 def get_index_all_mutual_fund():
-    with open(data_path+"data/NAVAll.json", "r") as f:
-        json_data = json.load(f)
-        return [{"label": x, "value": json_data[x]} for x in json_data]
+    return [{"label": x, "value": json_data[x]} for x in json_data]
+
+
+def get_id_name_dic(value):
+    value = str(value)
+    key = [k for k, v in json_data.items() if value == v]
+    return key[0]
 
 
 if __name__ == "__main__":
