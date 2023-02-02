@@ -14,11 +14,11 @@ app.layout = html.Div([
 
     dbc.Nav(children=[
         dbc.NavItem(dbc.NavLink(
-            "DashBoard", id="dasboardLink", href="/apps/dashBoard", className="")),
+            "DashBoard", id="dasboardLink", href="/apps/dashBoard", className=""), id="dashLink"),
         dbc.NavItem(dbc.NavLink(
-            "Add Order", id="addOrder", href="/apps/addOrder", className="")),
+            "Add Order", id="addOrder", href="/apps/addOrder", className=""), id="orderLink"),
         dbc.NavItem(dbc.NavLink(
-            "Stocks", id="stocks", href="/apps/stocks", className="")),
+            "Stocks", id="stocks", href="/apps/stocks", className=""), id="stockLink"),
     ], style={'width': '100%', 'height': '50px', 'background-color': '#f8f9fa', 'margin-bottom': '20px'}),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
@@ -26,9 +26,9 @@ app.layout = html.Div([
 
 
 @app.callback(Output('page-content', 'children'),
-              Output("dasboardLink", component_property="style"),
-              Output("addOrder", component_property="style"),
-              Output("stocks", component_property="style"),
+              Output("dashLink", component_property="style"),
+              Output("orderLink", component_property="style"),
+              Output("stockLink", component_property="style"),
               [Input('url', 'pathname')])
 def display_page(pathname: str):
     # active style for navbar links
@@ -45,5 +45,5 @@ def display_page(pathname: str):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, host="0.0.0.0", port=3000)
+    app.run_server(debug=True, port=3000)
     # server.run(debug=True, port=3000)

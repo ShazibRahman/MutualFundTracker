@@ -29,6 +29,18 @@ Orders = readJsonFile(data_path+'data/order.json')
 json_data = readJsonFile(data_path+"data/NAVAll.json")
 
 
+def getOrders():
+    return readJsonFile(data_path+'data/order.json')
+
+
+def getUnits():
+    return readJsonFile(data_path+"data/units.json")
+
+
+def getDayChange_data():
+    return readJsonFile(data_path+"data/dayChange.json")
+
+
 def addOrder(MFID, unit, amount, date) -> str:
     '''
         mfid , unit : float , amount :float , date : for ex 07-May-2022
@@ -151,11 +163,12 @@ def getMainTableData():
         current = preMF['current']
         invested = preMF['invested']
         date = preMF['latestNavDate']
-        if dayChange != 'N/A':
+        if dayChange != 'N.A.':
+            # print(dayChange)
             dayChangePercentage = roundup3(dayChange/invested*100)
             daychngeString = f"{dayChangePercentage}% {dayChange}"
         else:
-            daychngeString = "N/A|N/A"
+            daychngeString = "N.A. N.A."
         returns = roundup3(current-invested)
         returnsPercentage = roundup3(returns/invested*100)
         returnsString = f"{returns} {returnsPercentage}%"

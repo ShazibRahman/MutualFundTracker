@@ -8,7 +8,27 @@ from dash.dependencies import Input, Output, State
 
 from app import app
 
-# layout = dbc.Container(["container for add order"], className="container")
+
+def get_all_order() -> dbc.Table:
+    mfs = helper.json_data
+    MfsReversed = {}
+    for k, v in mfs.items():
+        MfsReversed[v] = k
+
+    children = []
+    children.append(html.Thead(html.Tr([html.Th("Mutual Fund Name"), html.Th(
+        "Amount"), html.Th("Units"), html.Th("Nav Date")])))
+    body = []
+    for k, v in helper.getOrders().items():  # id , dic
+        for k2, v2 in v.items():  # date ,list[units,amount]
+            body.append(
+                html.Tr([html.Td(MfsReversed[k]), html.Td(v2[1]), html.Td(v2[0]), html.Td(k2)]))
+    children.append(html.Tbody(body))
+
+    return dbc.Table(children=children, className=f"table table-striped table-bordered  justify-content-center")
+
+
+    # layout = dbc.Container(["container for add order"], className="container")
 layout = html.Div([
     dbc.Col([
         dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_index_all_mutual_fund(
@@ -33,6 +53,13 @@ layout = html.Div([
         "padding": "0px"
     }),
     html.Div(id='output', className="output"),
+
+    html.Div(
+        id='view-order', style={
+            "margin-top": "150px"
+        },
+        children=[get_all_order()]
+    )
 
 ], className="container")
 

@@ -34,7 +34,7 @@ def prepareTable() -> List[dbc.Table]:
     for x in range(len(summary_table)):
         if x == 0:
             children_sum_tab.append(html.Thead(
-                html.Tr([html.Th(x, className="table-dark") for x in summary_table[x]])))
+                html.Tr([html.Th(x) for x in summary_table[x]])))
         else:
             tr = html.Tr()
             tr.children = []
@@ -53,10 +53,9 @@ def prepareTable() -> List[dbc.Table]:
             children_sum_tab.append(html.Tbody(tr))
 
     sum_tab = dbc.Table(children=children_sum_tab,
-                        striped=True, bordered=True, hover=True, className="table table-hover table-striped table-bordered")
+                        striped=True, bordered=True, hover=True, className="table table-striped")
     children_mut_tab = []
-    theme = "light"
-
+    body = []
     for x in range(len(MutualFund_table)):
         if x == 0:
             children_mut_tab.append(html.Thead(
@@ -64,10 +63,9 @@ def prepareTable() -> List[dbc.Table]:
         else:
             # children_mut_tab.append(html.Tbody(
             #     html.Tr([html.Td(x) for x in MutualFund_table[x]])))
-            theme = 'dark' if theme == 'light' else 'light'
 
-            tr = html.Tr(className=f"table-{theme}", style={
-                         'color': "black"})
+            tr = html.Tr(style={
+                'color': "black"})
             tr.children = []
 
             for y in range(len(MutualFund_table[x])):
@@ -75,11 +73,13 @@ def prepareTable() -> List[dbc.Table]:
                     _1, _2 = MutualFund_table[x][y].split(" ")
                     # print(_1, _2)
                     td = html.Td()
-                    td.children = [_1, html.Br(), html.Br(), number(_2)]
+                    td.children = [_1, html.Br(), html.Br(), number(
+                        _2) if not _2 == "N.A." else _2]
                 elif y == 2:
                     _1, _2 = MutualFund_table[x][y].split(" ")
                     td = html.Td()
-                    td.children = [_1, html.Br(), html.Br(), percentage(_2)]
+                    td.children = [_1, html.Br(), html.Br(), percentage(
+                        _2) if not _2 == "N.A." else _2]
                 elif y == 3:
                     _1, _2 = MutualFund_table[x][y].split(" ")
                     td = html.Td()
@@ -96,9 +96,12 @@ def prepareTable() -> List[dbc.Table]:
                         MutualFund_table[x][y])
 
                 tr.children.append(td)
-            children_mut_tab.append(html.Tbody(tr, className=f"table-{theme}"))
+            # children_mut_tab.append(html.Tbody(tr))
+            body.append(tr)
+    children_mut_tab.append(html.Tbody(body))
+
     mut_tab = dbc.Table(children=children_mut_tab,
-                        striped=True, bordered=True, hover=True, className=f"table-{theme} justify-content-center")
+                        striped=True, bordered=True, hover=True, className=f"table table-sm")
     return [sum_tab, html.Br(), html.Br(), mut_tab]
 
 
