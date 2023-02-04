@@ -6,6 +6,7 @@ import pandas as pd
 from dash.dependencies import Input, Output, State
 from plotly import graph_objs as go
 import helper.helperFunctions as helper
+import helper.stock_helper as stock_helper
 
 from app import app
 
@@ -38,6 +39,33 @@ layout = html.Div([html.Div(children=[
         })
 
     ], id="row3"),
+    html.Div([
+        html.H2("add stock order", style={
+                "text-align": "center", "margin-top": "10px", "margin-bottom": "10px", "padding": "5px"}),
+        dbc.Col([
+                dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_all_stocks_list(
+                ), value='', multi=False, placeholder='Select a product', className="dropdown", style={"width": "100%", "margin-bottom": "20px"}),
+                ]),
+        dbc.Row([
+
+            dbc.Col([dbc.Input(id='units', type='number',
+                               placeholder='Enter units',  min=1, className="input")],),
+            dbc.Col([dbc.Input(id='amount', type='flaot',
+                               placeholder='Enter amount per unit', min=1, className="input")]),
+            dbc.Col([dbc.Button("Add", id='add', color="primary",
+                                          n_clicks=0, className="button", style={
+                                              "width": "100%",
+                                          })]),
+
+        ], className="row", style={
+            "padding": "0px",
+            "margin": "10px"
+        }), html.Div(id="stock_added_output")],
+    style={
+        "display": "flex", "justify-content": "center", "flex-direction": "column"}),
+    html.Div([stock_helper.get_stock_data_in_form_of_table()
+
+              ], className="container")
 ], className="container")
 
 
@@ -105,3 +133,55 @@ def add_graph(n_clicks, input1, start_date, end_date):
 
         }
     }, {'border': '1px solid green'}, {'border': '1px solid green'}
+
+
+@app.callback(
+    Output('stock_added_output', 'children'),
+    Output('dropdown', 'value'),
+    Output('units', 'value'),
+    Output('amount', 'value'),
+    [Input('add', 'n_clicks')],
+    [State('dropdown', 'value'),
+        State('units', 'value'),
+        State('amount', 'value')],
+    prevent_initial_call=True
+)
+def add_stock_order(n_clicks, dropdown, units, amount):
+    if n_clicks > 0:
+        if dropdown is None or dropdown == "":
+            return html.Div("Please select a stock", style={
+                "color": "red",
+                "font-weight": "bold",
+                "font-size": "20px",
+                "text-align": "center"
+            })
+        if units is None or units == "":
+            return html.Div("Please enter units", style={
+                "color": "red",
+                "font-weight": "bold",
+                "font-size": "20px",
+                "text-align": "center"
+            })
+        if amount is None or amount == "":
+            return html.Div("Please enter amount", style={
+                "color": "red",
+                "font-weight": "bold",
+                "font-size": "20px",
+                "text-align": "center"
+            })
+        print(dropdown, units, amount)
+        booolean = helper.add_order_stock(dropdown, int(units), float(amount))
+        if not booolean:
+            return html.Div("Order not added because there is no such Stock", style={
+                "color": "red",
+                "font-weight": "bold",
+                "font-size": "20px",
+                "text-align": "center"
+            })
+
+        return html.Div(f"Order for {helper.get_all_stock_dic()[dropdown]} units {units} at amount per units {amount}", style={
+            "color": "green",
+            "font-weight": "bold",
+            "font-size": "20px",
+            "text-align": "center"
+        }), "", 0, 0

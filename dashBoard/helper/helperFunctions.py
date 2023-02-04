@@ -3,7 +3,6 @@ import json
 from typing import Dict, List
 import nsepy
 import os
-import pickle
 
 
 data_path = os.path.join(os.path.dirname(__file__)+"/../../")
@@ -15,6 +14,11 @@ def roundup3(x):
 
 def readJsonFile(filename):
     with open(filename, 'r') as f:
+        return json.load(f)
+
+
+def readJsonFromDataFolder(filename):
+    with open(data_path+"/data/"+filename, 'r') as f:
         return json.load(f)
 
 
@@ -39,6 +43,20 @@ def getUnits():
 
 def getDayChange_data():
     return readJsonFile(data_path+"data/dayChange.json")
+
+
+def add_order_stock(stock, units, amount):
+    stock_order = readJsonFile(data_path+'data/stock_order.json')
+    stock_data = readJsonFile(data_path+'data/stock_data.json')
+    if not stock_data.__contains__(stock):
+        return False
+    if stock_order.__contains__(stock):
+        stock_order[stock][0] += units
+        stock_order[stock][1] += amount*units
+    else:
+        stock_order[stock] = [units, amount*units]
+    writeJsonFile(data_path+'data/stock_order.json', stock_order)
+    return True
 
 
 def addOrder(MFID, unit, amount, date) -> str:
@@ -205,6 +223,15 @@ def get_id_name_dic(value):
     value = str(value)
     key = [k for k, v in json_data.items() if value == v]
     return key[0]
+
+
+def get_all_stocks_list():
+    stock_data = readJsonFile(data_path+"/data/stocks_data.json")
+    return [{"label": stock_data[x], "value":x} for x in stock_data]
+
+
+def get_all_stock_dic():
+    return readJsonFile(data_path+"/data/stocks_data.json")
 
 
 if __name__ == "__main__":
