@@ -137,9 +137,6 @@ def add_graph(n_clicks, input1, start_date, end_date):
 
 @app.callback(
     Output('stock_added_output', 'children'),
-    Output('dropdown', 'value'),
-    Output('units', 'value'),
-    Output('amount', 'value'),
     [Input('add', 'n_clicks')],
     [State('dropdown', 'value'),
         State('units', 'value'),

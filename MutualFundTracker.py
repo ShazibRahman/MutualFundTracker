@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 import os
 from typing import Tuple
+import pytz
+
+
+INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 try:
     from rich.console import Console
@@ -442,7 +446,8 @@ class MutualFund:
                 if prev_hash == new_hash:
                     logging.info("--No changes found in the new NAV file--")
             self.jsonData['hash'] = new_hash
-            lastUpdated = datetime.now().strftime(self.formatString + " %X")
+            lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
+                self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
             os.system(f"rm -f {self.navallfile+'.bak'}")
 
