@@ -166,7 +166,6 @@ def add_stock_order(n_clicks, dropdown, units, amount):
                 "font-size": "20px",
                 "text-align": "center"
             })
-        print(dropdown, units, amount)
         booolean = helper.add_order_stock(dropdown, int(units), float(amount))
         if not booolean:
             return html.Div("Order not added because there is no such Stock", style={

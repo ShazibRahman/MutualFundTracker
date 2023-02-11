@@ -27,7 +27,6 @@ def get_all_order() -> dbc.Table:
 
     return dbc.Table(children=children, className=f"table table-striped table-bordered  justify-content-center") if not len(body) == 0 else dbc.Table()
 
-
     # layout = dbc.Container(["container for add order"], className="container")
 layout = html.Div([
     dbc.Col([

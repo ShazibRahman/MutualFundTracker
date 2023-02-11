@@ -27,7 +27,6 @@ def get_stock_data_in_form_of_table():
         total_invested = v[1]
         total_invested_all += total_invested
         quote = nsepy.get_quote(k)['data'][0]
-        print(quote)
         current_price = float(quote['closePrice'])
         previous_close = float(quote['previousClose'])
         day_change = current_price - previous_close
