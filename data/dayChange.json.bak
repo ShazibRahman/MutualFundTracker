@@ -1,11 +1,11 @@
 {
-    "lastUpdated": "11-Feb-2023 14:41:12",
-    "sumTotal": 47928.97,
-    "totalProfitPercentage": 3.073,
-    "totalDaychange": -78.88,
-    "totalInvested": 46500.0,
-    "totalProfit": 1428.97,
-    "hash": "4753deebab68816cee6fc0bdb3cb2f03",
+    "lastUpdated": "17-Feb-2023 18:57:26",
+    "sumTotal": 50128.723,
+    "totalProfitPercentage": 3.358,
+    "totalDaychange": 13.94,
+    "totalInvested": 48500.0,
+    "totalProfit": 1628.723,
+    "hash": "3b94c76903a7add618b53c2a5472ca5a",
     "122639": {
         "name": "Parag Parikh Flexi Cap Fund",
         "nav": {
@@ -278,12 +278,16 @@
             "07-Feb-2023": 53.0658,
             "08-Feb-2023": 53.4666,
             "09-Feb-2023": 52.9848,
-            "10-Feb-2023": 52.6782
+            "10-Feb-2023": 52.6782,
+            "13-Feb-2023": 52.4751,
+            "14-Feb-2023": 52.8227,
+            "15-Feb-2023": 52.8794,
+            "16-Feb-2023": 53.0012
         },
-        "latestNavDate": "10-Feb-2023",
-        "current": 8613.887,
-        "invested": 8000.0,
-        "dayChange": -50.135
+        "latestNavDate": "16-Feb-2023",
+        "current": 10686.632,
+        "invested": 10000.0,
+        "dayChange": 24.559
     },
     "149219": {
         "name": "ICICI Prudential NASDAQ 100 Index Fund",
@@ -545,12 +549,16 @@
             "07-Feb-2023": 9.1374,
             "08-Feb-2023": 8.969,
             "09-Feb-2023": 8.8816,
-            "10-Feb-2023": 8.8249
+            "10-Feb-2023": 8.8249,
+            "13-Feb-2023": 8.9792,
+            "14-Feb-2023": 9.0433,
+            "15-Feb-2023": 9.1316,
+            "16-Feb-2023": 8.9327
         },
-        "latestNavDate": "10-Feb-2023",
-        "current": 2361.155,
+        "latestNavDate": "16-Feb-2023",
+        "current": 2389.997,
         "invested": 2500,
-        "dayChange": -15.17
+        "dayChange": -53.217
     },
     "120594": {
         "name": "ICICI Prudential Technology Fund",
@@ -773,12 +781,16 @@
             "07-Feb-2023": 151.67,
             "08-Feb-2023": 153.61,
             "09-Feb-2023": 154.53,
-            "10-Feb-2023": 154.17
+            "10-Feb-2023": 154.17,
+            "13-Feb-2023": 151.68,
+            "14-Feb-2023": 153.17,
+            "15-Feb-2023": 154.28,
+            "16-Feb-2023": 155.57
         },
-        "latestNavDate": "10-Feb-2023",
-        "current": 2152.83,
+        "latestNavDate": "16-Feb-2023",
+        "current": 2172.379,
         "invested": 2000.0,
-        "dayChange": -5.027
+        "dayChange": 18.014
     },
     "120754": {
         "name": "ICICI Prudential Short Term Fund",
@@ -955,12 +967,16 @@
             "07-Feb-2023": 53.7355,
             "08-Feb-2023": 53.7255,
             "09-Feb-2023": 53.7327,
-            "10-Feb-2023": 53.741
+            "10-Feb-2023": 53.741,
+            "13-Feb-2023": 53.7678,
+            "14-Feb-2023": 53.758,
+            "15-Feb-2023": 53.773,
+            "16-Feb-2023": 53.807
         },
-        "latestNavDate": "10-Feb-2023",
-        "current": 30604.263,
+        "latestNavDate": "16-Feb-2023",
+        "current": 30641.849,
         "invested": 30000.0,
-        "dayChange": 4.727
+        "dayChange": 19.362
     },
     "118269": {
         "name": "CANARA ROBECO BLUE CHIP EQUITY FUND",
@@ -1142,12 +1158,16 @@
             "07-Feb-2023": 46.56,
             "08-Feb-2023": 46.9,
             "09-Feb-2023": 46.95,
-            "10-Feb-2023": 46.88
+            "10-Feb-2023": 46.88,
+            "13-Feb-2023": 46.63,
+            "14-Feb-2023": 46.93,
+            "15-Feb-2023": 47.16,
+            "16-Feb-2023": 47.22
         },
-        "latestNavDate": "10-Feb-2023",
-        "current": 3187.418,
+        "latestNavDate": "16-Feb-2023",
+        "current": 3210.535,
         "invested": 3000,
-        "dayChange": -4.759
+        "dayChange": 4.079
     },
     "148381": {
         "name": "Motilal Oswal S&P 500 Index Fund",
@@ -1159,11 +1179,15 @@
             "07-Feb-2023": 15.4967,
             "08-Feb-2023": 15.6615,
             "09-Feb-2023": 15.4906,
-            "10-Feb-2023": 15.361
+            "10-Feb-2023": 15.361,
+            "13-Feb-2023": 15.4139,
+            "14-Feb-2023": 15.6087,
+            "15-Feb-2023": 15.6162,
+            "16-Feb-2023": 15.6336
         },
-        "latestNavDate": "10-Feb-2023",
-        "current": 1009.417,
+        "latestNavDate": "16-Feb-2023",
+        "current": 1027.331,
         "invested": 1000,
-        "dayChange": -8.516
+        "dayChange": 1.143
     }
 }
