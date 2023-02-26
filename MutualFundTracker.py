@@ -239,6 +239,8 @@ class MutualFund:
             invested = self.jsonData['totalInvested']
             totalProfitPercentage = self.jsonData['totalProfitPercentage']
             totalProfit = self.jsonData['totalProfit']
+            totalDaychange = self.jsonData['totalDaychange']
+            totalDaychangePercentage = totalDaychange / invested * 100
         except Exception as e:
             self.console.print(
                 'Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option'
@@ -249,9 +251,10 @@ class MutualFund:
         currentColor = f'[green]₹{current}[/green]' if current >= invested else f'[red]₹{current}[/red]'
         currentString = f'Current\n\n[bold]{currentColor}[/bold]'
         totalReturnString = f'[yellow]•[/yellow]Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]'
+        dailyReturnString = f'[yellow]•[/yellow][bold]{getfv(totalDaychange)} {getfp(totalDaychangePercentage)}[/bold]'
         lastUpdatedString = f'Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]'
         self.summaryTable.add_row(investedString, currentString,
-                                  totalReturnString, lastUpdatedString)
+                                  totalReturnString+"\n"+dailyReturnString, lastUpdatedString)
 
     def MutualFundTableEdit(self, id: str) -> None:
         try:

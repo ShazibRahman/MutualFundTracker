@@ -1,11 +1,11 @@
 {
-    "lastUpdated": "23-Feb-2023 19:24:51",
-    "sumTotal": 56661.093,
-    "totalProfitPercentage": 2.092,
-    "totalDaychange": -255.969,
+    "lastUpdated": "26-Feb-2023 19:55:51",
+    "sumTotal": 56643.637,
+    "totalProfitPercentage": 2.061,
+    "totalDaychange": -32.103,
     "totalInvested": 55500.0,
-    "totalProfit": 1161.093,
-    "hash": "6fad2807461e939a0b905bafebaeafbc",
+    "totalProfit": 1143.637,
+    "hash": "087e0ed3bd15bd83fc351f2aa2b9668d",
     "122639": {
         "name": "Parag Parikh Flexi Cap Fund",
         "nav": {
@@ -286,12 +286,14 @@
             "17-Feb-2023": 52.7128,
             "20-Feb-2023": 52.5665,
             "21-Feb-2023": 52.5544,
-            "22-Feb-2023": 52.0666
+            "22-Feb-2023": 52.0666,
+            "23-Feb-2023": 52.0787,
+            "24-Feb-2023": 52.1252
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 15450.399,
+        "latestNavDate": "24-Feb-2023",
+        "current": 15467.788,
         "invested": 15000.0,
-        "dayChange": -144.751
+        "dayChange": 13.799
     },
     "149219": {
         "name": "ICICI Prudential NASDAQ 100 Index Fund",
@@ -560,12 +562,14 @@
             "16-Feb-2023": 8.9327,
             "17-Feb-2023": 8.89,
             "21-Feb-2023": 8.6703,
-            "22-Feb-2023": 8.6838
+            "22-Feb-2023": 8.6838,
+            "23-Feb-2023": 8.7573,
+            "24-Feb-2023": 8.6054
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 2323.403,
+        "latestNavDate": "24-Feb-2023",
+        "current": 2302.426,
         "invested": 2500,
-        "dayChange": 3.612
+        "dayChange": -40.642
     },
     "120594": {
         "name": "ICICI Prudential Technology Fund",
@@ -796,12 +800,14 @@
             "17-Feb-2023": 153.92,
             "20-Feb-2023": 154.39,
             "21-Feb-2023": 153.53,
-            "22-Feb-2023": 151.7
+            "22-Feb-2023": 151.7,
+            "23-Feb-2023": 151.36,
+            "24-Feb-2023": 150.92
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 2118.339,
+        "latestNavDate": "24-Feb-2023",
+        "current": 2107.447,
         "invested": 2000.0,
-        "dayChange": -25.554
+        "dayChange": -6.144
     },
     "120754": {
         "name": "ICICI Prudential Short Term Fund",
@@ -986,12 +992,14 @@
             "17-Feb-2023": 53.8062,
             "20-Feb-2023": 53.8516,
             "21-Feb-2023": 53.8544,
-            "22-Feb-2023": 53.8477
+            "22-Feb-2023": 53.8477,
+            "23-Feb-2023": 53.8602,
+            "24-Feb-2023": 53.8653
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 30665.027,
+        "latestNavDate": "24-Feb-2023",
+        "current": 30675.049,
         "invested": 30000.0,
-        "dayChange": -3.815
+        "dayChange": 2.904
     },
     "118269": {
         "name": "CANARA ROBECO BLUE CHIP EQUITY FUND",
@@ -1181,12 +1189,14 @@
             "17-Feb-2023": 46.95,
             "20-Feb-2023": 46.78,
             "21-Feb-2023": 46.73,
-            "22-Feb-2023": 46.12
+            "22-Feb-2023": 46.12,
+            "23-Feb-2023": 46.04,
+            "24-Feb-2023": 45.94
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 3135.745,
+        "latestNavDate": "24-Feb-2023",
+        "current": 3123.507,
         "invested": 3000,
-        "dayChange": -41.475
+        "dayChange": -6.799
     },
     "148381": {
         "name": "Motilal Oswal S&P 500 Index Fund",
@@ -1206,23 +1216,27 @@
             "17-Feb-2023": 15.4464,
             "20-Feb-2023": 15.3865,
             "21-Feb-2023": 15.4033,
-            "22-Feb-2023": 15.1157
+            "22-Feb-2023": 15.1157,
+            "23-Feb-2023": 15.0546,
+            "24-Feb-2023": 15.1416
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 993.298,
+        "latestNavDate": "24-Feb-2023",
+        "current": 995.0,
         "invested": 1000,
-        "dayChange": -18.899
+        "dayChange": 5.717
     },
     "135781": {
         "name": "Mirae Asset Tax Saver Fund",
         "nav": {
             "20-Feb-2023": 34.12,
             "21-Feb-2023": 34.121,
-            "22-Feb-2023": 33.693
+            "22-Feb-2023": 33.693,
+            "23-Feb-2023": 33.667,
+            "24-Feb-2023": 33.651
         },
-        "latestNavDate": "22-Feb-2023",
-        "current": 1974.882,
+        "latestNavDate": "24-Feb-2023",
+        "current": 1972.42,
         "invested": 2000,
-        "dayChange": -25.087
+        "dayChange": -0.938
     }
 }
