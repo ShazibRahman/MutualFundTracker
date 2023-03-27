@@ -14,7 +14,7 @@ app.layout = html.Div([
 
     dbc.Nav(children=[
         dbc.NavItem(dbc.NavLink(
-            "DashBoard", id="dasboardLink", href="/apps/dashBoard", className=""), id="dashLink"),
+            "DashBoard", id="dashboardLink", href="/apps/dashBoard", className=""), id="dashLink"),
         dbc.NavItem(dbc.NavLink(
             "Add Order", id="addOrder", href="/apps/addOrder", className=""), id="orderLink"),
         dbc.NavItem(dbc.NavLink(

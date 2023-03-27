@@ -4,6 +4,9 @@ from typing import Dict, List
 import nsepy
 import os
 
+from pandas import DataFrame
+
+DATA_ORDER_JSON = 'data/order.json'
 
 data_path = os.path.join(os.path.dirname(__file__)+"/../../")
 
@@ -29,12 +32,12 @@ def writeJsonFile(filename, data):
 
 units_json = readJsonFile(data_path+'data/units.json')
 daychange_json = readJsonFile(data_path+'data/dayChange.json')
-Orders = readJsonFile(data_path+'data/order.json')
+Orders = readJsonFile(data_path + DATA_ORDER_JSON)
 json_data = readJsonFile(data_path+"data/NAVAll.json")
 
 
 def getOrders():
-    return readJsonFile(data_path+'data/order.json')
+    return readJsonFile(data_path + DATA_ORDER_JSON)
 
 
 def getUnits():
@@ -60,14 +63,11 @@ def add_order_stock(stock, units, amount):
 
 
 def addOrder(MFID, unit, amount, date) -> str:
-    '''
+    """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
-    '''
-    # print("called with id: ", MFID, " and value: ",
-    #       daychange_json[MFID]['name'])
+    """
     value = "old"
-    if Orders.__contains__(MFID) and Orders[MFID].__contains__(
-            date):
+    if Orders.__contains__(MFID) and Orders[MFID].__contains__(date):
         data = Orders[MFID][date]
         data[0] += unit
         data[1] += amount
@@ -77,7 +77,7 @@ def addOrder(MFID, unit, amount, date) -> str:
         Orders[MFID] = {}
         Orders[MFID][date] = [unit, amount]
         value = "new"
-    writeJsonFile(data_path+'data/order.json', Orders)
+    writeJsonFile(data_path + DATA_ORDER_JSON, Orders)
     return value
 
 
@@ -108,11 +108,11 @@ def getDailyChange():
     return [{'x': list(sumDayChange.keys()), 'y': list(sumDayChange.values()), 'type': 'line', 'name': 'Daily Change'}]
 
 
-def dailyChangePerMutualFund(id):
+def dailyChangePerMutualFund(id_):
     # print("called with id: ", id, " and value: ", daychange_json[id]['name'])
     sumDayChange: dict = {}
-    units: float = units_json[id][0]
-    value = daychange_json[id]['nav']
+    units: float = units_json[id_][0]
+    value = daychange_json[id_]['nav']
     i = True
     prevdayChange = 0.0
     for nav, daychange in value.items():
@@ -129,7 +129,9 @@ def dailyChangePerMutualFund(id):
             sumDayChange[nav] = daychangeData
         prevdayChange = daychange
     return [{'x': list(sumDayChange.keys()), 'y': list(
-        sumDayChange.values()), 'type': 'line', 'name': daychange_json[id]['name']+" Daily Change"}], daychange_json[id]['name']
+        sumDayChange.values()),
+        'type': 'line', 'name': daychange_json[id_]['name'] + " Daily Change"}], \
+        daychange_json[id_]['name']
 
 
 def return_data(value):
@@ -174,7 +176,7 @@ def getMainTableData():
         "SCHEME NAME,DAY CHANGE,RETURNS,CURRENT,NAV".split(",")]
 
     for val in units_json.keys():
-        daychngeString = ""
+
         preMF = daychange_json[val]
         SchemeName = preMF['name']
         dayChange = preMF['dayChange']
@@ -184,21 +186,21 @@ def getMainTableData():
         if dayChange != 'N.A.':
             # print(dayChange)
             dayChangePercentage = roundup3(dayChange/invested*100)
-            daychngeString = f"{dayChangePercentage}% {dayChange}"
+            daychange_string = f"{dayChangePercentage}% {dayChange}"
         else:
-            daychngeString = "N.A. N.A."
+            daychange_string = "N.A. N.A."
         returns = roundup3(current-invested)
         returnsPercentage = roundup3(returns/invested*100)
         returnsString = f"{returns} {returnsPercentage}%"
         currentString = f"{current} {invested}"
         nav_date = f'{date} {preMF["nav"][date]}'
         mutual_fund_table.append(
-            [SchemeName, daychngeString, returnsString, currentString, nav_date])
+            [SchemeName, daychange_string, returnsString, currentString, nav_date])
 
     return summaryTable, mutual_fund_table
 
 
-def get_history(symbol: str, start: str, end: str) -> Dict:
+def get_history(symbol: str, start: str, end: str) -> DataFrame:
     start_date = datetime.strptime(start, '%Y-%m-%d')
     end_date = datetime.strptime(end, '%Y-%m-%d')
     return nsepy.get_history(symbol, start=start_date, end=end_date)
