@@ -105,6 +105,8 @@ def getDailyChange():
             else:
                 sumDayChange[nav] = daychangeData
             prevdayChange = daychange
+    sum_daychange_sorted_keys = sorted( sumDayChange.keys(), key=lambda x: datetime.strptime(x, '%d-%b-%Y'))
+    sumDayChange = {k: sumDayChange[k] for k in sum_daychange_sorted_keys} # sorted by key, return a dict
     return [{'x': list(sumDayChange.keys()), 'y': list(sumDayChange.values()), 'type': 'line', 'name': 'Daily Change'}]
 
 
