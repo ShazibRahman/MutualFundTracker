@@ -16,10 +16,10 @@ try:
     from rich.table import Table
     import plotext as plt
 except ImportError as e:
+    print('Installing requirements for you')
     if os.name == 'nt':
         os.system('pip install -r requirements.txt')
     else:
-        print('Installing requirements for you')
         os.system('pip3 install -r requirements.txt')
     from rich.console import Console
     from rich.table import Table
@@ -292,6 +292,9 @@ class MutualFund:
                                 expand=True)
         all_daily_table.add_column('NAV', justify='center', no_wrap=True)
         all_daily_table.add_column('DayChange', justify='center', no_wrap=True)
+        sum_daychange_sorted_keys = sorted( dic.keys(), key=lambda x: datetime.strptime(x, '%d-%b-%Y'))
+        dic = {k: dic[k] for k in sum_daychange_sorted_keys}
+
 
         nav_col = ''
         dayChange_col = ''
@@ -301,7 +304,7 @@ class MutualFund:
         all_daily_table.add_row(nav_col, dayChange_col)
         self.console.print(all_daily_table)
         print(end="\n\n")
-        dates: list = list(dic.keys())
+        dates: list = sum_daychange_sorted_keys
         dayChangeList: list = list(dic.values())
         plt.clear_figure()
         plt.plot_size(100, 30)
@@ -412,8 +415,9 @@ class MutualFund:
         print()
 
     def updateMyNaVFile(self):
-        if not os.path.isfile(self.navallfile):
-            self.downloadAllNavFile()
+        if not os.path.exists(self.navallfile):
+            if not self.downloadAllNavFile():
+                return False
 
         var = os.system(f'''
             grep -wi '{self.getGrepString()}' {self.navallfile} > {self.navMyfile}
@@ -423,36 +427,41 @@ class MutualFund:
             print('something went wrong')
             exit()
 
-    def downloadAllNavFile(self) -> None:
+        return True
+        
+
+    def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
         start = time.time()
 
         var = os.system(f'''
-            mv {self.navallfile} {self.navallfile + '.bak'}
+          
             cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
-            wget  -q --timeout=20 --tries=10 --retry-connrefused  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}
+            wget  -q --timeout=20 --tries=10 --retry-connrefused -N  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}.new
         ''')
         if var:
             logging.info(
-                "something went wrong can\'t download the file Rolling back to previous NAV file"
+                "something went wrong can't download the file Rolling back to previous NAV file"
             )
-            os.system(f'''
-                mv {self.navallfile + '.bak'} {self.navallfile}
-                ''')
+            return False
+
+            
         else:
             logging.info(
                 f"--took {(time.time() - start):.2f} Secs to download the file")
-            new_hash = hashlib.md5(open(self.navallfile,
+            new_hash = hashlib.md5(open(self.navallfile+".new",
                                         'rb').read()).hexdigest()
             if self.jsonData.__contains__('hash'):
                 prev_hash = self.jsonData['hash']
                 if prev_hash == new_hash:
                     logging.info("--No changes found in the new NAV file--")
+                    return False
             self.jsonData['hash'] = new_hash
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
-            os.system(f"rm -f {self.navallfile + '.bak'}")
+            os.system(f'mv {self.navallfile}.new {self.navallfile}')
+            return True
 
     def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
                         name: str) -> str | float:
@@ -539,9 +548,12 @@ class MutualFund:
         logging.info("--Main calculation--")
         if download:
             self.addToUnitsNotPreEXisting()
-            self.downloadAllNavFile()
-        self.updateMyNaVFile()
+            if not self.downloadAllNavFile():
+                return
 
+            if not self.updateMyNaVFile():
+                return
+ 
         sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
 
         totalProfit = sumTotal - totalInvested
