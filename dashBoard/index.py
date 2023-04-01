@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
-from app import app
+from app import app,server
 
 # connect to your app pages
 from apps import dashBoard, addOrder, stocks
@@ -45,5 +45,5 @@ def display_page(pathname: str):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, port=3000)
-    # server.run(debug=True, port=3000)
+    # app.run_server(debug=True, port=3000)
+    server.run(debug=True, port=3000)
