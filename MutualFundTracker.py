@@ -573,11 +573,14 @@ class MutualFund:
 
 
 if __name__ == "__main__":
-    os.system('''
+    var = os.system('''
     git pull 
     git add * 
     git commit -m "commit" 
     git push
     ''')
+    if var:
+        logging.info("git commands unsuccessful")
+    
     tracker = MutualFund()
     tracker.getCurrentValues(download=True)
