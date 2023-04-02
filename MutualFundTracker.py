@@ -515,7 +515,7 @@ class MutualFund:
 
     def readMyNavFile(self) -> Tuple[float, float, float]:
         """
-        returns subtotal, total invested , totaldaychange"""
+        returns subtotal, totalInvested , totaldaychange"""
         with open(self.navMyfile, 'r') as file:
             sumTotal = 0
             totalInvested = 0
@@ -574,7 +574,10 @@ class MutualFund:
 
 if __name__ == "__main__":
     os.system('''
-    git pull ; git add * ; git commit -m "commit" ; git push;
+    git pull 
+    git add * 
+    git commit -m "commit" 
+    git push
     ''')
     tracker = MutualFund()
     tracker.getCurrentValues(download=True)
