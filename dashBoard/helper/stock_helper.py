@@ -30,8 +30,8 @@ def get_stock_data_in_form_of_table():
             quote = nsepy.get_quote(k)['data'][0]
         except:
             quote = {
-                'closePrice':round(total_invested/v[0], 2),
-                'previousClose':round(total_invested/v[0], 2)
+                'closePrice': round(total_invested/v[0], 2),
+                'previousClose': round(total_invested/v[0], 2)
             }
         current_price = float(quote['closePrice'])
         previous_close = float(quote['previousClose'])

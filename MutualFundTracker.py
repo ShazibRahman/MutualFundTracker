@@ -292,9 +292,9 @@ class MutualFund:
                                 expand=True)
         all_daily_table.add_column('NAV', justify='center', no_wrap=True)
         all_daily_table.add_column('DayChange', justify='center', no_wrap=True)
-        sum_daychange_sorted_keys = sorted( dic.keys(), key=lambda x: datetime.strptime(x, '%d-%b-%Y'))
+        sum_daychange_sorted_keys = sorted(
+            dic.keys(), key=lambda x: datetime.strptime(x, '%d-%b-%Y'))
         dic = {k: dic[k] for k in sum_daychange_sorted_keys}
-
 
         nav_col = ''
         dayChange_col = ''
@@ -428,7 +428,6 @@ class MutualFund:
             exit()
 
         return True
-        
 
     def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
@@ -443,7 +442,6 @@ class MutualFund:
             )
             return False
 
-            
         else:
             logging.info(
                 f"--took {(time.time() - start):.2f} Secs to download the file")
@@ -469,11 +467,11 @@ class MutualFund:
 
         dayChange = 0.0
         self.isExistingId(ids, name, latestNavDate, todayNav)
-        data:dict[str:str] = self.jsonData[ids]['nav']
+        data: dict[str:str] = self.jsonData[ids]['nav']
         latestDate = datetime.strptime(latestNavDate, self.formatString)
 
-        prevDayNavDate:str = datetime.strftime(latestDate - timedelta(1),
-                                           self.formatString)
+        prevDayNavDate: str = datetime.strftime(latestDate - timedelta(1),
+                                                self.formatString)
 
         if prevDayNavDate not in data:
             key_list = list(data.keys())
@@ -554,7 +552,7 @@ class MutualFund:
 
             if not self.updateMyNaVFile():
                 return
- 
+
         sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
 
         totalProfit = sumTotal - totalInvested
@@ -573,14 +571,5 @@ class MutualFund:
 
 
 if __name__ == "__main__":
-    var = os.system('''
-    git pull 
-    git add * 
-    git commit -m "commit" 
-    git push
-    ''')
-    if var:
-        logging.info("git commands unsuccessful")
-    
     tracker = MutualFund()
     tracker.getCurrentValues(download=True)
