@@ -239,7 +239,7 @@ class MutualFund:
             totalDaychangePercentage = totalDaychange / invested * 100
         except KeyError as e:
             self.console.print(
-                'Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option', e
+                'Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option'
             )
             exit()
 
@@ -469,10 +469,10 @@ class MutualFund:
 
         dayChange = 0.0
         self.isExistingId(ids, name, latestNavDate, todayNav)
-        data = self.jsonData[ids]['nav']
+        data:dict[str:str] = self.jsonData[ids]['nav']
         latestDate = datetime.strptime(latestNavDate, self.formatString)
 
-        prevDayNavDate = datetime.strftime(latestDate - timedelta(1),
+        prevDayNavDate:str = datetime.strftime(latestDate - timedelta(1),
                                            self.formatString)
 
         if prevDayNavDate not in data:
