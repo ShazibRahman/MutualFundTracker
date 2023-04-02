@@ -6,8 +6,9 @@ loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 
 
 def readLogs():
-    file = open(loggerPath, 'r')
-    print(file.read(), end='')
+    # file = open(loggerPath, 'r')
+    # print(file.read(), end='')
+    os.system(f'bat --line-range 50: --paging=never {loggerPath}')
     return
 
 

@@ -435,9 +435,7 @@ class MutualFund:
         start = time.time()
 
         var = os.system(f'''
-          
-            cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
-            wget  -q --timeout=20 --tries=10 --retry-connrefused -N  "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}.new
+            wget  -q --timeout=20 --tries=10 --retry-connrefused   "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}.new
         ''')
         if var:
             logging.info(
@@ -460,7 +458,10 @@ class MutualFund:
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
-            os.system(f'mv {self.navallfile}.new {self.navallfile}')
+            os.system(f'''
+            cp {self.navallfile}.new {self.navallfile}
+            cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
+            ''')
             return True
 
     def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
@@ -572,5 +573,8 @@ class MutualFund:
 
 
 if __name__ == "__main__":
+    os.system('''
+    git pull ; git add * ; git commit -m "commit" ; git push;
+    ''')
     tracker = MutualFund()
     tracker.getCurrentValues(download=True)
