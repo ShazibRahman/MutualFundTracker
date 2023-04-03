@@ -1,10 +1,10 @@
 import argparse
-from MutualFundTracker import MutualFund
 import os
 
 git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
+
 
 def readLogs():
     # file = open(loggerPath, 'r')
@@ -26,6 +26,9 @@ def callMutualFund() -> None:
     if (args.logs == "clear"):
         clearLogs()
         return
+
+    os.system(f"cd {git_dir} && git pull")
+    from MutualFundTracker import MutualFund
     tracker = MutualFund()
     if (args.add is not None):
         tracker.addOrder(args.add[0], float(args.add[1]), float(args.add[2]),
@@ -51,7 +54,6 @@ def callMutualFund() -> None:
 
 
 if __name__ == '__main__':
-    os.system(f"cd {git_dir} && git pull")
     choices = ['y', 'n']
     parser = argparse.ArgumentParser()
     parser.add_argument('-d',
@@ -85,3 +87,5 @@ if __name__ == '__main__':
                         default='n')
     args = parser.parse_args()
     callMutualFund()
+else:
+    raise RuntimeError("this script is not meant to be imported")

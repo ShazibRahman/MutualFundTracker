@@ -12,7 +12,6 @@ INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 
 try:
     from rich.console import Console
-    from rich import print
     from rich.table import Table
     import plotext as plt
 except ImportError as e:
@@ -54,7 +53,7 @@ class MutualFund:
     def __init__(self) -> None:
         if os.environ.get("USER") is not None and os.environ.get("USER") == "shazib":
             logging.info = Console().log
-        print("Initializing MutualFundTracker")
+        logging.info("Initializing MutualFundTracker")
 
         logging.info("--Application has started---")
         logging.info(f"--Logged in as {os.environ.get('USER')}")
