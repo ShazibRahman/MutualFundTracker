@@ -570,6 +570,7 @@ class MutualFund:
         self.writeToJsonFile()
 
 
+
 if __name__ == "__main__":
     tracker = MutualFund()
     tracker.getCurrentValues(download=True)

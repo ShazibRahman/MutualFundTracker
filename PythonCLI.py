@@ -2,13 +2,14 @@ import argparse
 from MutualFundTracker import MutualFund
 import os
 
+git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
-
+anacron_user = "Shazib_Anacron"
 
 def readLogs():
     # file = open(loggerPath, 'r')
     # print(file.read(), end='')
-    os.system(f'bat --line-range 50: --paging=never {loggerPath}')
+    os.system(f'bat --paging=never {loggerPath}')
     return
 
 
@@ -39,6 +40,9 @@ def callMutualFund() -> None:
 
     if args.d == 'y':
         tracker.getCurrentValues(True)
+        os.system(f"cd {git_dir} && git add *")
+        os.system(f"cd {git_dir} && git commit -m 'commit'")
+        os.system(f"cd {git_dir} && git push")
     if args.g != 'o':
         tracker.drawTable()
     if args.g == 'y' or args.g == 'o':
@@ -47,6 +51,7 @@ def callMutualFund() -> None:
 
 
 if __name__ == '__main__':
+    os.system(f"cd {git_dir} && git pull")
     choices = ['y', 'n']
     parser = argparse.ArgumentParser()
     parser.add_argument('-d',
