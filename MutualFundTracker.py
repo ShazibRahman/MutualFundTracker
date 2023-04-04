@@ -54,7 +54,7 @@ class MutualFund:
         if os.environ.get("USER") is not None and os.environ.get("USER") == "shazib":
             logging.info = Console().log
 
-        self.logging =  logging
+        self.logging = logging
         logging.info("Initializing MutualFundTracker")
 
         logging.info("--Application has started---")
@@ -569,7 +569,6 @@ class MutualFund:
         self.jsonData['totalDaychange'] = totalDaychange
 
         self.writeToJsonFile()
-
 
 
 if __name__ == "__main__":
