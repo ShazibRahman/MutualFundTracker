@@ -5,8 +5,6 @@ git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
 
-tracker = None
-
 
 def readLogs():
     os.system(f'bat --paging=never {loggerPath}')
@@ -28,24 +26,22 @@ def callMutualFund() -> None:
         return
 
     if (args.add is not None):
-        if tracker is None:
 
-            from MutualFundTracker import MutualFund
-            tracker = MutualFund()
+        from MutualFundTracker import MutualFund
+        tracker = MutualFund()
         tracker.addOrder(args.add[0], float(args.add[1]), float(args.add[2]),
                          args.add[3])
         return
     if args.dc == 'y':
-        if tracker is None:
-            from MutualFundTracker import MutualFund
-            tracker = MutualFund()
+        
+        from MutualFundTracker import MutualFund
+        tracker = MutualFund()
         tracker.DayChangeTable()
         return
 
     if args.r == 'y':
-        if tracker is None:
-            from MutualFundTracker import MutualFund
-            tracker = MutualFund()
+        from MutualFundTracker import MutualFund
+        tracker = MutualFund()
         tracker.getCurrentValues(False)
 
     if args.d == 'y':
@@ -57,14 +53,12 @@ def callMutualFund() -> None:
         os.system(f"cd {git_dir} && git commit -m 'commit'")
         os.system(f"cd {git_dir} && git push")
     if args.g != 'o':
-        if tracker is None:
-            from MutualFundTracker import MutualFund
-            tracker = MutualFund()
+        from MutualFundTracker import MutualFund
+        tracker = MutualFund()
         tracker.drawTable()
     if args.g == 'y' or args.g == 'o':
-        if tracker is None:
-            from MutualFundTracker import MutualFund
-            tracker = MutualFund()
+        from MutualFundTracker import MutualFund
+        tracker = MutualFund()
         tracker.drawGraph()
         return
 
