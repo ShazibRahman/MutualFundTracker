@@ -53,12 +53,13 @@ class MutualFund:
     def __init__(self) -> None:
         if os.environ.get("USER") is not None and os.environ.get("USER") == "shazib":
             logging.info = Console().log
+        else:
+            logging.info("Initializing MutualFundTracker")
+            logging.info("--Application has started---")
+            logging.info(f"--Logged in as {os.environ.get('USER')}")
 
         self.logging = logging
-        logging.info("Initializing MutualFundTracker")
-
-        logging.info("--Application has started---")
-        logging.info(f"--Logged in as {os.environ.get('USER')}")
+       
         self.directoryString: str = os.path.dirname(__file__)
 
         self.navallfile: str = self.directoryString + "/data/NAVAll.txt"
