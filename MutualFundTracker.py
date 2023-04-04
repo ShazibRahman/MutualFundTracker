@@ -53,6 +53,8 @@ class MutualFund:
     def __init__(self) -> None:
         if os.environ.get("USER") is not None and os.environ.get("USER") == "shazib":
             logging.info = Console().log
+
+        self.logging =  logging
         logging.info("Initializing MutualFundTracker")
 
         logging.info("--Application has started---")
