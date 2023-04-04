@@ -28,7 +28,7 @@ def callMutualFund() -> None:
         return
 
     if (args.add is not None):
-        if not tracker:
+        if tracker is None:
 
             from MutualFundTracker import MutualFund
             tracker = MutualFund()
@@ -36,14 +36,14 @@ def callMutualFund() -> None:
                          args.add[3])
         return
     if args.dc == 'y':
-        if not tracker:
+        if tracker is None:
             from MutualFundTracker import MutualFund
             tracker = MutualFund()
         tracker.DayChangeTable()
         return
 
     if args.r == 'y':
-        if not tracker:
+        if tracker is None:
             from MutualFundTracker import MutualFund
             tracker = MutualFund()
         tracker.getCurrentValues(False)
@@ -62,7 +62,7 @@ def callMutualFund() -> None:
             tracker = MutualFund()
         tracker.drawTable()
     if args.g == 'y' or args.g == 'o':
-        if not tracker:
+        if tracker is None:
             from MutualFundTracker import MutualFund
             tracker = MutualFund()
         tracker.drawGraph()
