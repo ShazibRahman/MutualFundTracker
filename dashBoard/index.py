@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
-from app import app, server
+from app import app
 
 # connect to your app pages
 from apps import dashBoard, addOrder, stocks
@@ -19,7 +19,12 @@ app.layout = html.Div([
             "Add Order", id="addOrder", href="/apps/addOrder", className=""), id="orderLink"),
         dbc.NavItem(dbc.NavLink(
             "Stocks", id="stocks", href="/apps/stocks", className=""), id="stockLink"),
-    ], style={'width': '100%', 'height': '50px', 'background-color': '#f8f9fa', 'margin-bottom': '20px'}),
+    ], style={
+        'width': '100%',
+        'height': '50px',
+        'background-color': '#f8f9fa',
+        'margin-bottom': '20px'
+    }),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
 ])
@@ -45,5 +50,5 @@ def display_page(pathname: str):
 
 
 if __name__ == '__main__':
-    # app.run_server(debug=True, port=3000)
-    server.run(debug=True, port=3000)
+    app.run_server(debug=True, port=3000)
+    # server.run(debug=True, port=3000)

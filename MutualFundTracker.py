@@ -59,7 +59,7 @@ class MutualFund:
             logging.info(f"--Logged in as {os.environ.get('USER')}")
 
         self.logging = logging
-       
+
         self.directoryString: str = os.path.dirname(__file__)
 
         self.navallfile: str = self.directoryString + "/data/NAVAll.txt"
@@ -515,7 +515,8 @@ class MutualFund:
 
     def readMyNavFile(self) -> Tuple[float, float, float]:
         """
-        returns subtotal, totalInvested , totaldaychange"""
+        returns subtotal, totalInvested , totaldaychange
+        """
         with open(self.navMyfile, 'r') as file:
             sumTotal = 0
             totalInvested = 0

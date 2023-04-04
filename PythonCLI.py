@@ -18,14 +18,14 @@ def clearLogs():
 
 
 def callMutualFund() -> None:
-    if (args.logs == "show"):
+    if args.logs == "show":
         readLogs()
         return
-    if (args.logs == "clear"):
+    if args.logs == "clear":
         clearLogs()
         return
 
-    if (args.add is not None):
+    if args.add is not None:
 
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
@@ -33,7 +33,7 @@ def callMutualFund() -> None:
                          args.add[3])
         return
     if args.dc == 'y':
-        
+
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
         tracker.DayChangeTable()
