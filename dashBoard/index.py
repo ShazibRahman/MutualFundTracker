@@ -4,7 +4,7 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 
-from app import app,server
+from app import app, server
 
 # connect to your app pages
 from apps import dashBoard, addOrder, stocks
