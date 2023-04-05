@@ -43,15 +43,19 @@ def callMutualFund() -> None:
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
         tracker.getCurrentValues(False)
+        tracker.drawTable()
+        return
 
     if args.d == 'y':
         os.system(f"cd {git_dir} && git pull")
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
         tracker.getCurrentValues(True)
+        tracker.drawTable()
         os.system(f"cd {git_dir} && git add *")
         os.system(f"cd {git_dir} && git commit -m 'commit'")
         os.system(f"cd {git_dir} && git push")
+        return
     if args.g != 'o':
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
