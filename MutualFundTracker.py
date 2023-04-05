@@ -85,7 +85,7 @@ class MutualFund:
             print(
                 f'No mutual Fund specified to track please Add something in {self.unitsFile} file to track'
             )
-            exit()
+            exit(0)
 
         try:
             self.jsonData: dict = json.load(open(self.dayChangeJsonFileString))

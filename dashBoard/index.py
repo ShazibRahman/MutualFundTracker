@@ -38,13 +38,20 @@ app.layout = html.Div([
 def display_page(pathname: str):
     # active style for navbar links
     active_Style: dict[str:str] = {
-        'background-color': '#e9ecef', 'border-radius': '5px'}
-    inactive_Style: dict[str:str] = {'background-color': '#f8f9fa',
-                                     'border-radius': '5px', 'color': "grey"}  # inactive style for navbar links
-    data: dict[str:Tuple] = {"/apps/dashBoard": (dashBoard.layout, active_Style, inactive_Style, inactive_Style),
-                             "/apps/addOrder": (addOrder.layout, inactive_Style, active_Style, inactive_Style),
-                             "/apps/stocks": (stocks.layout, inactive_Style, inactive_Style, active_Style),
-                             "/": (dashBoard.layout, active_Style, inactive_Style, inactive_Style)}
+        'background-color': '#e9ecef', 'border-radius': '5px'
+    }
+
+    inactive_Style: dict[str:str] = {
+        'background-color': '#f8f9fa',
+        'border-radius': '5px', 'color': "grey"
+    }  # inactive style for navbar links
+
+    data: dict[str:Tuple] = {
+        "/apps/dashBoard": (dashBoard.layout, active_Style, inactive_Style, inactive_Style),
+        "/apps/addOrder": (addOrder.layout, inactive_Style, active_Style, inactive_Style),
+        "/apps/stocks": (stocks.layout, inactive_Style, inactive_Style, active_Style),
+        "/": (dashBoard.layout, active_Style, inactive_Style, inactive_Style)
+    }
 
     return data[pathname]
 

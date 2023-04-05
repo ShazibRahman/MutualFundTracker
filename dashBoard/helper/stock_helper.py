@@ -20,8 +20,6 @@ def get_stock_data_in_form_of_table():
     table = []
     total_invested_all = 0
     total_returns_all = 0
-    total_profit = 0
-    total_profit_percentage = 0
     for k, v in my_stocks_json.items():
 
         total_invested = v[1]
@@ -53,10 +51,6 @@ def get_stock_data_in_form_of_table():
                       "returns_percentage": round((total_returns - total_invested) / total_invested * 100, 2) if total_invested != 0 else 0,
                       })
 
-    total_profit = total_returns_all - total_invested_all
-
-    total_profit_percentage = round(
-        total_profit / total_invested_all * 100, 2) if total_invested_all != 0 else 0
     table_data = []
     table_data.append(html.Tr([html.Th("Name"), html.Th(
         "Market Price"), html.Th("Returns %"), html.Th("Current")]))
@@ -76,7 +70,9 @@ def get_stock_data_in_form_of_table():
 
     table_data.append(html.Tbody(table_body))
 
-    return dbc.Table(table_data, bordered=True, hover=True, responsive=True, striped=True, className="table table-hover table-bordered table-striped  p-10 table-responsive-sm table-responsive-md table-responsive-lg table-responsive-xl text-align-center",
+    return dbc.Table(table_data, bordered=True, hover=True,
+                     responsive=True, striped=True,
+                     className="table table-hover table-bordered table-striped  p-10 table-responsive-sm table-responsive-md table-responsive-lg table-responsive-xl text-align-center",
                      style={
                          "margin-top": "100px",
                          "margin-bottom": "10px",
