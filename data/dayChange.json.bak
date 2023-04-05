@@ -1,11 +1,11 @@
 {
-    "lastUpdated": "05-Apr-2023 22:55:25",
-    "sumTotal": 57158.457,
-    "totalProfitPercentage": 2.988,
-    "totalDaychange": 383.265,
+    "lastUpdated": "05-Apr-2023 23:31:06",
+    "sumTotal": 57626.829,
+    "totalProfitPercentage": 3.832,
+    "totalDaychange": 468.372,
     "totalInvested": 55500.0,
-    "totalProfit": 1658.457,
-    "hash": "4ced4278eddac86b6995a37714e1d531",
+    "totalProfit": 2126.829,
+    "hash": "85a46727733da05cf72e3ab6010fc567",
     "122639": {
         "name": "Parag Parikh Flexi Cap Fund",
         "nav": {
@@ -311,12 +311,13 @@
             "27-Mar-2023": 52.4353,
             "28-Mar-2023": 52.2485,
             "29-Mar-2023": 52.3695,
-            "31-Mar-2023": 53.0485
+            "31-Mar-2023": 53.0485,
+            "05-Apr-2023": 53.796
         },
-        "latestNavDate": "31-Mar-2023",
-        "current": 15741.771,
+        "latestNavDate": "05-Apr-2023",
+        "current": 15963.586,
         "invested": 15000.0,
-        "dayChange": 201.488
+        "dayChange": 221.815
     },
     "149219": {
         "name": "ICICI Prudential NASDAQ 100 Index Fund",
@@ -609,12 +610,13 @@
             "24-Mar-2023": 9.1153,
             "27-Mar-2023": 9.0614,
             "28-Mar-2023": 9.0007,
-            "29-Mar-2023": 9.182
+            "29-Mar-2023": 9.182,
+            "03-Apr-2023": 9.4005
         },
-        "latestNavDate": "29-Mar-2023",
-        "current": 2456.699,
+        "latestNavDate": "03-Apr-2023",
+        "current": 2515.16,
         "invested": 2500,
-        "dayChange": 48.508
+        "dayChange": 58.461
     },
     "120594": {
         "name": "ICICI Prudential Technology Fund",
@@ -869,12 +871,13 @@
             "24-Mar-2023": 141.18,
             "27-Mar-2023": 141.42,
             "28-Mar-2023": 140.08,
-            "29-Mar-2023": 141.15
+            "29-Mar-2023": 141.15,
+            "05-Apr-2023": 145.33
         },
-        "latestNavDate": "29-Mar-2023",
-        "current": 1971.019,
+        "latestNavDate": "05-Apr-2023",
+        "current": 2029.388,
         "invested": 2000.0,
-        "dayChange": 14.941
+        "dayChange": 58.37
     },
     "120754": {
         "name": "ICICI Prudential Short Term Fund",
@@ -1082,12 +1085,13 @@
             "24-Mar-2023": 54.2223,
             "27-Mar-2023": 54.2592,
             "28-Mar-2023": 54.2606,
-            "29-Mar-2023": 54.3071
+            "29-Mar-2023": 54.3071,
+            "05-Apr-2023": 54.4252
         },
-        "latestNavDate": "29-Mar-2023",
-        "current": 30926.644,
+        "latestNavDate": "05-Apr-2023",
+        "current": 30993.9,
         "invested": 30000.0,
-        "dayChange": 26.481
+        "dayChange": 67.255
     },
     "118269": {
         "name": "CANARA ROBECO BLUE CHIP EQUITY FUND",
@@ -1302,12 +1306,13 @@
             "27-Mar-2023": 44.74,
             "28-Mar-2023": 44.67,
             "29-Mar-2023": 45.0,
-            "31-Mar-2023": 45.66
+            "31-Mar-2023": 45.66,
+            "05-Apr-2023": 46.15
         },
-        "latestNavDate": "31-Mar-2023",
-        "current": 3104.469,
+        "latestNavDate": "05-Apr-2023",
+        "current": 3137.785,
         "invested": 3000,
-        "dayChange": 44.874
+        "dayChange": 33.316
     },
     "148381": {
         "name": "Motilal Oswal S&P 500 Index Fund",
@@ -1352,12 +1357,13 @@
             "27-Mar-2023": 14.9372,
             "28-Mar-2023": 14.927,
             "29-Mar-2023": 14.9279,
-            "31-Mar-2023": 15.2119
+            "31-Mar-2023": 15.2119,
+            "05-Apr-2023": 15.3639
         },
-        "latestNavDate": "31-Mar-2023",
-        "current": 999.62,
+        "latestNavDate": "05-Apr-2023",
+        "current": 1009.608,
         "invested": 1000,
-        "dayChange": 18.662
+        "dayChange": 9.988
     },
     "135781": {
         "name": "Mirae Asset Tax Saver Fund",
@@ -1389,11 +1395,12 @@
             "27-Mar-2023": 32.684,
             "28-Mar-2023": 32.619,
             "29-Mar-2023": 32.926,
-            "31-Mar-2023": 33.409
+            "31-Mar-2023": 33.409,
+            "05-Apr-2023": 33.736
         },
-        "latestNavDate": "31-Mar-2023",
-        "current": 1958.235,
+        "latestNavDate": "05-Apr-2023",
+        "current": 1977.402,
         "invested": 2000,
-        "dayChange": 28.311
+        "dayChange": 19.167
     }
 }
