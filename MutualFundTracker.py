@@ -459,7 +459,7 @@ class MutualFund:
                 self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
             os.system(f'''
-            cp {self.navallfile}.new {self.navallfile}
+            mv {self.navallfile}.new {self.navallfile}
             cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
             ''')
             return True
