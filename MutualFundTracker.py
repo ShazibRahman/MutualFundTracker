@@ -9,7 +9,7 @@ from typing import Tuple
 import pytz
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
-DATA_PATH = os.path.join(os.path.dirname(__file__),'data')
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 
 try:
     from rich.console import Console
@@ -22,7 +22,7 @@ except ImportError as e:
     from rich.table import Table
     import plotext as plt
 
-LOGGER_PATH = os.path.join(DATA_PATH,'logger.log')
+LOGGER_PATH = os.path.join(DATA_PATH, 'logger.log')
 
 logging.basicConfig(filename=LOGGER_PATH,
                     filemode='a',
@@ -43,16 +43,16 @@ def getfp(percentage: float) -> str:
     return f'[green]({roundUp3(percentage)}%)[/green]' if percentage >= 0 else f'[red]({roundUp3(percentage)})%[/red]'
 
 
-def writeToFile(filename: str, data: object,indent=4) -> None:
+def writeToFile(filename: str, data: object, indent=4) -> None:
     logging.info(f"writing to {filename=}")
     with open(filename, 'w') as f:
         json.dump(data, f, indent=indent)
 
-def writeRawDataToFile(file_name:str, data:str)->None:
-    logging.info(f"writing raw string data to {file_name}")
-    with open(file_name,'w') as file:
-        file.write(data)
 
+def writeRawDataToFile(file_name: str, data: str) -> None:
+    logging.info(f"writing raw string data to {file_name}")
+    with open(file_name, 'w') as file:
+        file.write(data)
 
 
 class MutualFund:
@@ -69,12 +69,13 @@ class MutualFund:
 
         self.directoryString: str = os.path.dirname(__file__)
 
-        self.navallfile: str = os.path.join(DATA_PATH,'NAVAll.txt')
-        self.orderfile: str = os.path.join(DATA_PATH,'order.json')
-        self.navMyfile: str = os.path.join(DATA_PATH,'nav.txt')
-        self.dayChangeJsonFileString: str = os.path.join(DATA_PATH,'dayChange.json')
+        self.navallfile: str = os.path.join(DATA_PATH, 'NAVAll.txt')
+        self.orderfile: str = os.path.join(DATA_PATH, 'order.json')
+        self.navMyfile: str = os.path.join(DATA_PATH, 'nav.txt')
+        self.dayChangeJsonFileString: str = os.path.join(
+            DATA_PATH, 'dayChange.json')
         self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
-        self.unitsFile: str = os.path.join(DATA_PATH,'units.json')
+        self.unitsFile: str = os.path.join(DATA_PATH, 'units.json')
         try:
             self.Units: dict = json.load(open(self.unitsFile))
         except:
@@ -194,7 +195,7 @@ class MutualFund:
         writeToFile(self.orderfile, self.Orders)
 
     def runOnceInitialization(self, file):
-        if not os.path.exists(os.path.join(self.directoryString,'data')):
+        if not os.path.exists(os.path.join(self.directoryString, 'data')):
             os.system(f'''mkdir {os.path.join(self.directoryString,'data')} 
             ''')
         if file is not None:
@@ -486,6 +487,7 @@ class MutualFund:
                 prevDayNavDate = key_list[-2]
             else:
                 prevDayNavDate = key_list[-1]
+
         self.addToUnits(ids, prevDayNavDate)
         units: float = self.Units[ids][0]
 
@@ -569,7 +571,7 @@ class MutualFund:
         self.jsonData['totalProfitPercentage'] = totalProfitPercentage
         self.jsonData['totalDaychange'] = totalDaychange
 
-        writeToFile(self.dayChangeJsonFileString,self.jsonData)
+        writeToFile(self.dayChangeJsonFileString, self.jsonData)
 
 
 if __name__ == "__main__":
