@@ -9,6 +9,7 @@ from typing import Tuple
 import pytz
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
+DATA_PATH = os.path.join(os.path.dirname(__file__),'data')
 
 try:
     from rich.console import Console
@@ -16,15 +17,14 @@ try:
     import plotext as plt
 except ImportError as e:
     print('Installing requirements for you')
-    if os.name == 'nt':
-        os.system('pip install -r requirements.txt')
-    else:
-        os.system('pip3 install -r requirements.txt')
+    os.system('pip3 install -r requirements.txt')
     from rich.console import Console
     from rich.table import Table
     import plotext as plt
 
-logging.basicConfig(filename=os.path.dirname(__file__) + '/data/logger.log',
+LOGGER_PATH = os.path.join(DATA_PATH,'logger.log')
+
+logging.basicConfig(filename=LOGGER_PATH,
                     filemode='a',
                     level=logging.DEBUG,
                     format='%(asctime)s %(message)s',
@@ -43,9 +43,16 @@ def getfp(percentage: float) -> str:
     return f'[green]({roundUp3(percentage)}%)[/green]' if percentage >= 0 else f'[red]({roundUp3(percentage)})%[/red]'
 
 
-def writeToFile(filename: str, data: dict) -> None:
+def writeToFile(filename: str, data: object,indent=4) -> None:
+    logging.info(f"writing to {filename=}")
     with open(filename, 'w') as f:
-        json.dump(data, f, indent=4)
+        json.dump(data, f, indent=indent)
+
+def writeRawDataToFile(file_name:str, data:str)->None:
+    logging.info(f"writing raw string data to {file_name}")
+    with open(file_name,'w') as file:
+        file.write(data)
+
 
 
 class MutualFund:
@@ -62,12 +69,12 @@ class MutualFund:
 
         self.directoryString: str = os.path.dirname(__file__)
 
-        self.navallfile: str = self.directoryString + "/data/NAVAll.txt"
-        self.orderfile: str = self.directoryString + "/data/order.json"
-        self.navMyfile: str = self.directoryString + "/data/nav.txt"
-        self.dayChangeJsonFileString: str = self.directoryString + "/data/dayChange.json"
+        self.navallfile: str = os.path.join(DATA_PATH,'NAVAll.txt')
+        self.orderfile: str = os.path.join(DATA_PATH,'order.json')
+        self.navMyfile: str = os.path.join(DATA_PATH,'nav.txt')
+        self.dayChangeJsonFileString: str = os.path.join(DATA_PATH,'dayChange.json')
         self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
-        self.unitsFile: str = self.directoryString + "/data/units.json"
+        self.unitsFile: str = os.path.join(DATA_PATH,'units.json')
         try:
             self.Units: dict = json.load(open(self.unitsFile))
         except:
@@ -187,8 +194,8 @@ class MutualFund:
         writeToFile(self.orderfile, self.Orders)
 
     def runOnceInitialization(self, file):
-        if not os.path.isdir(self.directoryString + '/data'):
-            os.system(f'''mkdir {self.directoryString + "/data"} 
+        if not os.path.exists(os.path.join(self.directoryString,'data')):
+            os.system(f'''mkdir {os.path.join(self.directoryString,'data')} 
             ''')
         if file is not None:
             os.system(f'echo {"{}"} > {file}')
@@ -381,12 +388,6 @@ class MutualFund:
             self.MutualFundTableEdit(ids)
         self.console.print(self.TableMutualFund)
 
-    def writeToJsonFile(self) -> None:
-        logging.info(
-            f"--writing to the dayChange {self.dayChangeJsonFileString = }--")
-        with open(self.dayChangeJsonFileString, 'w') as outfile:
-            json.dump(self.jsonData, outfile, indent=4)
-
     def getGrepString(self) -> str:
         unitKeyList = list(self.Units.keys())
 
@@ -549,10 +550,10 @@ class MutualFund:
         if download:
             self.addToUnitsNotPreEXisting()
             if not self.downloadAllNavFile():
-                return
+                exit(0)
 
             if not self.updateMyNaVFile():
-                return
+                exit(0)
 
         sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
 
@@ -568,7 +569,7 @@ class MutualFund:
         self.jsonData['totalProfitPercentage'] = totalProfitPercentage
         self.jsonData['totalDaychange'] = totalDaychange
 
-        self.writeToJsonFile()
+        writeToFile(self.dayChangeJsonFileString,self.jsonData)
 
 
 if __name__ == "__main__":
