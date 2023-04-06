@@ -439,9 +439,7 @@ class MutualFund:
             wget  -q --timeout=20 --tries=10 --retry-connrefused   "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}.new
         ''')
         if var:
-            logging.info(
-                "something went wrong can't download the file Rolling back to previous NAV file"
-            )
+            logging.info('---download failed---')
             return False
 
         else:
