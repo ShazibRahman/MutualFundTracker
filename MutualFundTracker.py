@@ -224,7 +224,9 @@ class MutualFund:
         self.summaryTable.add_column('invested',
                                      justify='center',
                                      no_wrap=True)
-        self.summaryTable.add_column('current', justify='right', no_wrap=True)
+        self.summaryTable.add_column('current',
+                                     justify='right',
+                                     no_wrap=True)
         self.summaryTable.add_column('total returns',
                                      justify='right',
                                      no_wrap=True)
@@ -247,7 +249,7 @@ class MutualFund:
             totalProfit = self.jsonData['totalProfit']
             totalDaychange = self.jsonData['totalDaychange']
             totalDaychangePercentage = totalDaychange / invested * 100
-        except KeyError as e:
+        except KeyError:
             self.console.print(
                 'Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option'
             )
@@ -274,11 +276,11 @@ class MutualFund:
             self.console.print(
                 'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option'
             )
-            exit()
+            exit(256)
         except Exception:
             self.console.print('Something went wrong')
 
-            exit()
+            exit(256)
         if dayChange != 'N.A.':
             dayChangePercentage: float = roundUp3(dayChange / invested * 100)
             dayChangeString = f'{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]'
@@ -308,11 +310,13 @@ class MutualFund:
 
         nav_col = ''
         dayChange_col = ''
+
         for nav, dayChange in dic.items():
             nav_col += f'[yellow]{nav}[/yellow]\n'
             dayChange_col += f'{getfv(dayChange)}\n'
         all_daily_table.add_row(nav_col, dayChange_col)
         self.console.print(all_daily_table)
+
         print(end="\n\n")
         dates: list = sum_daychange_sorted_keys
         dayChangeList: list = list(dic.values())
@@ -353,6 +357,7 @@ class MutualFund:
             daychange_col = ''
             i = True
             prevdayChange = 0.0
+
             for nav, daychange in value.items():
                 if i:
                     prevdayChange = units * daychange
@@ -393,11 +398,13 @@ class MutualFund:
         unitKeyList = list(self.Units.keys())
 
         grepSearchString = ''
+
         for i in range(len(unitKeyList)):
             if i == 0:
                 grepSearchString += unitKeyList[i]
             else:
                 grepSearchString += '\|' + unitKeyList[i]
+
         return grepSearchString
 
     def drawGraph(self) -> None:

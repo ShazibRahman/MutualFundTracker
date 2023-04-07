@@ -21,6 +21,7 @@ def callMutualFund() -> None:
     if args.logs == "show":
         readLogs()
         return
+
     if args.logs == "clear":
         clearLogs()
         return
@@ -56,10 +57,12 @@ def callMutualFund() -> None:
         os.system(f"cd {git_dir} && git commit -m 'commit'")
         os.system(f"cd {git_dir} && git push")
         return
+
     if args.g != 'o':
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
         tracker.drawTable()
+
     if args.g == 'y' or args.g == 'o':
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
