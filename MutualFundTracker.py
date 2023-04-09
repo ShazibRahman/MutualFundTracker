@@ -57,6 +57,12 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
         file.write(data)
 
 
+def readJsonFile(filename: str):
+    logging.info(f"reading {filename=}")
+    with open(filename, 'r') as f:
+        return json.load(f)
+
+
 class MutualFund:
 
     def __init__(self) -> None:
@@ -79,13 +85,13 @@ class MutualFund:
         self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
         self.unitsFile: str = os.path.join(DATA_PATH, 'units.json')
         try:
-            self.Units: dict = json.load(open(self.unitsFile))
+            self.Units: dict = readJsonFile(self.unitsFile)
         except:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.Units = {}
             self.runOnceInitialization(self.unitsFile)
         try:
-            self.Orders: dict = json.load((open(self.orderfile)))
+            self.Orders: dict = readJsonFile(self.orderfile)
         except:
             print("Something went wrong with the order file")
             self.Orders = {}
@@ -98,7 +104,7 @@ class MutualFund:
             exit(0)
 
         try:
-            self.jsonData: dict = json.load(open(self.dayChangeJsonFileString))
+            self.jsonData: dict = readJsonFile(self.dayChangeJsonFileString)
         except FileNotFoundError:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.runOnceInitialization(None)
@@ -170,12 +176,6 @@ class MutualFund:
         if len(key_list) == 0 or not found:
             logging.info("--No new Mutual fund was found in Order--")
 
-    def searchMutualFund(self, string: str) -> None:
-        os.system(f'''
-        grep -wi '{string}' {self.navallfile}
-
-        ''')
-
     def addOrder(self, MFID, unit, amount, date) -> None:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
@@ -198,19 +198,17 @@ class MutualFund:
 
     def runOnceInitialization(self, file):
         if not os.path.exists(os.path.join(self.directoryString, 'data')):
-            os.system(f'''mkdir {os.path.join(self.directoryString,'data')}
-            ''')
+            os.makedirs(os.path.join(DATA_PATH))
         if file is not None:
-            os.system(f'echo {"{}"} > {file}')
+            writeToFile(file, {})
         else:
             if os.path.isfile(self.dayChangeJsonFileStringBackupFile):
-                os.system(
-                    f'cp {self.dayChangeJsonFileStringBackupFile} {self.dayChangeJsonFileString}'
-                )
-                self.jsonData = json.load(open(self.dayChangeJsonFileString))
+                backup_data = readJsonFile(
+                    self.dayChangeJsonFileStringBackupFile)
+                writeToFile(self.dayChangeJsonFileString, backup_data)
+                self.jsonData = backup_data
             else:
-                os.system(
-                    f'echo {"{}"} > {self.dayChangeJsonFileStringBackupFile}')
+                writeToFile(self.dayChangeJsonFileStringBackupFile, {})
                 self.jsonData = {}
 
     def initializeTables(self) -> None:
@@ -471,9 +469,8 @@ class MutualFund:
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
-            os.system(f'''
-            cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
-            ''')
+            writeToFile(self.dayChangeJsonFileStringBackupFile,
+                        readJsonFile(self.dayChangeJsonFileString))
             return True
 
     def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
@@ -524,7 +521,7 @@ class MutualFund:
             if key.isnumeric() and key not in self.Units:
                 del self.jsonData[key]
 
-        self.writeToJsonFile()
+        writeToFile(self.dayChangeJsonFileString, self.jsonData)
 
     def readMyNavFile(self) -> Tuple[float, float, float]:
         """
