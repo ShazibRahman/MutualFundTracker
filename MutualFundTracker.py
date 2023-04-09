@@ -440,6 +440,13 @@ class MutualFund:
                 result += i.strip()+"\n"
 
         self.navMyfile = result
+        if self.jsonData.__contains__("hash2"):
+            new_hash = hashlib.md5(self.navMyfile.encode()).hexdigest()
+            prev_hash = self.jsonData['hash2']
+            if prev_hash == new_hash:
+                logging.info("--Nothing to update--")
+                return False
+            self.jsonData['hash2'] = new_hash
         return True
 
     def downloadAllNavFile(self) -> bool:
