@@ -7,6 +7,8 @@ from json.decoder import JSONDecodeError
 import os
 from typing import Tuple
 import pytz
+import requests
+import re
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
@@ -69,9 +71,9 @@ class MutualFund:
 
         self.directoryString: str = os.path.dirname(__file__)
 
-        self.navallfile: str = os.path.join(DATA_PATH, 'NAVAll.txt')
+        self.navallfile: None
         self.orderfile: str = os.path.join(DATA_PATH, 'order.json')
-        self.navMyfile: str = os.path.join(DATA_PATH, 'nav.txt')
+        self.navMyfile: None
         self.dayChangeJsonFileString: str = os.path.join(
             DATA_PATH, 'dayChange.json')
         self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
@@ -117,7 +119,7 @@ class MutualFund:
         nav -1 date = 13-may
         in this case the orders should move to units
 
-        scenario 2 
+        scenario 2
 
         order date = 12-May
         nav - 1 date = 13-May
@@ -170,7 +172,7 @@ class MutualFund:
 
     def searchMutualFund(self, string: str) -> None:
         os.system(f'''
-        grep -wi '{string}' {self.navallfile} 
+        grep -wi '{string}' {self.navallfile}
 
         ''')
 
@@ -196,7 +198,7 @@ class MutualFund:
 
     def runOnceInitialization(self, file):
         if not os.path.exists(os.path.join(self.directoryString, 'data')):
-            os.system(f'''mkdir {os.path.join(self.directoryString,'data')} 
+            os.system(f'''mkdir {os.path.join(self.directoryString,'data')}
             ''')
         if file is not None:
             os.system(f'echo {"{}"} > {file}')
@@ -403,7 +405,7 @@ class MutualFund:
             if i == 0:
                 grepSearchString += unitKeyList[i]
             else:
-                grepSearchString += '\|' + unitKeyList[i]
+                grepSearchString += '|' + unitKeyList[i]
 
         return grepSearchString
 
@@ -426,36 +428,33 @@ class MutualFund:
         print()
 
     def updateMyNaVFile(self):
-        if not os.path.exists(self.navallfile):
+        if self.navallfile is None:
             if not self.downloadAllNavFile():
                 return False
 
-        var = os.system(f'''
-            grep -wi '{self.getGrepString()}' {self.navallfile} > {self.navMyfile}
+        result = ""
+        pattern = self.getGrepString()
+        for i in self.navallfile.splitlines():
+            if re.search(pattern, i):
 
-            ''')
-        if var:
-            print('something went wrong')
-            exit()
+                result += i.strip()+"\n"
 
+        self.navMyfile = result
         return True
 
     def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
         start = time.time()
 
-        var = os.system(f'''
-            wget  -q --timeout=20 --tries=10 --retry-connrefused   "https://www.amfiindia.com/spages/NAVopen.txt" -O {self.navallfile}.new
-        ''')
-        if var:
-            logging.info('---download failed---')
+        res = requests.get("https://www.amfiindia.com/spages/NAVopen.txt")
+        if res.status_code != 200:
             return False
 
         else:
+            self.navallfile = res.text
             logging.info(
                 f"--took {(time.time() - start):.2f} Secs to download the file")
-            new_hash = hashlib.md5(open(self.navallfile+".new",
-                                        'rb').read()).hexdigest()
+            new_hash = hashlib.md5(self.navallfile.encode()).hexdigest()
             if self.jsonData.__contains__('hash'):
                 prev_hash = self.jsonData['hash']
                 if prev_hash == new_hash:
@@ -466,7 +465,6 @@ class MutualFund:
                 self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
             os.system(f'''
-            mv {self.navallfile}.new {self.navallfile}
             cp {self.dayChangeJsonFileString} {self.dayChangeJsonFileStringBackupFile}
             ''')
             return True
@@ -525,33 +523,33 @@ class MutualFund:
         """
         returns subtotal, totalInvested , totaldaychange
         """
-        with open(self.navMyfile, 'r') as file:
-            sumTotal = 0
-            totalInvested = 0
-            totalDayChange = 0
 
-            for line in file:
-                current = 0
-                dayChange = 0
+        sumTotal = 0
+        totalInvested = 0
+        totalDayChange = 0
 
-                temp = line.strip().split(";")
-                _id, name, nav, date = temp[0], temp[3].split(
-                    '-')[0].strip(), float(temp[4]), temp[5]
+        for line in self.navMyfile.splitlines():
+            current = 0
+            dayChange = 0
 
-                dayChange = self.dayChangeMethod(_id, nav, date, name)
+            temp = line.strip().split(";")
+            _id, name, nav, date = temp[0], temp[3].split(
+                '-')[0].strip(), float(temp[4]), temp[5]
 
-                current = round(self.Units[_id][0] * nav, 3)
-                invested = self.Units[_id][1]
-                sumTotal += current
-                totalInvested += invested
-                if dayChange != 'N.A.':
-                    totalDayChange += dayChange
+            dayChange = self.dayChangeMethod(_id, nav, date, name)
 
-                cur_json_id: dict = self.jsonData[_id]
-                cur_json_id['latestNavDate'] = date
-                cur_json_id['current'] = current
-                cur_json_id['invested'] = invested
-                cur_json_id['dayChange'] = dayChange
+            current = round(self.Units[_id][0] * nav, 3)
+            invested = self.Units[_id][1]
+            sumTotal += current
+            totalInvested += invested
+            if dayChange != 'N.A.':
+                totalDayChange += dayChange
+
+            cur_json_id: dict = self.jsonData[_id]
+            cur_json_id['latestNavDate'] = date
+            cur_json_id['current'] = current
+            cur_json_id['invested'] = invested
+            cur_json_id['dayChange'] = dayChange
         return sumTotal, totalInvested, totalDayChange
 
     def getCurrentValues(self, download: bool) -> None:
