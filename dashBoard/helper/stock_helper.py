@@ -3,6 +3,9 @@ import dash_core_components as dcc
 import dash_html_components as html
 import nsepy
 from helper.helperFunctions import readJsonFromDataFolder, get_all_stock_dic
+from rich.console import Console
+
+console = Console()
 
 
 def get_stock_data_in_form_of_table():
@@ -24,13 +27,10 @@ def get_stock_data_in_form_of_table():
 
         total_invested = v[1]
         total_invested_all += total_invested
-        try:
-            quote = nsepy.get_quote(k)['data'][0]
-        except:
-            quote = {
-                'closePrice': round(total_invested/v[0], 2),
-                'previousClose': round(total_invested/v[0], 2)
-            }
+
+        quote = nsepy.get_quote(k)['data'][0]
+        console.log("successfully fetched the data")
+
         current_price = float(quote['closePrice'])
         previous_close = float(quote['previousClose'])
 

@@ -450,9 +450,11 @@ class MutualFund:
     def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
         start = time.time()
-
-        res = requests.get("https://www.amfiindia.com/spages/NAVopen.txt")
-        if res.status_code != 200:
+        try:
+            res = requests.get("https://www.amfiindia.com/spages/NAVopen.txt")
+            if res.status_code != 200:
+                return False
+        except:
             return False
 
         else:
