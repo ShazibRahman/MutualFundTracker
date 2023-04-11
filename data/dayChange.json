@@ -1,12 +1,12 @@
 {
-    "lastUpdated": "11-Apr-2023 09:31:33",
-    "sumTotal": 57804.524,
-    "totalProfitPercentage": 4.152,
-    "totalDaychange": 116.386,
+    "lastUpdated": "11-Apr-2023 10:01:24",
+    "sumTotal": 57800.511,
+    "totalProfitPercentage": 4.145,
+    "totalDaychange": 140.627,
     "totalInvested": 55500.0,
-    "totalProfit": 2304.524,
-    "hash": "19af23fc085a604b29e03a7cb024bac3",
-    "hash2": "fe95127dffc001eb76c490cf37a7d0ad",
+    "totalProfit": 2300.511,
+    "hash": "ac1810c99036336e203c9b533606cb59",
+    "hash2": "afbd570876acad09d7ded5fc7bd38022",
     "122639": {
         "name": "Parag Parikh Flexi Cap Fund",
         "nav": {
@@ -615,12 +615,13 @@
             "28-Mar-2023": 9.0007,
             "29-Mar-2023": 9.182,
             "03-Apr-2023": 9.4005,
-            "06-Apr-2023": 9.2949
+            "06-Apr-2023": 9.2949,
+            "10-Apr-2023": 9.2799
         },
-        "latestNavDate": "06-Apr-2023",
-        "current": 2486.906,
+        "latestNavDate": "10-Apr-2023",
+        "current": 2482.893,
         "invested": 2500,
-        "dayChange": -28.254
+        "dayChange": -4.013
     },
     "120594": {
         "name": "ICICI Prudential Technology Fund",
