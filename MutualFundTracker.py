@@ -586,10 +586,10 @@ class MutualFund:
         if download:
             self.addToUnitsNotPreEXisting()
             if not self.downloadAllNavFile():
-                exit(1)
+                return
 
             if not self.updateMyNaVFile():
-                exit(1)
+                return
 
         sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
 

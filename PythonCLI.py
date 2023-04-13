@@ -65,6 +65,8 @@ def callMutualFund() -> None:
             tracker.logging.info("Pulling successful")
         except:
             tracker.logging.info("Pulling failed")
+            tracker.git_command_failed_mail(str(e), "Pulling failed")
+            tracker.logging.info(str(e))
             return
 
         from MutualFundTracker import MutualFund
@@ -74,11 +76,14 @@ def callMutualFund() -> None:
 
         try:
             tracker.logging.info("Pushing the latest changes")
+            repo.git.add(update=True)
+            repo.index.commit("Updated the data")
             repo.remotes.origin.push()
             tracker.logging.info("Pushing successful")
         except Exception as e:
             tracker.logging.info("Pushing failed")
-            tracker.logging.info(e)
+            tracker.git_command_failed_mail(str(e), "Pushing failed")
+            tracker.logging.info(str(e))
             return
 
         return
