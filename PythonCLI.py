@@ -48,7 +48,7 @@ def callMutualFund() -> None:
         return
 
     if args.d == 'y':
-        os.system(f"cd {git_dir} && git pull")
+        os.system(f"cd {git_dir} && git rebase")
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
         tracker.getCurrentValues(True)
