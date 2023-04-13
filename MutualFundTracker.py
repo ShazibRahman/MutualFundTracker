@@ -1,3 +1,4 @@
+from email.message import EmailMessage
 import logging
 import hashlib
 import time
@@ -9,6 +10,23 @@ from typing import Tuple
 import pytz
 import requests
 import re
+import ssl
+import smtplib
+
+ctx = ssl.create_default_context()
+ctx.verify_mode = ssl.CERT_REQUIRED
+
+
+def send_mail(sender_email: str, password: str, message: EmailMessage):
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ctx) as server:
+            server.login(sender_email, password)
+            server.send_message(message)
+    except:
+        logging.error("---Network Error---")
+        return False
+    return True
+
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
@@ -76,6 +94,8 @@ class MutualFund:
         self.logging = logging
 
         self.directoryString: str = os.path.dirname(__file__)
+        self.sender_email: str = os.environ.get("shazmail")  # type: ignore
+        self.password: str = os.environ.get("shazPassword")  # type: ignore
 
         self.navallfile: None
         self.orderfile: str = os.path.join(DATA_PATH, 'order.json')
@@ -446,7 +466,7 @@ class MutualFund:
                 return False
             self.jsonData['hash2'] = new_hash
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
-            self.formatString + " %X")
+                self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
             writeToFile(self.dayChangeJsonFileStringBackupFile,
                         readJsonFile(self.dayChangeJsonFileString))
@@ -475,7 +495,7 @@ class MutualFund:
             self.jsonData['hash'] = new_hash
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 self.formatString + " %X")
-            
+
             return True
 
     def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
@@ -586,6 +606,14 @@ class MutualFund:
         self.jsonData['totalDaychange'] = totalDaychange
 
         writeToFile(self.dayChangeJsonFileString, self.jsonData)
+
+    def git_command_failed_mail(self, message: str, subject: str = "Git Command Failed") -> None:
+        message = EmailMessage()
+        message["Subject"] = subject
+        message["From"] = self.sender_email
+        message["To"] = self.sender_email
+        message.set_content(message)
+        send_mail(self.sender_email, self.password, message)
 
 
 if __name__ == "__main__":

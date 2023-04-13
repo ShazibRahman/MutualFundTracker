@@ -4,9 +4,9 @@ try:
     from git import Repo
 except ImportError:
     if os.name == 'nt':
-        os.system('pip install gitpython')
+        os.system('pip install -r requirements.txt')
     else:
-        os.system('pip3 install gitpython')
+        os.system('pip3 install -r requirements.txt')
     from git import Repo
 git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
