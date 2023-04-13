@@ -27,9 +27,16 @@ def get_stock_data_in_form_of_table():
 
         total_invested = v[1]
         total_invested_all += total_invested
+        try:
 
-        quote = nsepy.get_quote(k)['data'][0]
-        console.log("successfully fetched the data")
+            quote = nsepy.get_quote(k)['data'][0]
+            console.log("successfully fetched the data")
+        except:
+            console.log("error in fetching the data")
+            quote = {
+                "closePrice": round(total_invested/v[0], 2) ,
+                "previousClose": round(total_invested/v[0], 2)
+            }
 
         current_price = float(quote['closePrice'])
         previous_close = float(quote['previousClose'])
