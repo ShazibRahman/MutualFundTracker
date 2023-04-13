@@ -608,6 +608,8 @@ class MutualFund:
         writeToFile(self.dayChangeJsonFileString, self.jsonData)
 
     def git_command_failed_mail(self, message: str, subject: str = "Git Command Failed") -> None:
+        if "Your branch is up to date" in message or "nothing to commit" in message:
+            return
         message = EmailMessage()
         message["Subject"] = subject
         message["From"] = self.sender_email
