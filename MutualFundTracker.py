@@ -567,7 +567,7 @@ class MutualFund:
 
             if not self.updateMyNaVFile():
                 exit(1)
-                
+
         sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
 
         totalProfit = sumTotal - totalInvested

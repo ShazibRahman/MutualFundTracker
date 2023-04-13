@@ -88,8 +88,12 @@ if __name__ == '__main__':
                         default='y',
                         help='Render the tables',
                         choices=choices)
-    parser.add_argument("-r", type=str, default='n', choices=['y', 'n'])
-    parser.add_argument("-dc", type=str, choices=choices, default='n')
+    parser.add_argument("-r", type=str,
+                        default='n',
+                        choices=['y', 'n'])
+    parser.add_argument("-dc", type=str,
+                        choices=choices,
+                        default='n')
     parser.add_argument("-add",
                         nargs="+",
                         type=str,
