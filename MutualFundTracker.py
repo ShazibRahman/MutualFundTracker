@@ -445,6 +445,11 @@ class MutualFund:
                 logging.info("--Nothing to update--")
                 return False
             self.jsonData['hash2'] = new_hash
+            lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
+            self.formatString + " %X")
+            self.jsonData['lastUpdated'] = lastUpdated
+            writeToFile(self.dayChangeJsonFileStringBackupFile,
+                        readJsonFile(self.dayChangeJsonFileString))
         return True
 
     def downloadAllNavFile(self) -> bool:
@@ -470,9 +475,7 @@ class MutualFund:
             self.jsonData['hash'] = new_hash
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 self.formatString + " %X")
-            self.jsonData['lastUpdated'] = lastUpdated
-            writeToFile(self.dayChangeJsonFileStringBackupFile,
-                        readJsonFile(self.dayChangeJsonFileString))
+            
             return True
 
     def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
