@@ -1,13 +1,5 @@
 import argparse
 import os
-try:
-    from git import Repo
-except ImportError:
-    if os.name == 'nt':
-        os.system('pip install -r requirements.txt')
-    else:
-        os.system('pip3 install -r requirements.txt')
-    from git import Repo
 git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
@@ -58,33 +50,9 @@ def callMutualFund() -> None:
 
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
-        repo = Repo(git_dir)
-        try:
-            tracker.logging.info("Pulling the latest changes")
-            repo.remotes.origin.pull()
-            tracker.logging.info("Pulling successful")
-        except:
-            tracker.logging.info("Pulling failed")
-            tracker.git_command_failed_mail(str(e), "Pulling failed")
-            tracker.logging.info(str(e))
-            return
-
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
+        
         tracker.getCurrentValues(True)
         tracker.drawTable()
-
-        try:
-            tracker.logging.info("Pushing the latest changes")
-            repo.git.add(update=True)
-            repo.index.commit("Updated the data")
-            repo.remotes.origin.push()
-            tracker.logging.info("Pushing successful")
-        except Exception as e:
-            tracker.logging.info("Pushing failed")
-            tracker.git_command_failed_mail(str(e), "Pushing failed")
-            tracker.logging.info(str(e))
-            return
 
         return
 
