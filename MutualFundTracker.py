@@ -84,7 +84,7 @@ def readJsonFile(filename: str):
 class MutualFund:
 
     def __init__(self) -> None:
-        if os.environ.get("USER") is not None and os.environ.get("USER") == "shazib":
+        if os.environ.get("USER") is not None and False:
             logging.info = Console().log
         else:
             logging.info("Initializing MutualFundTracker")

@@ -50,7 +50,7 @@ def callMutualFund() -> None:
 
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
-        
+
         tracker.getCurrentValues(True)
         tracker.drawTable()
 
