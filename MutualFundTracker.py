@@ -493,8 +493,6 @@ class MutualFund:
                     logging.info("--No changes found in the new NAV file--")
                     return False
             self.jsonData['hash'] = new_hash
-            lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
-                self.formatString + " %X")
 
             return True
 
