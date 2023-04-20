@@ -1,7 +1,7 @@
 from pandas import DataFrame
 from datetime import datetime
 import json
-from typing import Dict, List
+from typing import List
 import nsepy
 import os
 import sys

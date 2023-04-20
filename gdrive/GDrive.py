@@ -134,7 +134,6 @@ class GDrive:
                 return False
         except Exception as e:
             logging.info(f"File '{self.file_title}' is not present on remote.")
-            self.upload(file_path)
             print(e)
 
             return False
