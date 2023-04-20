@@ -3,3 +3,4 @@ logger*
 .vscode
 .idea/
 **venv**
+**.json**
