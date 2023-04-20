@@ -34,7 +34,7 @@ def get_stock_data_in_form_of_table():
         except:
             console.log("error in fetching the data")
             quote = {
-                "closePrice": round(total_invested/v[0], 2) ,
+                "closePrice": round(total_invested/v[0], 2),
                 "previousClose": round(total_invested/v[0], 2)
             }
 

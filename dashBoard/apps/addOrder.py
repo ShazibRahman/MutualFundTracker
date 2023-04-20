@@ -25,9 +25,9 @@ def get_all_order() -> dbc.Table:
                 html.Tr([html.Td(MfsReversed[k]), html.Td(v2[1]), html.Td(v2[0]), html.Td(k2)]))
     children.append(html.Tbody(body))
 
-    return dbc.Table(children=children, className=f"table table-striped table-bordered  justify-content-center") if not len(body) == 0 else dbc.Table()
+    return dbc.Table(children=children, className="table table-striped table-bordered  justify-content-center") if len(body) != 0 else dbc.Table()
 
-    # layout = dbc.Container(["container for add order"], className="container")
+
 layout = html.Div([
     dbc.Col([
         dcc.Dropdown(id='dropdown', optionHeight=60, options=helper.get_index_all_mutual_fund(

@@ -1,14 +1,23 @@
+from pandas import DataFrame
 from datetime import datetime
 import json
 from typing import Dict, List
 import nsepy
 import os
+import sys
+import pathlib
 
-from pandas import DataFrame
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+print(pathlib.Path(os.path.join(os.path.dirname(__file__), "..", "..")).resolve())
+
+from gdrive.GDrive import GDrive  # autopep8: off
 
 DATA_ORDER_JSON = 'data/order.json'
 
 data_path = os.path.join(os.path.dirname(__file__)+"/../../")
+
+
+gdrive: GDrive = GDrive()
 
 
 def roundup3(x):
@@ -16,11 +25,13 @@ def roundup3(x):
 
 
 def readJsonFile(filename):
+    gdrive.download(filename)
     with open(filename, 'r') as f:
         return json.load(f)
 
 
 def readJsonFromDataFolder(filename):
+    gdrive.download(data_path+"/data/"+filename)
     with open(data_path+"/data/"+filename, 'r') as f:
         return json.load(f)
 
@@ -28,6 +39,7 @@ def readJsonFromDataFolder(filename):
 def writeJsonFile(filename, data):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
+    gdrive.upload(filename)
 
 
 units_json = readJsonFile(data_path+'data/units.json')

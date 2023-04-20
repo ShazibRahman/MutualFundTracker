@@ -12,6 +12,7 @@ import requests
 import re
 import ssl
 import smtplib
+from gdrive.GDrive import GDrive
 
 ctx = ssl.create_default_context()
 ctx.verify_mode = ssl.CERT_REQUIRED
@@ -22,8 +23,9 @@ def send_mail(sender_email: str, password: str, message: EmailMessage):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ctx) as server:
             server.login(sender_email, password)
             server.send_message(message)
-    except:
+    except Exception as e:
         logging.error("---Network Error---")
+        logging.error(str(e))
         return False
     return True
 
@@ -50,6 +52,8 @@ logging.basicConfig(filename=LOGGER_PATH,
                     format='%(asctime)s %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p')
 
+gdrive: GDrive = GDrive()
+
 
 def roundUp3(number: float) -> float:
     return round(number, 3)
@@ -67,6 +71,7 @@ def writeToFile(filename: str, data: object, indent=4) -> None:
     logging.info(f"writing to {filename=}")
     with open(filename, 'w') as f:
         json.dump(data, f, indent=indent)
+    gdrive.upload(filename)
 
 
 def writeRawDataToFile(file_name: str, data: str) -> None:
@@ -77,6 +82,7 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
 
 def readJsonFile(filename: str):
     logging.info(f"reading {filename=}")
+    gdrive.download(filename)
     with open(filename, 'r') as f:
         return json.load(f)
 
@@ -84,12 +90,9 @@ def readJsonFile(filename: str):
 class MutualFund:
 
     def __init__(self) -> None:
-        if os.environ.get("USER") is not None and False:
-            logging.info = Console().log
-        else:
-            logging.info("Initializing MutualFundTracker")
-            logging.info("--Application has started---")
-            logging.info(f"--Logged in as {os.environ.get('USER')}")
+        logging.info("Initializing MutualFundTracker")
+        logging.info("--Application has started---")
+        logging.info(f"--Logged in as {os.environ.get('USER')}")
 
         self.logging = logging
 
@@ -106,13 +109,13 @@ class MutualFund:
         self.unitsFile: str = os.path.join(DATA_PATH, 'units.json')
         try:
             self.Units: dict = readJsonFile(self.unitsFile)
-        except:
+        except JSONDecodeError:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.Units = {}
             self.runOnceInitialization(self.unitsFile)
         try:
             self.Orders: dict = readJsonFile(self.orderfile)
-        except:
+        except JSONDecodeError:
             print("Something went wrong with the order file")
             self.Orders = {}
             self.runOnceInitialization(self.orderfile)
