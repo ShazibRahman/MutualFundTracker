@@ -23,8 +23,13 @@ FILE_PATH = pathlib.Path(__file__).parent.parent.joinpath(
 CLIENT_SECRET = pathlib.Path(__file__).parent.joinpath(
     "client_secrets.json").resolve()
 
+if not os.path.exists(CLIENT_SECRET):
+    raise FileNotFoundError(
+        f"Client secret file not found at {CLIENT_SECRET}")
+
 LOCAL_DATE_TIMEZONE = pytz.timezone("Asia/Kolkata")
 
+# Folder ID of the folder where you want to upload the file
 FOLDER_ID = "1Jif1yY_Zal-Vhwx7gezP3AAJSK2ELGOO"
 
 
