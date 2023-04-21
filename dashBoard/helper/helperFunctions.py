@@ -5,10 +5,8 @@ from typing import List
 import nsepy
 import os
 import sys
-import pathlib
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
-print(pathlib.Path(os.path.join(os.path.dirname(__file__), "..", "..")).resolve())
 
 from gdrive.GDrive import GDrive  # autopep8: off
 
