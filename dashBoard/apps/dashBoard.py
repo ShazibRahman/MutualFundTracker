@@ -1,4 +1,3 @@
-from typing import List
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -24,12 +23,11 @@ def number(string: str) -> html.Font:
 
 def percentage(string: str) -> html.Font:
     string = string.replace("%", "")
-    return html.Font(f"({string})%" if float(string) > 0 else f"({string})%", style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
+    return html.Font(f"({string})%", style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
 
 
-def prepareTable() -> List[dbc.Table]:
+def prepareTable() -> list[dbc.Table]:
     summary_table, MutualFund_table = helper.getMainTableData()
-    # return [dbc.Table.from_dataframe(pd.DataFrame(summary_table, columns=['Invested', 'Current', '•|Total Returns', 'Last UpDated']), striped=True, bordered=True, hover=True), dbc.Table.from_dataframe(pd.DataFrame(MutualFund_table, columns="SCHEME NAME,DAY CHANGE,RETURNS,CURRENT,NAV".split(",")), striped=True, bordered=True, hover=True)]
     children_sum_tab = []
     for x in range(len(summary_table)):
         if x == 0:
