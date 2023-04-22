@@ -6,6 +6,7 @@ import json
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 import os
+import pathlib
 from typing import Tuple
 import pytz
 import requests
@@ -31,7 +32,7 @@ def send_mail(sender_email: str, password: str, message: EmailMessage):
 
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
-DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath('data').as_posix()
 
 try:
     from rich.console import Console
@@ -44,7 +45,8 @@ except ImportError as e:
     from rich.table import Table
     import plotext as plt
 
-LOGGER_PATH = os.path.join(DATA_PATH, 'logger.log')
+LOGGER_PATH = pathlib.Path(DATA_PATH).resolve().joinpath(
+    'logger.log').as_posix()
 
 logging.basicConfig(filename=LOGGER_PATH,
                     filemode='a',
@@ -96,17 +98,20 @@ class MutualFund:
 
         self.logging = logging
 
-        self.directoryString: str = os.path.dirname(__file__)
+        self.directoryString: str = pathlib.Path(
+            __file__).parent.resolve().as_posix()
         self.sender_email: str = os.environ.get("shazmail")  # type: ignore
         self.password: str = os.environ.get("shazPassword")  # type: ignore
 
         self.navallfile: None
-        self.orderfile: str = os.path.join(DATA_PATH, 'order.json')
+        self.orderfile: str = pathlib.Path(
+            DATA_PATH).resolve().joinpath('order.json').as_posix()
         self.navMyfile: None
-        self.dayChangeJsonFileString: str = os.path.join(
-            DATA_PATH, 'dayChange.json')
+        self.dayChangeJsonFileString: str = pathlib.Path(
+            DATA_PATH).resolve().joinpath('dayChange.json').as_posix()
         self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
-        self.unitsFile: str = os.path.join(DATA_PATH, 'units.json')
+        self.unitsFile: str = pathlib.Path(
+            DATA_PATH).resolve().joinpath('units.json').as_posix()
         try:
             self.Units: dict = readJsonFile(self.unitsFile)
         except JSONDecodeError:
@@ -220,12 +225,12 @@ class MutualFund:
         writeToFile(self.orderfile, self.Orders)
 
     def runOnceInitialization(self, file):
-        if not os.path.exists(os.path.join(self.directoryString, 'data')):
-            os.makedirs(os.path.join(DATA_PATH))
+        if not pathlib.Path.exists(DATA_PATH):
+            pathlib.Path.mkdir(DATA_PATH)
         if file is not None:
             writeToFile(file, {})
         else:
-            if os.path.isfile(self.dayChangeJsonFileStringBackupFile):
+            if pathlib.Path.exists(self.dayChangeJsonFileStringBackupFile):
                 backup_data = readJsonFile(
                     self.dayChangeJsonFileStringBackupFile)
                 writeToFile(self.dayChangeJsonFileString, backup_data)

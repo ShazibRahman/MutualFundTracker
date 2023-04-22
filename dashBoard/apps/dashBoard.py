@@ -74,12 +74,12 @@ def prepareTable() -> List[dbc.Table]:
                     # print(_1, _2)
                     td = html.Td()
                     td.children = [_1, html.Br(), html.Br(), number(
-                        _2) if not _2 == "N.A." else _2]
+                        _2) if _2 != "N.A." else _2]
                 elif y == 2:
                     _1, _2 = MutualFund_table[x][y].split(" ")
                     td = html.Td()
                     td.children = [_1, html.Br(), html.Br(), percentage(
-                        _2) if not _2 == "N.A." else _2]
+                        _2) if _2 != "N.A." else _2]
                 elif y == 3:
                     _1, _2 = MutualFund_table[x][y].split(" ")
                     td = html.Td()
@@ -101,7 +101,7 @@ def prepareTable() -> List[dbc.Table]:
     children_mut_tab.append(html.Tbody(body))
 
     mut_tab = dbc.Table(children=children_mut_tab,
-                        striped=True, bordered=True, hover=True, className=f"table table-sm")
+                        striped=True, bordered=True, hover=True, className="table table-sm")
     return [sum_tab, html.Br(), html.Br(), mut_tab]
 
 

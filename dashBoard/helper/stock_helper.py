@@ -21,12 +21,10 @@ def get_stock_data_in_form_of_table():
 }
     '''
     table = []
-    total_invested_all = 0
-    total_returns_all = 0
+
     for k, v in my_stocks_json.items():
 
         total_invested = v[1]
-        total_invested_all += total_invested
         try:
 
             quote = nsepy.get_quote(k)['data'][0]
@@ -45,7 +43,6 @@ def get_stock_data_in_form_of_table():
         day_change_percentage = round(
             day_change / previous_close * 100, 2) if previous_close != 0 else 0
         total_returns = v[0] * current_price
-        total_returns_all += total_returns
         table.append({"name": stocks_dic[k],
                       "units": v[0],
                       "average_price": round(total_invested/v[0], 2),

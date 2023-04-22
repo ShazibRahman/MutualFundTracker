@@ -1,18 +1,20 @@
+import pathlib
 from pandas import DataFrame
 from datetime import datetime
 import json
 from typing import List
 import nsepy
-import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+import requests
+
+sys.path.append(pathlib.Path(
+    __file__).parent.parent.parent.absolute().as_posix())
 
 from gdrive.GDrive import GDrive  # autopep8: off
 
-DATA_ORDER_JSON = 'data/order.json'
-
-data_path = os.path.join(os.path.dirname(__file__)+"/../../")
+data_path = pathlib.Path(__file__).parent.parent.parent.joinpath(
+    "data").resolve().as_posix()
 
 
 gdrive: GDrive = GDrive()
@@ -29,38 +31,34 @@ def readJsonFile(filename):
 
 
 def readJsonFromDataFolder(filename):
-    gdrive.download(data_path+"/data/"+filename)
-    with open(data_path+"/data/"+filename, 'r') as f:
+    gdrive.download(data_path+filename)
+    with open(data_path+filename, 'r') as f:
         return json.load(f)
 
 
 def writeJsonFile(filename, data):
+    print("writing to file : ", filename)
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4)
     gdrive.upload(filename)
 
+unit_file_path = pathlib.Path(data_path).joinpath("units.json").resolve()
+daychange_file_path = pathlib.Path(data_path).joinpath("dayChange.json").resolve()
+order_file_path = pathlib.Path(data_path).joinpath("order.json").resolve()
+json_data_file_path = pathlib.Path(data_path).joinpath("NAVAll.json").resolve()
+stock_data_file_path = pathlib.Path(data_path).joinpath("stock_data.json").resolve()
+stock_order_file_path = pathlib.Path(data_path).joinpath("stock_order.json").resolve()
 
-units_json = readJsonFile(data_path+'data/units.json')
-daychange_json = readJsonFile(data_path+'data/dayChange.json')
-Orders = readJsonFile(data_path + DATA_ORDER_JSON)
-json_data = readJsonFile(data_path+"data/NAVAll.json")
+units_json = readJsonFile(unit_file_path)
+daychange_json = readJsonFile(daychange_file_path)
+Orders = readJsonFile(order_file_path)
+json_data = readJsonFile(json_data_file_path)
 
-
-def getOrders():
-    return readJsonFile(data_path + DATA_ORDER_JSON)
-
-
-def getUnits():
-    return readJsonFile(data_path+"data/units.json")
-
-
-def getDayChange_data():
-    return readJsonFile(data_path+"data/dayChange.json")
 
 
 def add_order_stock(stock, units, amount):
-    stock_order = readJsonFile(data_path+'data/stock_order.json')
-    stock_data = readJsonFile(data_path+'data/stock_data.json')
+    stock_order = readJsonFile(stock_order_file_path)
+    stock_data = readJsonFile(stock_data_file_path)
     if not stock_data.__contains__(stock):
         return False
     if stock_order.__contains__(stock):
@@ -68,7 +66,7 @@ def add_order_stock(stock, units, amount):
         stock_order[stock][1] += amount*units
     else:
         stock_order[stock] = [units, amount*units]
-    writeJsonFile(data_path+'data/stock_order.json', stock_order)
+    writeJsonFile(stock_order_file_path, stock_order)
     return True
 
 
@@ -87,7 +85,7 @@ def addOrder(MFID, unit, amount, date) -> str:
         Orders[MFID] = {}
         Orders[MFID][date] = [unit, amount]
         value = "new"
-    writeJsonFile(data_path + DATA_ORDER_JSON, Orders)
+    writeJsonFile(order_file_path, Orders)
     return value
 
 
@@ -222,13 +220,13 @@ def get_history(symbol: str, start: str, end: str) -> DataFrame:
 
 def create_index_all_mutual_fund():
     index_all_mutual_fund = {}
-    with open(data_path+"data/NAVAll.txt", "r") as f:
-        for line in f:
+    with requests.get("https://www.amfiindia.com/spages/NAVopen.txt") as response:
+        for line in response.text.splitlines():
+            if line=="": continue
             if line[0].isdigit():
                 data = line.split(";")
                 index_all_mutual_fund[data[3]] = data[0]
-    with open(data_path+"data/NAVAll.json", "w") as f:
-        json.dump(index_all_mutual_fund, f, indent=4)
+    writeJsonFile(json_data_file_path,index_all_mutual_fund)
 
 
 def get_index_all_mutual_fund():
@@ -242,12 +240,12 @@ def get_id_name_dic(value):
 
 
 def get_all_stocks_list():
-    stock_data = readJsonFile(data_path+"/data/stocks_data.json")
+    stock_data = readJsonFile(stock_data_file_path)
     return [{"label": stock_data[x], "value":x} for x in stock_data]
 
 
 def get_all_stock_dic():
-    return readJsonFile(data_path+"/data/stocks_data.json")
+    return readJsonFile(stock_data_file_path)
 
 
 if __name__ == "__main__":
