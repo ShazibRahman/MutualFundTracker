@@ -35,4 +35,4 @@ if __name__ == '__main__':
     sort_nav_data_based_on_nav_date(
         os.path.join(data_directory, 'dayChange.json'))
 else:
-    raise Exception("This file is not meant to be imported")
+    raise ImportError("This file is not meant to be imported")
