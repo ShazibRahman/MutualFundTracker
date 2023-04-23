@@ -1,9 +1,13 @@
 import logging
 import os
 import pathlib
+import sys
 from datetime import datetime
 
+sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
 import pytz
+
+from EmailService.send_mail import EmailService  # autopep8: off
 
 try:
     from pydrive.auth import GoogleAuth, RefreshError
@@ -62,8 +66,11 @@ class GDrive:
         if self.gauth.access_token_expired:
             try:
                 self.gauth.Refresh()
-            except RefreshError:
-                self.gauth.LocalWebserverAuth()
+            except RefreshError as e:
+                logging.error("Error while refreshing token.")
+                EmailService().send_mail(
+                    subject="Error while refreshing token.", body=str(e))
+                exit(1)
             self.gauth.SaveCredentialsFile(CRED_FILE)
 
         self.drive = GoogleDrive(self.gauth)

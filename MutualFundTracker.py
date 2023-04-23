@@ -4,8 +4,6 @@ import logging
 import os
 import pathlib
 import re
-import smtplib
-import ssl
 import time
 from datetime import datetime, timedelta
 from email.message import EmailMessage
@@ -16,22 +14,6 @@ import pytz
 import requests
 
 from gdrive.GDrive import GDrive
-
-ctx = ssl.create_default_context()
-ctx.verify_mode = ssl.CERT_REQUIRED
-
-
-def send_mail(sender_email: str, password: str, message: EmailMessage):
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ctx) as server:
-            server.login(sender_email, password)
-            server.send_message(message)
-    except Exception as e:
-        logging.error("---Network Error---")
-        logging.error(str(e))
-        return False
-    return True
-
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath('data').as_posix()
@@ -614,16 +596,6 @@ class MutualFund:
         self.jsonData['totalDaychange'] = totalDaychange
 
         writeToFile(self.dayChangeJsonFileString, self.jsonData)
-
-    def git_command_failed_mail(self, message: str, subject: str = "Git Command Failed") -> None:
-        if "Your branch is up to date" in message or "nothing to commit" in message:
-            return
-        message = EmailMessage()
-        message["Subject"] = subject
-        message["From"] = self.sender_email
-        message["To"] = self.sender_email
-        message.set_content(message)
-        send_mail(self.sender_email, self.password, message)
 
 
 if __name__ == "__main__":
