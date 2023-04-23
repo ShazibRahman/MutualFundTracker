@@ -19,7 +19,7 @@ def get_all_order() -> dbc.Table:
     children.append(html.Thead(html.Tr([html.Th("Mutual Fund Name"), html.Th(
         "Amount"), html.Th("Units"), html.Th("Nav Date")])))
     body = []
-    for k, v in helper.getOrders().items():  # id , dic
+    for k, v in helper.Orders.items():  # id , dic
         for k2, v2 in v.items():  # date ,list[units,amount]
             body.append(
                 html.Tr([html.Td(MfsReversed[k]), html.Td(v2[1]), html.Td(v2[0]), html.Td(k2)]))

@@ -31,8 +31,9 @@ def readJsonFile(filename):
 
 
 def readJsonFromDataFolder(filename):
-    gdrive.download(data_path+filename)
-    with open(data_path+filename, 'r') as f:
+    file_path = pathlib.Path(data_path).joinpath(filename).resolve()
+    gdrive.download(file_path)
+    with open(file_path, 'r') as f:
         return json.load(f)
 
 
@@ -46,7 +47,7 @@ unit_file_path = pathlib.Path(data_path).joinpath("units.json").resolve()
 daychange_file_path = pathlib.Path(data_path).joinpath("dayChange.json").resolve()
 order_file_path = pathlib.Path(data_path).joinpath("order.json").resolve()
 json_data_file_path = pathlib.Path(data_path).joinpath("NAVAll.json").resolve()
-stock_data_file_path = pathlib.Path(data_path).joinpath("stock_data.json").resolve()
+stock_data_file_path = pathlib.Path(data_path).joinpath("stocks_data.json").resolve()
 stock_order_file_path = pathlib.Path(data_path).joinpath("stock_order.json").resolve()
 
 units_json = readJsonFile(unit_file_path)
