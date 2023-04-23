@@ -6,7 +6,7 @@ from datetime import datetime
 import pytz
 
 try:
-    from pydrive.auth import GoogleAuth
+    from pydrive.auth import GoogleAuth, RefreshError
     from pydrive.drive import GoogleDrive
 except ImportError:
     if os.name == "nt":
@@ -60,7 +60,10 @@ class GDrive:
             self.gauth.LocalWebserverAuth()
             self.gauth.SaveCredentialsFile(CRED_FILE)
         if self.gauth.access_token_expired:
-            self.gauth.Refresh()
+            try:
+                self.gauth.Refresh()
+            except RefreshError:
+                self.gauth.LocalWebserverAuth()
             self.gauth.SaveCredentialsFile(CRED_FILE)
 
         self.drive = GoogleDrive(self.gauth)
@@ -170,4 +173,5 @@ class GDrive:
 
 
 if __name__ == "__main__":
+    gdrive = GDrive()
     print(f"{logger_path=} {CRED_FILE=} {FILE_PATH=} {CLIENT_SECRET=}")
