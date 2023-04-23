@@ -1,15 +1,14 @@
-import dash_core_components as dcc
-import dash_bootstrap_components as dbc
-import dash_html_components as html
 from datetime import date
-import pandas as pd
-from dash.dependencies import Input, Output, State
-from plotly import graph_objs as go
+
+import dash_bootstrap_components as dbc
+import dash_core_components as dcc
+import dash_html_components as html
 import helper.helperFunctions as helper
 import helper.stock_helper as stock_helper
-
+import pandas as pd
 from app import app
-
+from dash.dependencies import Input, Output, State
+from plotly import graph_objs as go
 
 layout = html.Div([html.Div(children=[
     html.H1(children='Stocks', className="text-center"),

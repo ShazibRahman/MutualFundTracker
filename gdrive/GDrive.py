@@ -1,8 +1,10 @@
+import logging
 import os
 import pathlib
-import logging
 from datetime import datetime
+
 import pytz
+
 try:
     from pydrive.auth import GoogleAuth
     from pydrive.drive import GoogleDrive

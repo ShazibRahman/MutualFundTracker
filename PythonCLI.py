@@ -1,5 +1,6 @@
 import argparse
 import os
+
 git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
@@ -7,13 +8,11 @@ anacron_user = "Shazib_Anacron"
 
 def readLogs():
     os.system(f'bat --paging=never {loggerPath}')
-    return
 
 
 def clearLogs():
-    file = open(loggerPath, 'w')
-    file.close()
-    return
+    file_ = open(loggerPath, 'w')
+    file_.close()
 
 
 def callMutualFund() -> None:
@@ -65,7 +64,6 @@ def callMutualFund() -> None:
         from MutualFundTracker import MutualFund
         tracker = MutualFund()
         tracker.drawGraph()
-        return
 
 
 if __name__ == '__main__':

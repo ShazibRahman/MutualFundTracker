@@ -1,18 +1,20 @@
-from email.message import EmailMessage
-import logging
 import hashlib
-import time
 import json
-from datetime import datetime, timedelta
-from json.decoder import JSONDecodeError
+import logging
 import os
 import pathlib
+import re
+import smtplib
+import ssl
+import time
+from datetime import datetime, timedelta
+from email.message import EmailMessage
+from json.decoder import JSONDecodeError
 from typing import Tuple
+
 import pytz
 import requests
-import re
-import ssl
-import smtplib
+
 from gdrive.GDrive import GDrive
 
 ctx = ssl.create_default_context()
@@ -35,15 +37,15 @@ INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath('data').as_posix()
 
 try:
+    import plotext as plt
     from rich.console import Console
     from rich.table import Table
-    import plotext as plt
 except ImportError as e:
     print('Installing requirements for you')
     os.system('pip3 install -r requirements.txt')
+    import plotext as plt
     from rich.console import Console
     from rich.table import Table
-    import plotext as plt
 
 LOGGER_PATH = pathlib.Path(DATA_PATH).resolve().joinpath(
     'logger.log').as_posix()

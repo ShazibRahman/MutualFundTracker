@@ -2,7 +2,7 @@ import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import nsepy
-from helper.helperFunctions import readJsonFromDataFolder, get_all_stock_dic
+from helper.helperFunctions import get_all_stock_dic, readJsonFromDataFolder
 from rich.console import Console
 
 console = Console()

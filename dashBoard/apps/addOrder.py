@@ -1,12 +1,11 @@
 from datetime import date, datetime
+
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 import helper.helperFunctions as helper
-
-from dash.dependencies import Input, Output, State
-
 from app import app
+from dash.dependencies import Input, Output, State
 
 
 def get_all_order() -> dbc.Table:
