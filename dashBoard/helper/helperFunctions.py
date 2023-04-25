@@ -2,7 +2,6 @@ import json
 import pathlib
 import sys
 from datetime import datetime
-from typing import List
 
 import nsepy
 import requests
@@ -52,7 +51,7 @@ stock_order_file_path = pathlib.Path(data_path).joinpath("stock_order.json").res
 
 units_json = readJsonFile(unit_file_path)
 daychange_json = readJsonFile(daychange_file_path)
-Orders = readJsonFile(order_file_path)
+Orders:dict[str,dict[str,list[int]]] = readJsonFile(order_file_path)
 json_data = readJsonFile(json_data_file_path)
 
 
@@ -185,7 +184,7 @@ def getMainTableData():
     totalProfit = daychange_json['totalProfit']
     summaryTable.append([invested, current, str(totalProfit) +
                         " "+str(totalProfitPercentage), lastUpdated])
-    mutual_fund_table: List[List] = [
+    mutual_fund_table: list[list] = [
         "SCHEME NAME,DAY CHANGE,RETURNS,CURRENT,NAV".split(",")]
 
     for val in units_json.keys():
