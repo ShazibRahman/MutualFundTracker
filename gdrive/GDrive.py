@@ -2,6 +2,7 @@ import logging
 import os
 import pathlib
 import sys
+import uuid
 from datetime import datetime
 
 sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
@@ -52,7 +53,19 @@ logging.basicConfig(
 
 
 class GDrive:
+    _instance = None
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__initialized = False
+        else:
+            cls._instance.__initialized = True
+        return cls._instance    
+        
     def __init__(self, folder_name="MutualFund"):
+        if self.__initialized:
+            print("Already initialized")
+            return
         self.gauth = GoogleAuth()
         self.gauth.settings['client_config_file'] = CLIENT_SECRET
         if os.path.exists(CRED_FILE):
@@ -75,7 +88,11 @@ class GDrive:
 
         self.drive = GoogleDrive(self.gauth)
         self.folder = self.create_or_get_folder(folder_name)
-
+    def __repr__(self) -> str:
+        if not hasattr(self, "_id"):
+            self._id = uuid.uuid4()
+        return f"{self.__class__.__name__}({self._id})"
+        
     def create_or_get_folder(self, folder_name):
         folder_list = self.drive.ListFile(
             {'q': f"title='{folder_name}' and trashed=false and mimeType='application/vnd.google-apps.folder'"}).GetList()
