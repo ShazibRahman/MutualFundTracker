@@ -66,19 +66,20 @@ class GDrive:
         if self.__initialized:
             print("Already initialized")
             return
-        self.gauth = GoogleAuth()
-        self.gauth.settings['client_config_file'] = CLIENT_SECRET
+        self._id = uuid.uuid4().__str__()
+        gauth = GoogleAuth()
+        gauth.settings['client_config_file'] = CLIENT_SECRET
         if os.path.exists(CRED_FILE):
-            self.gauth.LoadCredentialsFile(CRED_FILE)
+            gauth.LoadCredentialsFile(CRED_FILE)
         else:
-            self.gauth.LocalWebserverAuth()
-            self.gauth.SaveCredentialsFile(CRED_FILE)
-        if self.gauth.credentials is None:
-            self.gauth.LocalWebserverAuth()
-            self.gauth.SaveCredentialsFile(CRED_FILE)
-        if self.gauth.access_token_expired:
+            gauth.LocalWebserverAuth()
+            gauth.SaveCredentialsFile(CRED_FILE)
+        if gauth.credentials is None:
+            gauth.LocalWebserverAuth()
+            gauth.SaveCredentialsFile(CRED_FILE)
+        if gauth.access_token_expired:
             try:
-                self.gauth.Refresh()
+                gauth.Refresh()
             except RefreshError as e:
                 logging.error("Error while refreshing token.")
                 if pathlib.Path(CRED_FILE).exists():
@@ -86,15 +87,20 @@ class GDrive:
                 EmailService().send_mail(
                     subject="Error while refreshing token.", body=str(e))
                 exit(1)
-            self.gauth.SaveCredentialsFile(CRED_FILE)
+            gauth.SaveCredentialsFile(CRED_FILE)
 
-        self.drive = GoogleDrive(self.gauth)
+        self.drive = GoogleDrive(gauth)
         self.folder = self.create_or_get_folder(folder_name)
     def __repr__(self) -> str:
-        if not hasattr(self, "_id"):
-            self._id = uuid.uuid4()
         return f"{self.__class__.__name__}({self._id})"
-        
+    
+    def __dict__(self) -> dict:
+        return {
+            "_id": self._id,
+            "_initialized": self.__initialized,
+            "_class": self.__class__.__name__,
+        }
+
     def create_or_get_folder(self, folder_name):
         folder_list = self.drive.ListFile(
             {'q': f"title='{folder_name}' and trashed=false and mimeType='application/vnd.google-apps.folder'"}).GetList()
@@ -200,4 +206,12 @@ class GDrive:
 
 if __name__ == "__main__":
     gdrive = GDrive()
-    print(f"{logger_path=} {CRED_FILE=} {FILE_PATH=} {CLIENT_SECRET=}")
+    # print(gdrive.__dict__())
+    print(gdrive)
+    print(gdrive.__dict__())
+
+
+
+
+
+    print(GDrive().__dict__())
