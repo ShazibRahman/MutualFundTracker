@@ -209,9 +209,3 @@ if __name__ == "__main__":
     # print(gdrive.__dict__())
     print(gdrive)
     print(gdrive.__dict__())
-
-
-
-
-
-    print(GDrive().__dict__())
