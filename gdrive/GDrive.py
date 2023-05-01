@@ -81,6 +81,8 @@ class GDrive:
                 self.gauth.Refresh()
             except RefreshError as e:
                 logging.error("Error while refreshing token.")
+                if pathlib.Path(CRED_FILE).exists():
+                    pathlib.Path(CRED_FILE).unlink()
                 EmailService().send_mail(
                     subject="Error while refreshing token.", body=str(e))
                 exit(1)
