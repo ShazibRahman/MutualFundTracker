@@ -1,8 +1,12 @@
+import pathlib
+import sys
 from typing import Tuple
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
+
+sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
 from app import app
 # connect to your app pages
 from apps import addOrder, dashBoard, stocks

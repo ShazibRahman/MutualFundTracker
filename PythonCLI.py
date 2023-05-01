@@ -1,9 +1,16 @@
 import argparse
 import os
+import pathlib
+import sys
+
+from MutualFundTracker import MutualFund
 
 git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
+# sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
+
+tracker = MutualFund()
 
 
 def readLogs():
@@ -23,46 +30,40 @@ def callMutualFund() -> None:
     if args.logs == "clear":
         clearLogs()
         return
+    if args.dash == 'y':
+        import webbrowser
+
+        from dashBoard.index import app
+        port = 8050
+
+        webbrowser.open(f"http://localhost:{port}")
+        app.run_server(debug=True, port=port)
+        return
 
     if args.add is not None:
-
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
         tracker.addOrder(args.add[0], float(args.add[1]), float(args.add[2]),
                          args.add[3])
         return
     if args.dc == 'y':
-
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
         tracker.DayChangeTable()
         return
 
     if args.r == 'y':
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
         tracker.getCurrentValues(False)
         tracker.drawTable()
         return
 
     if args.d == 'y':
-
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
-
         tracker.getCurrentValues(True)
         tracker.drawTable()
 
         return
 
     if args.g != 'o':
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
+
         tracker.drawTable()
 
     if args.g == 'y' or args.g == 'o':
-        from MutualFundTracker import MutualFund
-        tracker = MutualFund()
         tracker.drawGraph()
 
 
@@ -102,6 +103,11 @@ if __name__ == '__main__':
                         type=str,
                         choices=['show', 'clear', 'n'],
                         default='n')
+    parser.add_argument("-dash",
+                        type=str,
+                        choices=['y', 'n'],
+                        default='n')
+
     args = parser.parse_args()
     callMutualFund()
 else:
