@@ -4,19 +4,23 @@ import logging
 import os
 import pathlib
 import re
+import sys
 import time
 from datetime import datetime, timedelta
-from email.message import EmailMessage
 from json.decoder import JSONDecodeError
 from typing import Tuple
 
 import pytz
 import requests
 
-from gdrive.GDrive import GDrive
+sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
+
+
+from gdrive.GDrive import GDrive  # autopep8: off
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath('data').as_posix()
+FOLDER_NAME = "MutualFund"
 
 try:
     import plotext as plt
@@ -38,7 +42,7 @@ logging.basicConfig(filename=LOGGER_PATH,
                     format='%(asctime)s %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p')
 
-gdrive: GDrive = GDrive()
+gdrive: GDrive = GDrive(FOLDER_NAME,logging)
 
 
 def roundUp3(number: float) -> float:
@@ -531,7 +535,7 @@ class MutualFund:
             self.jsonData[ids]['latestNavDate'] = latestNavDate
 
     def cleanUp(self) -> None:
-        keys = list(self.jsonData.keys())
+        keys:list[str] = list(self.jsonData.keys())
         for key in keys:
             if key.isnumeric() and key not in self.Units:
                 del self.jsonData[key]
