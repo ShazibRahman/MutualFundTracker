@@ -1,4 +1,5 @@
 import json
+import logging
 import pathlib
 import sys
 from datetime import datetime
@@ -8,22 +9,29 @@ import requests
 from pandas import DataFrame
 
 sys.path.append(pathlib.Path(
-    __file__).parent.parent.parent.absolute().as_posix())
+    __file__).parent.parent.parent.parent.absolute().as_posix())
 
 from gdrive.GDrive import GDrive  # autopep8: off
 
 data_path = pathlib.Path(__file__).parent.parent.parent.joinpath(
     "data").resolve().as_posix()
+LOGGER_PATH = pathlib.Path(data_path).resolve().joinpath(
+    'logger.log').as_posix()
 
+logging.basicConfig(filename=LOGGER_PATH,
+                    filemode='a',
+                    level=logging.DEBUG,
+                    format='%(asctime)s %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p')
 
-gdrive: GDrive = GDrive()
+gdrive: GDrive = GDrive("MutualFund",logging)
 
 
 def roundup3(x):
     return round(x, 3)
 
 
-def readJsonFile(filename):
+def  readJsonFile(filename):
     gdrive.download(filename)
     with open(filename, 'r') as f:
         return json.load(f)
@@ -225,7 +233,11 @@ def create_index_all_mutual_fund():
             if line=="": continue
             if line[0].isdigit():
                 data = line.split(";")
-                index_all_mutual_fund[data[3]] = data[0]
+                try:
+                    index_all_mutual_fund[data[3]] = data[0]
+                except IndexError:
+                    print(line)
+                    continue
     writeJsonFile(json_data_file_path,index_all_mutual_fund)
 
 
