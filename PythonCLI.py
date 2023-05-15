@@ -1,7 +1,5 @@
 import argparse
 import os
-import pathlib
-import sys
 
 from MutualFundTracker import MutualFund
 
@@ -9,8 +7,6 @@ git_dir = os.path.dirname(__file__)
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
 # sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
-
-tracker = MutualFund()
 
 
 def readLogs():
@@ -41,29 +37,38 @@ def callMutualFund() -> None:
         return
 
     if args.add is not None:
+        tracker = MutualFund()
+
         tracker.addOrder(args.add[0], float(args.add[1]), float(args.add[2]),
                          args.add[3])
         return
     if args.dc == 'y':
+        tracker = MutualFund()
+
         tracker.DayChangeTable()
         return
 
     if args.r == 'y':
+        tracker = MutualFund()
+
         tracker.getCurrentValues(False)
         tracker.drawTable()
         return
 
     if args.d == 'y':
+        tracker = MutualFund()
+
         tracker.getCurrentValues(True)
         tracker.drawTable()
 
         return
 
     if args.g != 'o':
-
+        tracker = MutualFund()
         tracker.drawTable()
 
     if args.g == 'y' or args.g == 'o':
+        tracker = MutualFund()
         tracker.drawGraph()
 
 

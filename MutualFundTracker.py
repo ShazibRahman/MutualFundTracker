@@ -12,8 +12,12 @@ from typing import Tuple
 
 import pytz
 import requests
-from gdrive.GDrive import GDrive
 
+# autopep8: off
+sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix()) 
+from gdrive.GDrive import GDrive  # pylint: disable=import-error
+
+# autopep8: on
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath('data').as_posix()
 FOLDER_NAME = "MutualFund"
@@ -40,9 +44,7 @@ logging.basicConfig(filename=LOGGER_PATH,
 
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
-
-gdrive: GDrive = GDrive(FOLDER_NAME, logging)
+gdrive = None
 
 
 def roundUp3(number: float) -> float:
@@ -80,6 +82,8 @@ def readJsonFile(filename: str):
 class MutualFund:
 
     def __init__(self) -> None:
+        global gdrive
+        gdrive = GDrive(FOLDER_NAME, logging)
         logging.info("Initializing MutualFundTracker")
         logging.info("--Application has started---")
         logging.info(f"--Logged in as {os.environ.get('USER')}")
