@@ -12,11 +12,7 @@ from typing import Tuple
 
 import pytz
 import requests
-
-sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
-
-
-from gdrive.GDrive import GDrive  # autopep8: off
+from gdrive.GDrive import GDrive
 
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath('data').as_posix()
@@ -41,6 +37,8 @@ logging.basicConfig(filename=LOGGER_PATH,
                     level=logging.DEBUG,
                     format='%(asctime)s %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S %p')
+
+logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 gdrive: GDrive = GDrive(FOLDER_NAME,logging)
 
