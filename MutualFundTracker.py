@@ -40,7 +40,9 @@ logging.basicConfig(filename=LOGGER_PATH,
 
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-gdrive: GDrive = GDrive(FOLDER_NAME,logging)
+sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
+
+gdrive: GDrive = GDrive(FOLDER_NAME, logging)
 
 
 def roundUp3(number: float) -> float:
@@ -533,7 +535,7 @@ class MutualFund:
             self.jsonData[ids]['latestNavDate'] = latestNavDate
 
     def cleanUp(self) -> None:
-        keys:list[str] = list(self.jsonData.keys())
+        keys: list[str] = list(self.jsonData.keys())
         for key in keys:
             if key.isnumeric() and key not in self.Units:
                 del self.jsonData[key]
