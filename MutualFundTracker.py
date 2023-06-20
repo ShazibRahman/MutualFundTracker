@@ -14,7 +14,7 @@ import pytz
 import requests
 
 # autopep8: off
-sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix()) 
+sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
 from gdrive.GDrive import GDrive  # pylint: disable=import-error
 
 # autopep8: on
@@ -44,8 +44,6 @@ logging.basicConfig(filename=LOGGER_PATH,
 
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
-gdrive = None
-
 
 def roundUp3(number: float) -> float:
     return round(number, 3)
@@ -63,7 +61,7 @@ def writeToFile(filename: str, data: object, indent=4) -> None:
     logging.info(f"writing to {filename=}")
     with open(filename, 'w') as f:
         json.dump(data, f, indent=indent)
-    gdrive.upload(filename)
+    GDrive(FOLDER_NAME, logging).upload(filename)
 
 
 def writeRawDataToFile(file_name: str, data: str) -> None:
@@ -74,7 +72,8 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
 
 def readJsonFile(filename: str):
     logging.info(f"reading {filename=}")
-    gdrive.download(filename)
+
+    GDrive(FOLDER_NAME, logging).download(filename)
     with open(filename, 'r') as f:
         return json.load(f)
 
@@ -82,8 +81,9 @@ def readJsonFile(filename: str):
 class MutualFund:
 
     def __init__(self) -> None:
-        global gdrive
-        gdrive = GDrive(FOLDER_NAME, logging)
+        self.navallfile = None
+        self.navMyfile = None
+        GDrive(FOLDER_NAME, logging)
         logging.info("Initializing MutualFundTracker")
         logging.info("--Application has started---")
         logging.info(f"--Logged in as {os.environ.get('USER')}")
@@ -454,8 +454,7 @@ class MutualFund:
         pattern = self.getGrepString()
         for i in self.navallfile.splitlines():
             if re.search(pattern, i):
-
-                result += i.strip()+"\n"
+                result += i.strip() + "\n"
 
         self.navMyfile = result
         if self.jsonData.__contains__("hash2"):
@@ -499,7 +498,6 @@ class MutualFund:
     def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
                         name: str) -> str | float:
 
-        dayChange = 0.0
         self.isExistingId(ids, name, latestNavDate, todayNav)
         data: dict[str:str] = self.jsonData[ids]['nav']
         latestDate = datetime.strptime(latestNavDate, self.formatString)
@@ -556,8 +554,6 @@ class MutualFund:
         totalDayChange = 0
 
         for line in self.navMyfile.splitlines():
-            current = 0
-            dayChange = 0
 
             temp = line.strip().split(";")
             _id, name, nav, date = temp[0], temp[3].split(
