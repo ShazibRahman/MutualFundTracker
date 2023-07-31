@@ -45,6 +45,15 @@ logging.basicConfig(filename=LOGGER_PATH,
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
+def log_uncaught_exceptions(exctype, value, traceback):
+    logging.exception("Uncaught exception",
+                      exc_info=(exctype, value, traceback))
+
+
+sys.excepthook = log_uncaught_exceptions
+
+
+
 def roundUp3(number: float) -> float:
     return round(number, 3)
 
