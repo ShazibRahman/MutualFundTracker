@@ -14,9 +14,8 @@ def get_all_order() -> dbc.Table:
     for k, v in mfs.items():
         MfsReversed[v] = k
 
-    children = []
-    children.append(html.Thead(html.Tr([html.Th("Mutual Fund Name"), html.Th(
-        "Amount"), html.Th("Units"), html.Th("Nav Date")])))
+    children = [html.Thead(html.Tr([html.Th("Mutual Fund Name"), html.Th(
+        "Amount"), html.Th("Units"), html.Th("Nav Date")]))]
     body = []
     for k, v in helper.Orders.items():  # id , dic
         for k2, v2 in v.items():  # date ,list[units,amount]
@@ -72,11 +71,11 @@ layout = html.Div([
     prevent_initial_call=True
 
 )
-def add_order(n_clicks, units, amount, date, product):
-    print(product, units, amount, date)
-    if product is None or product == "" or units is None or float(units) <= 0 or amount is None or amount < 1 or date is None:
+def add_order(n_clicks, units, amount, date_input, product):
+    print(product, units, amount, date_input)
+    if product is None or product == "" or units is None or float(units) <= 0 or amount is None or amount < 1 or date_input is None:
         return "Please fill all the fields"
     else:
-        date_object = datetime.strptime(date, '%Y-%m-%d').strftime("%d-%b-%Y")
+        date_object = datetime.strptime(date_input, '%Y-%m-%d').strftime("%d-%b-%Y")
         helper.addOrder(product, float(units), amount, date_object)
         return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"

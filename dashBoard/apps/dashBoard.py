@@ -13,8 +13,8 @@ def getPieChart(value: dict, name: str) -> px.pie:
         'Fund', 'Amount']), values='Amount', names='Fund', title='Investment Distribution '+name, width=700, height=700)
 
 
-def getFont(text, dict: dict) -> html.Font:
-    return html.Font(text, style=dict)
+def getFont(text, dictionary: dict) -> html.Font:
+    return html.Font(text, style=dictionary)
 
 
 def number(string: str) -> html.Font:
