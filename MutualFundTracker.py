@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import logging
@@ -6,16 +7,20 @@ import pathlib
 import re
 import sys
 import time
+import timeit
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
 
+import aiofiles
+import aiohttp
 import pytz
 import requests
+import rich
 
 # autopep8: off
 sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
-from gdrive.GDrive import GDrive  # pylint: disable=import-error
+from gdrive.GDrive import GDrive  # type: ignore
 
 # autopep8: on
 INDIAN_TIMEZONE = pytz.timezone('Asia/Kolkata')
@@ -53,7 +58,6 @@ def log_uncaught_exceptions(exctype, value, traceback):
 sys.excepthook = log_uncaught_exceptions
 
 
-
 def roundUp3(number: float) -> float:
     return round(number, 3)
 
@@ -73,13 +77,20 @@ def writeToFile(filename: str, data: object, indent=4) -> None:
     GDrive(FOLDER_NAME, logging).upload(filename)
 
 
+async def writeToFileAsync(filename: str, data: object, indent=4) -> None:
+    logging.info(f"writing asynchronously to {filename=}")
+    async with aiofiles.open(filename, 'w') as f:
+        await f.write(json.dumps(data, indent=indent))  # type: ignore
+        await GDrive(FOLDER_NAME, logging)._upload_async(filename)
+
+
 def writeRawDataToFile(file_name: str, data: str) -> None:
     logging.info(f"writing raw string data to {file_name}")
     with open(file_name, 'w') as file:
         file.write(data)
 
 
-def readJsonFile(filename: str):
+async def readJsonFile(filename: str):
     logging.info(f"reading {filename=}")
 
     GDrive(FOLDER_NAME, logging).download(filename)
@@ -87,12 +98,20 @@ def readJsonFile(filename: str):
         return json.load(f)
 
 
+async def readJsonFileAsychronously(filename: str | pathlib.Path):
+    logging.info(f"reading asynchronously {filename=}")
+
+    await GDrive(FOLDER_NAME, logging)._download_async(filename)
+    async with aiofiles.open(filename, 'r') as f:
+        content = await f.read()
+        return json.loads(content)
+
+
 class MutualFund:
 
     def __init__(self) -> None:
-        self.navallfile = None
-        self.navMyfile = None
-        GDrive(FOLDER_NAME, logging)
+        self.navallfile = ""
+        self.navMyfile = ""
         logging.info("Initializing MutualFundTracker")
         logging.info("--Application has started---")
         logging.info(f"--Logged in as {os.environ.get('USER')}")
@@ -104,23 +123,29 @@ class MutualFund:
         self.sender_email: str = os.environ.get("shazmail")  # type: ignore
         self.password: str = os.environ.get("shazPassword")  # type: ignore
 
-        self.navallfile: None
         self.orderfile: str = pathlib.Path(
             DATA_PATH).resolve().joinpath('order.json').as_posix()
-        self.navMyfile: None
+
         self.dayChangeJsonFileString: str = pathlib.Path(
             DATA_PATH).resolve().joinpath('dayChange.json').as_posix()
         self.dayChangeJsonFileStringBackupFile: str = self.dayChangeJsonFileString + ".bak"
         self.unitsFile: str = pathlib.Path(
             DATA_PATH).resolve().joinpath('units.json').as_posix()
+
+    async def _intialiaze(self):
+
+        units_coro = asyncio.create_task(readJsonFileAsychronously(self.unitsFile))
+        order_coro = asyncio.create_task(readJsonFileAsychronously(self.orderfile))
+        daychange_coro = asyncio.create_task(readJsonFileAsychronously(self.dayChangeJsonFileString))
+
         try:
-            self.Units: dict = readJsonFile(self.unitsFile)
+            self.Units: dict = await units_coro
         except JSONDecodeError:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.Units = {}
             self.runOnceInitialization(self.unitsFile)
         try:
-            self.Orders: dict = readJsonFile(self.orderfile)
+            self.Orders: dict = await order_coro
         except JSONDecodeError:
             print("Something went wrong with the order file")
             self.Orders = {}
@@ -133,7 +158,7 @@ class MutualFund:
             exit(0)
 
         try:
-            self.jsonData: dict = readJsonFile(self.dayChangeJsonFileString)
+            self.jsonData: dict = await daychange_coro
         except FileNotFoundError:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.runOnceInitialization(None)
@@ -141,9 +166,9 @@ class MutualFund:
             self.runOnceInitialization(None)
 
         self.unitsKeyList = list(self.Units.keys())
-        self.console = None
-        self.TableMutualFund = None
-        self.summaryTable = None
+        self.console: Console
+        self.TableMutualFund = Table()
+        self.summaryTable = Table()
         self.formatString = "%d-%b-%Y"
         plt.datetime.set_datetime_form(date_form=self.formatString)
 
@@ -161,11 +186,11 @@ class MutualFund:
 
         in this case orders should move to units file
         """
-        nav_date_foramt = datetime.strptime(NavDate, self.formatString)
+        nav_date_foramt = datetime.strptime(NavDate, self.formatString)  # type: ignore
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         return orderDateFormat <= nav_date_foramt
 
-    def addToUnits(self, mfid, date) -> None:
+    async def addToUnits(self, mfid, date) -> None:
         found = False
         if self.Orders.__contains__(mfid):
             keys_list = list(self.Orders[mfid].keys())
@@ -178,14 +203,17 @@ class MutualFund:
                         data[1] += order_data[1]
                         found = True
         if found:
-            writeToFile(self.unitsFile, self.Units)
-            writeToFile(self.orderfile, self.Orders)
+            task = []
+            task.append(writeToFileAsync(self.unitsFile, self.Units))
+            task.append(writeToFileAsync(self.orderfile, self.Orders))
+            await asyncio.gather(*task)
+
         else:
             logging.info(
                 f"--No new Orders were found for {self.jsonData[mfid]['name']}--"
             )
 
-    def addToUnitsNotPreEXisting(self) -> None:
+    async def addToUnitsNotPreEXisting(self) -> None:
         logging.info("--adding new MF units to Unit file")
         key_list = list(self.Orders.keys())
         found = False
@@ -200,8 +228,11 @@ class MutualFund:
                     self.Units[i][0] += date_data[0]
                     self.Units[i][1] += date_data[1]
 
-                writeToFile(self.unitsFile, self.Units)
-                writeToFile(self.orderfile, self.Orders)
+                # writeToFile(self.unitsFile, self.Units)
+                # writeToFile(self.orderfile, self.Orders)
+                task = [writeToFileAsync(self.unitsFile, self.Units), writeToFileAsync(self.orderfile, self.Orders)]
+                await asyncio.gather(*task)
+
         if len(key_list) == 0 or not found:
             logging.info("--No new Mutual fund was found in Order--")
 
@@ -226,16 +257,16 @@ class MutualFund:
         writeToFile(self.orderfile, self.Orders)
 
     def runOnceInitialization(self, file):
-        if not pathlib.Path.exists(DATA_PATH):
-            pathlib.Path.mkdir(DATA_PATH)
+        if not pathlib.Path.exists(DATA_PATH):  # type: ignore
+            pathlib.Path.mkdir(DATA_PATH)  # type: ignore
         if file is not None:
             writeToFile(file, {})
         else:
-            if pathlib.Path.exists(self.dayChangeJsonFileStringBackupFile):
+            if pathlib.Path.exists(self.dayChangeJsonFileStringBackupFile):  # type: ignore
                 backup_data = readJsonFile(
                     self.dayChangeJsonFileStringBackupFile)
                 writeToFile(self.dayChangeJsonFileString, backup_data)
-                self.jsonData = backup_data
+                self.jsonData = backup_data  # type: ignore
             else:
                 writeToFile(self.dayChangeJsonFileStringBackupFile, {})
                 self.jsonData = {}
@@ -303,7 +334,7 @@ class MutualFund:
             date = preMF['latestNavDate']
         except KeyError:
             self.console.print(
-                'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option'
+                'Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option'  # type: ignore
             )
             exit(256)
         except Exception:
@@ -365,7 +396,7 @@ class MutualFund:
     def UpdateKeyList(self):
         self.unitsKeyList = self.Units.keys()
 
-    def DayChangeTable(self):
+    async def DayChangeTable(self):
         logging.info("--rendering day change table--")
         daily_table = Table(title='Day Change table',
                             show_lines=True,
@@ -378,7 +409,7 @@ class MutualFund:
         self.UpdateKeyList()
         for key in self.unitsKeyList:
             if not self.jsonData.__contains__(key):
-                self.getCurrentValues(False)
+                await self.getCurrentValues(False)
             value: dict[str, float] = self.jsonData[key]['nav']
             name: str = self.jsonData[key]['name']
             units: float = self.Units[key][0]
@@ -454,7 +485,7 @@ class MutualFund:
             plt.clear_figure()
         print()
 
-    def updateMyNaVFile(self):
+    async def updateMyNaVFile(self):
         if self.navallfile is None:
             if not self.downloadAllNavFile():
                 return False
@@ -476,22 +507,35 @@ class MutualFund:
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 self.formatString + " %X")
             self.jsonData['lastUpdated'] = lastUpdated
-            writeToFile(self.dayChangeJsonFileStringBackupFile,
-                        readJsonFile(self.dayChangeJsonFileString))
+            asyncio.create_task(self.write_bakcup())
+
         return True
 
-    def downloadAllNavFile(self) -> bool:
+    async def write_bakcup(self):
+        await writeToFileAsync(self.dayChangeJsonFileStringBackupFile,
+                               await readJsonFileAsychronously(self.dayChangeJsonFileString))
+
+    async def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
         start = time.time()
+        status = 0
+        text = ""
         try:
-            res = requests.get("https://www.amfiindia.com/spages/NAVopen.txt")
-            if res.status_code != 200:
+            # client = aiohttp.client.ClientSession()
+            # res = await client.get("https://www.amfiindia.com/spages/NAVopen.txt")
+            # await client.close()
+            async with aiohttp.client.ClientSession() as client:
+                res = await client.get("https://www.amfiindia.com/spages/NAVopen.txt")
+                status = res.status
+                text = await res.text()
+
+            if status != 200:
                 return False
         except:
             return False
 
         else:
-            self.navallfile = res.text
+            self.navallfile = text
             logging.info(
                 f"--took {(time.time() - start):.2f} Secs to download the file")
             new_hash = hashlib.md5(self.navallfile.encode()).hexdigest()
@@ -504,11 +548,11 @@ class MutualFund:
 
             return True
 
-    def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
-                        name: str) -> str | float:
+    async def dayChangeMethod(self, ids: str, todayNav: float, latestNavDate: str,
+                              name: str) -> str | float:
 
         self.isExistingId(ids, name, latestNavDate, todayNav)
-        data: dict[str:str] = self.jsonData[ids]['nav']
+        data: dict[str, float] = self.jsonData[ids]['nav']
         latestDate = datetime.strptime(latestNavDate, self.formatString)
 
         prevDayNavDate: str = datetime.strftime(latestDate - timedelta(1),
@@ -527,7 +571,7 @@ class MutualFund:
             else:
                 prevDayNavDate = key_list[-1]
 
-        self.addToUnits(ids, prevDayNavDate)
+        await self.addToUnits(ids, prevDayNavDate)
         units: float = self.Units[ids][0]
 
         prevDaySum: float = data[prevDayNavDate] * units
@@ -545,15 +589,15 @@ class MutualFund:
             self.jsonData[ids]['nav'][latestNavDate] = todayNav
             self.jsonData[ids]['latestNavDate'] = latestNavDate
 
-    def cleanUp(self) -> None:
+    async def cleanUp(self) -> None:
         keys: list[str] = list(self.jsonData.keys())
         for key in keys:
             if key.isnumeric() and key not in self.Units:
                 del self.jsonData[key]
 
-        writeToFile(self.dayChangeJsonFileString, self.jsonData)
+        await writeToFileAsync(self.dayChangeJsonFileString, self.jsonData)
 
-    def readMyNavFile(self) -> Tuple[float, float, float]:
+    async def readMyNavFile(self) -> Tuple[float, float, float]:
         """
         returns subtotal, totalInvested , totaldaychange
         """
@@ -568,7 +612,7 @@ class MutualFund:
             _id, name, nav, date = temp[0], temp[3].split(
                 '-')[0].strip(), float(temp[4]), temp[5]
 
-            dayChange = self.dayChangeMethod(_id, nav, date, name)
+            dayChange: float = await self.dayChangeMethod(_id, nav, date, name)  # type: ignore
 
             current = round(self.Units[_id][0] * nav, 3)
             invested = self.Units[_id][1]
@@ -584,17 +628,17 @@ class MutualFund:
             cur_json_id['dayChange'] = dayChange
         return sumTotal, totalInvested, totalDayChange
 
-    def getCurrentValues(self, download: bool) -> None:
+    async def getCurrentValues(self, download: bool) -> None:
         logging.info("--Main calculation--")
         if download:
-            self.addToUnitsNotPreEXisting()
-            if not self.downloadAllNavFile():
+            await self.addToUnitsNotPreEXisting()
+            if not await self.downloadAllNavFile():
                 return
 
-            if not self.updateMyNaVFile():
+            if not await self.updateMyNaVFile():
                 return
 
-        sumTotal, totalInvested, totalDaychange = self.readMyNavFile()
+        sumTotal, totalInvested, totalDaychange = await self.readMyNavFile()
 
         totalProfit = sumTotal - totalInvested
         totalProfitPercentage = totalProfit / totalInvested * 100
@@ -607,11 +651,20 @@ class MutualFund:
         self.jsonData['totalInvested'] = totalInvested
         self.jsonData['totalProfitPercentage'] = totalProfitPercentage
         self.jsonData['totalDaychange'] = totalDaychange
+        logging.info(self.jsonData['hash'])
 
-        writeToFile(self.dayChangeJsonFileString, self.jsonData)
+        asyncio.create_task(writeToFileAsync(self.dayChangeJsonFileString, self.jsonData))
+        # asyncio.gather(*task)
+
+
+async def main():
+    tracker = MutualFund()
+    await tracker._intialiaze()
+    await tracker.getCurrentValues(download=True)
+    # tracker.drawTable()
 
 
 if __name__ == "__main__":
-    tracker = MutualFund()
-    tracker.getCurrentValues(download=True)
-    tracker.drawTable()
+    start = time.time()
+    asyncio.run(main())
+    print(time.time() - start)

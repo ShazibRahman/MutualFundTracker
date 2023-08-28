@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import os
 
 from MutualFundTracker import MutualFund
@@ -18,7 +19,7 @@ def clearLogs():
     file_.close()
 
 
-def callMutualFund() -> None:
+async def callMutualFund(args) -> None:
     if args.logs == "show":
         readLogs()
         return
@@ -33,7 +34,7 @@ def callMutualFund() -> None:
         port = 8050
 
         webbrowser.open(f"http://localhost:{port}")
-        app.run_server(debug=True, port=port)
+        app.run_server(debug=True, port=port)  # type: ignore
         return
 
     if args.add is not None:
@@ -45,20 +46,20 @@ def callMutualFund() -> None:
     if args.dc == 'y':
         tracker = MutualFund()
 
-        tracker.DayChangeTable()
+        await tracker.DayChangeTable()
         return
 
     if args.r == 'y':
         tracker = MutualFund()
 
-        tracker.getCurrentValues(False)
+        await tracker.getCurrentValues(False)
         tracker.drawTable()
         return
 
     if args.d == 'y':
         tracker = MutualFund()
 
-        tracker.getCurrentValues(True)
+        await tracker.getCurrentValues(True)
         tracker.drawTable()
 
         return
@@ -72,7 +73,7 @@ def callMutualFund() -> None:
         tracker.drawGraph()
 
 
-if __name__ == '__main__':
+async def main():
     choices = ['y', 'n']
     parser = argparse.ArgumentParser()
     parser.add_argument('-d',
@@ -114,6 +115,11 @@ if __name__ == '__main__':
                         default='n')
 
     args = parser.parse_args()
-    callMutualFund()
+    await callMutualFund(args)
+
+if __name__ == '__main__':
+
+    asyncio.run(main())
+
 else:
     raise RuntimeError("this script is not meant to be imported")
