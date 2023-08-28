@@ -651,10 +651,7 @@ class MutualFund:
         self.jsonData['totalInvested'] = totalInvested
         self.jsonData['totalProfitPercentage'] = totalProfitPercentage
         self.jsonData['totalDaychange'] = totalDaychange
-        logging.info(self.jsonData['hash'])
-
         asyncio.create_task(writeToFileAsync(self.dayChangeJsonFileString, self.jsonData))
-        # asyncio.gather(*task)
 
 
 async def main():

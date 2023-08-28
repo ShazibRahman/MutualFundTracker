@@ -45,19 +45,21 @@ async def callMutualFund(args) -> None:
         return
     if args.dc == 'y':
         tracker = MutualFund()
+        await tracker._intialiaze()
 
         await tracker.DayChangeTable()
         return
 
     if args.r == 'y':
         tracker = MutualFund()
-
+        await tracker._intialiaze()
         await tracker.getCurrentValues(False)
         tracker.drawTable()
         return
 
     if args.d == 'y':
         tracker = MutualFund()
+        await tracker._intialiaze()
 
         await tracker.getCurrentValues(True)
         tracker.drawTable()
@@ -66,10 +68,12 @@ async def callMutualFund(args) -> None:
 
     if args.g != 'o':
         tracker = MutualFund()
+        await tracker._intialiaze()
         tracker.drawTable()
 
     if args.g == 'y' or args.g == 'o':
         tracker = MutualFund()
+        await tracker._intialiaze()
         tracker.drawGraph()
 
 
