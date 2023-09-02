@@ -15,3 +15,5 @@ plotly==5.15.0
 requests==2.25.1
 argparse==1.4.0
 pytz==2022.1
+aiofiles
+aiohttp
