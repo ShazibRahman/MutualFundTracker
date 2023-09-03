@@ -1,8 +1,9 @@
 import datetime
 import json
 import os
+from pathlib import Path
 
-directory_path = os.path.dirname(os.path.realpath(__file__))
+directory_path = Path(__file__).parent.parent
 
 data_directory = os.path.join(directory_path, 'data')
 
@@ -23,10 +24,10 @@ def writeJson(fileName: str, data: dict) -> None:
 def sort_nav_data_based_on_nav_date(fileName: str) -> None:
     data = readjson(fileName)
     for key in readjson(unit_file).keys():
-        sorted_dates = sorted(data[key]["nav"].keys(
+        sorted_dates = sorted(data["funds"][key]["nav"].keys(
         ), key=lambda x: datetime.datetime.strptime(x, '%d-%b-%Y'))
-        sorted_dict = {date: data[key]["nav"][date] for date in sorted_dates}
-        data[key]["nav"] = sorted_dict
+        sorted_dict = {date: data["funds"][key]["nav"][date] for date in sorted_dates}
+        data["funds"][key]["nav"] = sorted_dict
 
     writeJson(fileName, data)
 

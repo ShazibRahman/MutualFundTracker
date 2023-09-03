@@ -7,7 +7,6 @@ import pathlib
 import re
 import sys
 import time
-from ast import Dict
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
@@ -17,7 +16,6 @@ import aiofiles
 import aiohttp
 import pytz
 from async_generator import asynccontextmanager
-from git import Object
 
 from models.day_change import InvestmentData, NavData, getInvestmentData
 

@@ -1,5 +1,5 @@
 from dataclasses import Field, dataclass, field
-from typing import Dict
+from typing import Any, Dict
 
 
 @dataclass
@@ -30,15 +30,15 @@ class InvestmentData:
     hash2: str = ""
     funds: Dict[str, NavData] = field(default_factory=dict)
 
-    def __getitem__(self, item):
-        return getattr(self, item)
+    def __getitem__(self, key: str) -> Any:
+        return getattr(self, key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: Any) -> None:
         setattr(self, key, value)
 
 
-def getInvestmentData(data: Dict) -> InvestmentData:
-    funds = data.pop("funds") if "funds" in data else {}
+def getInvestmentData(data: Dict[str, Any]) -> InvestmentData:
+    funds: Dict[str, Dict[str, Any]] = data.pop("funds") if "funds" in data else {}
     return InvestmentData(
         **data,
         funds={fund_id: NavData(**fund_data)
