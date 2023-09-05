@@ -1,14 +1,17 @@
+import asyncio
 from datetime import date
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import helper.helperFunctions as helper
 import helper.stock_helper as stock_helper
 import pandas as pd
 from app import app
 from dash.dependencies import Input, Output, State
+from helper.helperFunctions import helper_functions
 from plotly import graph_objs as go
+
+helper = helper_functions()
 
 layout = html.Div([html.Div(children=[
     html.H1(children='Stocks', className="text-center"),
@@ -68,7 +71,7 @@ layout = html.Div([html.Div(children=[
 ], className="container")
 
 
-@app.callback(
+@ app.callback(
     Output('my-graph6', 'figure'),
     Output('input-1', 'style'),
     Output('input-2', 'style'),

@@ -1,14 +1,14 @@
 import pathlib
 import sys
-from typing import Tuple
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
 
 sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
-from app import app, server
 
+# autopep8 : off
+from app import app, server
 # connect to your app pages
 from apps import addOrder, dashBoard, stocks
 from dash.dependencies import Input, Output
@@ -61,18 +61,18 @@ app.layout = html.Div(
 )
 def display_page(pathname: str):
     # active style for navbar links
-    active_Style: dict[str:str] = {
+    active_Style = {
         "background-color": "#e9ecef",
         "border-radius": "5px",
     }
 
-    inactive_Style: dict[str:str] = {
+    inactive_Style = {
         "background-color": "#f8f9fa",
         "border-radius": "5px",
         "color": "grey",
     }  # inactive style for navbar links
 
-    data: dict[str:Tuple] = {
+    data = {
         "/apps/dashBoard": (
             dashBoard.layout,
             active_Style,
@@ -93,5 +93,5 @@ def display_page(pathname: str):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True, port=3000)
-    server.run(port=3000, debug=True)
+    app.run_server(debug=True, port="3000")
+

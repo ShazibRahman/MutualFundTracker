@@ -1,14 +1,18 @@
+import asyncio
+
 import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import helper.helperFunctions as helper
 import pandas as pd
 import plotly.express as px
 from app import app
+from helper.helperFunctions import helper_functions
+
+helper = helper_functions()
 
 
-def getPieChart(value: dict, name: str) -> px.pie:
+def getPieChart(value: dict, name: str):
     return px.pie(pd.DataFrame(list(value.items()), columns=[
         'Fund', 'Amount']), values='Amount', names='Fund', title='Investment Distribution '+name, width=700, height=700)
 

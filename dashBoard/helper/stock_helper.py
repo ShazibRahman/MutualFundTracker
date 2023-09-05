@@ -1,15 +1,19 @@
 import dash_bootstrap_components as dbc
 import dash_html_components as html
-from helper.helperFunctions import get_all_stock_dic, readJsonFromDataFolder
+from helper.helperFunctions import helper_functions
 from rich.console import Console
 
 console = Console()
 
 
-def get_stock_data_in_form_of_table():
 
-    my_stocks_json = readJsonFromDataFolder("stock_order.json")
-    stocks_dic = get_all_stock_dic()
+def get_stock_data_in_form_of_table():
+    helpers = helper_functions()
+
+    my_stocks_json = helpers.stock_order
+    # print(my_stocks_json)
+
+    stocks_dic = helpers.get_all_stock_dic()
     """
 {
     "WIPRO": [

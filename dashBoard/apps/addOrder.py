@@ -1,14 +1,18 @@
+
 from datetime import date, datetime
 
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import helper.helperFunctions as helper
 from app import app
 from dash.dependencies import Input, Output, State
+from helper.helperFunctions import helper_functions
+
+helper = helper_functions()
 
 
 def get_all_order() -> dbc.Table:
+
     mfs = helper.json_data
     MfsReversed = {}
     for k, v in mfs.items():
@@ -27,7 +31,7 @@ def get_all_order() -> dbc.Table:
         )
     ]
     body = []
-    for k, v in helper.Orders.items():  # id , dic
+    for k, v in helper.order.items():  # id , dic
         for k2, v2 in v.items():  # date ,list[units,amount]
             body.append(
                 html.Tr(

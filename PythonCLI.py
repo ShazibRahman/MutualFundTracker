@@ -5,6 +5,7 @@ import os
 from MutualFundTracker import MutualFund
 
 git_dir = os.path.dirname(__file__)
+index_path = os.path.dirname(__file__) +"/dashBoard/index.py"
 loggerPath = os.path.dirname(__file__) + "/data/logger.log"
 anacron_user = "Shazib_Anacron"
 # sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
@@ -26,16 +27,6 @@ async def callMutualFund(args) -> None:
 
     if args.logs == "clear":
         clearLogs()
-        return
-    if args.dash == "y":
-        import webbrowser
-
-        from dashBoard.index import app
-
-        port = 8050
-
-        webbrowser.open(f"http://localhost:{port}")
-        app.run_server(debug=True, port=port)  # type: ignore
         return
 
     if args.add is not None:

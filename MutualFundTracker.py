@@ -91,11 +91,6 @@ def getfp(percentage: float) -> str:
     )
 
 
-def writeToFile(filename: pathlib.Path, data:object, indent=4) -> None:
-    logging.info(f"writing to {filename=}")
-    with open(filename, "w") as f:
-        json.dump(data, f, indent=indent)
-    GDrive(FOLDER_NAME, logging.getLogger()).upload(filename)
 
 
 async def writeToFileAsync(filename: pathlib.Path, data: dict, indent=4) -> None:

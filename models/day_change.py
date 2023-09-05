@@ -1,4 +1,4 @@
-from dataclasses import Field, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Dict
 
 
@@ -28,7 +28,7 @@ class InvestmentData:
     totalProfit: float = 0
     hash: str = ""
     hash2: str = ""
-    funds: Dict[str, NavData] = field(default_factory=dict)
+    funds: dict[str, NavData] = field(default_factory=dict)
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
