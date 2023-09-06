@@ -17,7 +17,7 @@ import aiohttp
 import pytz
 from async_generator import asynccontextmanager
 
-from models.day_change import InvestmentData, NavData, getInvestmentData
+from models import InvestmentData, NavData, getInvestmentData
 
 try:
     import plotext as plt
@@ -105,6 +105,11 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
     logging.info(f"writing raw string data to {file_name}")
     with open(file_name, "w") as file:
         file.write(data)
+
+def writeToFile(file_name: pathlib.Path  | str , data) ->None:
+    logging.info("writing to a file asynchronouslhy")
+    with open(file_name,'w') as file:
+        json.dump(data, file, indent=4)
 
 
 def readJsonFile(filename: str|pathlib.Path):

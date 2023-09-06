@@ -5,7 +5,7 @@ import os
 import pathlib
 import sys
 from datetime import datetime
-from typing import Awaitable
+from operator import imod
 
 import aiofiles
 import nsepy
@@ -15,11 +15,10 @@ from pandas import DataFrame
 sys.path.append(
     pathlib.Path(__file__).parent.parent.parent.parent.absolute().as_posix()
 )
-sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
 from gdrive.GDrive import GDrive  # autopep8: off
 
-from models.day_change import InvestmentData, NavData, getInvestmentData
+from MutualFund.models import InvestmentData, getInvestmentData
 
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()

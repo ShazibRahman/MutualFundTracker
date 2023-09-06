@@ -17,3 +17,4 @@ argparse==1.4.0
 pytz==2022.1
 aiofiles
 aiohttp
+async_generator
