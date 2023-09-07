@@ -17,7 +17,7 @@ import aiohttp
 import pytz
 from async_generator import asynccontextmanager
 
-from models import InvestmentData, NavData, getInvestmentData
+from models.day_change import InvestmentData, NavData, getInvestmentData
 
 try:
     import plotext as plt
