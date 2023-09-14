@@ -1,21 +1,20 @@
 import asyncio
 import hashlib
-import json
 import logging
 import os
 import pathlib
 import re
 import sys
 import time
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
 
-import aiofiles
 import aiohttp
 import pytz
-from async_generator import asynccontextmanager
+import ujson as json
 
 from models.day_change import InvestmentData, NavData, getInvestmentData
 
@@ -36,7 +35,7 @@ from gdrive.GDrive import GDrive
 
 
 @asynccontextmanager
-async def create_async_gdrive_context(folder_name, logger):
+async def gdrive_context(folder_name, logger):
     gdrive = GDrive(folder_name, logger)
     try:
         yield gdrive
@@ -91,12 +90,10 @@ def getfp(percentage: float) -> str:
     )
 
 
-
-
 async def writeToFileAsync(filename: pathlib.Path, data: dict, indent=4) -> None:
     logging.info(f"writing asynchronously to {filename=}")
-    async with aiofiles.open(filename, mode="w") as f:
-        await f.write(json.dumps(obj=data, indent=indent))
+    with open(filename, mode="w") as f:
+        json.dump(data, f, indent=indent)
     async with GDrive(FOLDER_NAME, logging.getLogger()) as gdrive:
         await gdrive._upload_async(filename)
 
@@ -124,10 +121,8 @@ async def readJsonFileAsychronously(filename: str | pathlib.Path):
     logging.info(f"reading asynchronously {filename=}")
     async with GDrive(FOLDER_NAME, logging.getLogger()) as gdrive:
         await gdrive._download_async(filename)
-    async with aiofiles.open(filename, 'r') as f:
-        content = await f.read()
-        return json.loads(content)
-
+    with open(filename, 'r') as f:
+        return json.load(f)
 
 
 class MutualFund:
@@ -137,7 +132,7 @@ class MutualFund:
         self.unitsKeyList = []
         self.summaryTable = Table()
         self.TableMutualFund = Table()
-        self.tasks: set = set()
+        self.tasks: list = []
         self.nav_all_file = ""
         self.nav_my_file = ""
         logging.info("Initializing MutualFundTracker")
@@ -553,7 +548,7 @@ class MutualFund:
                 result += i.strip() + "\n"
 
         self.nav_my_file = result
-        if self.jsonData.hash2:
+        if self.jsonData.hash2 is not None:
             new_hash = hashlib.md5(self.nav_my_file.encode()).hexdigest()
             prev_hash = self.jsonData.hash2
             if prev_hash == new_hash:
@@ -564,7 +559,7 @@ class MutualFund:
                 self.formatString + " %X"
             )
             self.jsonData["lastUpdated"] = lastUpdated
-            self.tasks.add(asyncio.create_task(
+            self.tasks.append(asyncio.create_task(
                 self.write_bakcup(), name="back-up"))
 
         return True
@@ -699,7 +694,7 @@ class MutualFund:
             if not await self.downloadAllNavFile():
                 return
 
-            if not await self.updateMyNaVFile():
+            if not await self.updateMyNaVFile(): # type: ignore
                 return
 
         sumTotal, totalInvested, totalDaychange = await self.readMyNavFile()
@@ -715,7 +710,7 @@ class MutualFund:
         self.jsonData["totalInvested"] = totalInvested
         self.jsonData["totalProfitPercentage"] = totalProfitPercentage
         self.jsonData["totalDaychange"] = totalDaychange
-        self.tasks.add(
+        self.tasks.append(
             asyncio.create_task(
                 writeToFileAsync(self.dayChangeJsonFileString,
                                  data=asdict(self.jsonData)),
@@ -736,6 +731,8 @@ async def main():
 
 
 if __name__ == "__main__":
-    start = time.time()
-    asyncio.run(main())
-    print(time.time() - start)
+    # start = time.time()
+    # asyncio.run(main())
+    # print(time.time() - start)
+    import cProfile
+    cProfile.run(statement="asyncio.run(main(),debug=True)",sort="cumtime",filename="profile.out")

@@ -141,6 +141,9 @@ layout = html.Div(
     prevent_initial_call=True,
 )
 def add_order(n_clicks, units, amount, date_input, product):
+    global helper
+    if helper is None:
+        helper = helper_functions()
     print(product, units, amount, date_input)
     if (
         product is None

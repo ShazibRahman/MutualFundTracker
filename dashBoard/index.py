@@ -4,14 +4,14 @@ import sys
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-
-sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
-
-# autopep8 : off
 from app import app, server
-# connect to your app pages
 from apps import addOrder, dashBoard, stocks
 from dash.dependencies import Input, Output
+
+# autopep8 : off
+sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
+
+# connect to your app pages
 
 app.layout = html.Div(
     [
@@ -94,4 +94,3 @@ def display_page(pathname: str):
 
 if __name__ == "__main__":
     app.run_server(debug=True, port="3000")
-

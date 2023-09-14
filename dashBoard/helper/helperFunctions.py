@@ -5,7 +5,6 @@ import os
 import pathlib
 import sys
 from datetime import datetime
-from operator import imod
 
 import aiofiles
 import nsepy
@@ -16,9 +15,14 @@ sys.path.append(
     pathlib.Path(__file__).parent.parent.parent.parent.absolute().as_posix()
 )
 
+sys.path.append(
+    pathlib.Path(__file__).parent.parent.parent.absolute().as_posix()
+)
+
+print(sys.path)
 from gdrive.GDrive import GDrive  # autopep8: off
 
-from MutualFund.models import InvestmentData, getInvestmentData
+from models.day_change import InvestmentData, getInvestmentData
 
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
@@ -120,7 +124,7 @@ class helper_functions:
         async with aiofiles.open(filename, 'r') as f:
             content = await f.read()
             return json.loads(content)
-    
+
     async def load_on(self):
         file_list =[self.daychange_file_path , self.unit_file_path , self.order_file_path , self.stock_order_file_path , self.stock_data_file_path]
         self.tasks =[ asyncio.create_task(self.readJsonFileAsychronously(file),name=file.as_posix()) for file in file_list]
@@ -144,7 +148,7 @@ class helper_functions:
                 self.stock_order = result.result()
             elif result.get_name() == self.stock_data_file_path.as_posix():
                 self.stock_data = result.result()
-    
+
         self.tasks.clear()
         self.mutual_funds_dic = {self.daychange_json.funds[unit].name: unit for unit in self.unit_json}
         self.mutual_funds = list(self.mutual_funds_dic.keys())
@@ -381,7 +385,7 @@ class helper_functions:
         #     self.json_data_file_path , index_all_mutual_fund
         #         )))
         return self.json_data
-        
+
 
     def get_index_all_mutual_fund(self):
         return [{"label": x, "value": y} for x,y in self.json_data.items()]
