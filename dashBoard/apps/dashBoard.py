@@ -13,8 +13,14 @@ helper = helper_functions()
 
 
 def getPieChart(value: dict, name: str):
-    return px.pie(pd.DataFrame(list(value.items()), columns=[
-        'Fund', 'Amount']), values='Amount', names='Fund', title='Investment Distribution '+name, width=700, height=700)
+    return px.pie(
+        pd.DataFrame(list(value.items()), columns=['Fund', 'Amount']),
+        values='Amount',
+        names='Fund',
+        title=f'Investment Distribution {name}',
+        width=700,
+        height=700,
+    )
 
 
 def getFont(text, dictionary: dict) -> html.Font:
@@ -22,7 +28,13 @@ def getFont(text, dictionary: dict) -> html.Font:
 
 
 def number(string: str) -> html.Font:
-    return html.Font("+₹"+string if float(string) > 0 else "-₹" + string.replace("-", ""), style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
+    return html.Font(
+        f"+₹{string}" if float(string) > 0 else "-₹" + string.replace("-", ""),
+        style={
+            'font-weight': 'bold',
+            'color': 'green' if float(string) > 0 else 'red',
+        },
+    )
 
 
 def percentage(string: str) -> html.Font:

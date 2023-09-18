@@ -146,40 +146,40 @@ def add_graph(n_clicks, input1, start_date, end_date):
     prevent_initial_call=True
 )
 def add_stock_order(n_clicks, dropdown, units, amount):
-    if n_clicks > 0:
-        if dropdown is None or dropdown == "":
-            return html.Div("Please select a stock", style={
-                "color": "red",
-                "font-weight": "bold",
-                "font-size": "20px",
-                "text-align": "center"
-            })
-        if units is None or units == "":
-            return html.Div("Please enter units", style={
-                "color": "red",
-                "font-weight": "bold",
-                "font-size": "20px",
-                "text-align": "center"
-            })
-        if amount is None or amount == "":
-            return html.Div("Please enter amount", style={
-                "color": "red",
-                "font-weight": "bold",
-                "font-size": "20px",
-                "text-align": "center"
-            })
-        booolean = helper.add_order_stock(dropdown, int(units), float(amount))
-        if not booolean:
-            return html.Div("Order not added because there is no such Stock", style={
-                "color": "red",
-                "font-weight": "bold",
-                "font-size": "20px",
-                "text-align": "center"
-            })
-
+    if n_clicks <= 0:
+        return
+    if dropdown is None or dropdown == "":
+        return html.Div("Please select a stock", style={
+            "color": "red",
+            "font-weight": "bold",
+            "font-size": "20px",
+            "text-align": "center"
+        })
+    if units is None or units == "":
+        return html.Div("Please enter units", style={
+            "color": "red",
+            "font-weight": "bold",
+            "font-size": "20px",
+            "text-align": "center"
+        })
+    if amount is None or amount == "":
+        return html.Div("Please enter amount", style={
+            "color": "red",
+            "font-weight": "bold",
+            "font-size": "20px",
+            "text-align": "center"
+        })
+    if booolean := helper.add_order_stock(dropdown, int(units), float(amount)):
         return html.Div(f"Order for {helper.get_all_stock_dic()[dropdown]} units {units} at amount per units {amount}", style={
             "color": "green",
             "font-weight": "bold",
             "font-size": "20px",
             "text-align": "center"
         }), "", 0, 0
+    else:
+        return html.Div("Order not added because there is no such Stock", style={
+            "color": "red",
+            "font-weight": "bold",
+            "font-size": "20px",
+            "text-align": "center"
+        })

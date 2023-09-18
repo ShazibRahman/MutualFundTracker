@@ -5,8 +5,8 @@ import os
 from MutualFundTracker import MutualFund
 
 git_dir = os.path.dirname(__file__)
-index_path = os.path.dirname(__file__) +"/dashBoard/index.py"
-loggerPath = os.path.dirname(__file__) + "/data/logger.log"
+index_path = f"{os.path.dirname(__file__)}/dashBoard/index.py"
+loggerPath = f"{os.path.dirname(__file__)}/data/logger.log"
 anacron_user = "Shazib_Anacron"
 # sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
 
@@ -64,7 +64,7 @@ async def callMutualFund(args) -> None:
         await tracker._intialiaze()
         tracker.drawTable()
 
-    if args.g == "y" or args.g == "o":
+    if args.g in ["y", "o"]:
         tracker = MutualFund()
         await tracker._intialiaze()
         tracker.drawGraph()
@@ -92,7 +92,6 @@ async def main():
         "-add", nargs="+", type=str, help="Mf unit amount date [dd-mon-yyyy]"
     )
     parser.add_argument("--logs", type=str, choices=["show", "clear", "n"], default="n")
-    parser.add_argument("-logs", type=str, choices=["show", "clear", "n"], default="n")
     parser.add_argument("-dash", type=str, choices=["y", "n"], default="n")
 
     args = parser.parse_args()

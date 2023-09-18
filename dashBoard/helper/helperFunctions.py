@@ -199,8 +199,7 @@ class helper_functions:
         elif self.order.__contains__(MFID):
             self.order[MFID][date] = [unit, amount]
         else:
-            self.order[MFID] = {}
-            self.order[MFID][date] = [unit, amount]
+            self.order[MFID] = {date: [unit, amount]}
             value = "new"
 
         self.writeToFile(self.order_file_path,self.order)
@@ -222,7 +221,7 @@ class helper_functions:
                     prevdayChange = units * daychange
                     i = False
                     continue
-                daychange: float = units * daychange
+                daychange *= units
                 daychangeData: float = round(daychange - prevdayChange, 3)
 
                 if nav in sumDayChange:
@@ -260,7 +259,7 @@ class helper_functions:
                 prevdayChange = units * daychange
                 i = False
                 continue
-            daychange: float = units * daychange
+            daychange *= units
             daychangeData: float = round(daychange - prevdayChange, 3)
 
             if nav in sumDayChange:
@@ -279,17 +278,20 @@ class helper_functions:
 
 
     def return_data(self,value):
-        return_list = []
         daychange_json  = self.daychange_json
 
 
         data = daychange_json.funds[value]["nav"]
         x = list(data.keys())
         y = list(data.values())
-        return_list.append(
-            {"x": x, "y": y, "type": "line", "name": daychange_json.funds[value].name}
-        )
-
+        return_list = [
+            {
+                "x": x,
+                "y": y,
+                "type": "line",
+                "name": daychange_json.funds[value].name,
+            }
+        ]
         return return_list, daychange_json.funds[value]["name"]
 
 
@@ -317,20 +319,20 @@ class helper_functions:
         units_json = self.unit_json
         daychange_json  = self.daychange_json
 
-        summaryTable = [["Invested", "Current", "•Total Returns", "Last UpDated"]]
         lastUpdated = daychange_json["lastUpdated"]
         current = daychange_json["sumTotal"]
         invested = daychange_json["totalInvested"]
         totalProfitPercentage = daychange_json["totalProfitPercentage"]
         totalProfit = daychange_json["totalProfit"]
-        summaryTable.append(
+        summaryTable = [
+            ["Invested", "Current", "•Total Returns", "Last UpDated"],
             [
                 invested,
                 current,
-                str(totalProfit) + " " + str(totalProfitPercentage),
+                f"{str(totalProfit)} {str(totalProfitPercentage)}",
                 lastUpdated,
-            ]
-        )
+            ],
+        ]
         mutual_fund_table: list[list] = [
             "SCHEME NAME,DAY CHANGE,RETURNS,CURRENT,NAV".split(",")
         ]

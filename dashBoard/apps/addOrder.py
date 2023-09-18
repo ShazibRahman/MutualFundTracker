@@ -14,10 +14,7 @@ helper = helper_functions()
 def get_all_order() -> dbc.Table:
 
     mfs = helper.json_data
-    MfsReversed = {}
-    for k, v in mfs.items():
-        MfsReversed[v] = k
-
+    MfsReversed = {v: k for k, v in mfs.items()}
     children = [
         html.Thead(
             html.Tr(
@@ -32,17 +29,17 @@ def get_all_order() -> dbc.Table:
     ]
     body = []
     for k, v in helper.order.items():  # id , dic
-        for k2, v2 in v.items():  # date ,list[units,amount]
-            body.append(
-                html.Tr(
-                    [
-                        html.Td(MfsReversed[k]),
-                        html.Td(v2[1]),
-                        html.Td(v2[0]),
-                        html.Td(k2),
-                    ]
-                )
+        body.extend(
+            html.Tr(
+                [
+                    html.Td(MfsReversed[k]),
+                    html.Td(v2[1]),
+                    html.Td(v2[0]),
+                    html.Td(k2),
+                ]
             )
+            for k2, v2 in v.items()
+        )
     children.append(html.Tbody(body))
 
     return (
@@ -50,7 +47,7 @@ def get_all_order() -> dbc.Table:
             children=children,
             className="table table-striped table-bordered  justify-content-center",
         )
-        if len(body) != 0
+        if body
         else dbc.Table()
     )
 
@@ -155,7 +152,6 @@ def add_order(n_clicks, units, amount, date_input, product):
         or date_input is None
     ):
         return "Please fill all the fields"
-    else:
-        date_object = datetime.strptime(date_input, "%Y-%m-%d").strftime("%d-%b-%Y")
-        helper.addOrder(product, float(units), amount, date_object)
-        return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"
+    date_object = datetime.strptime(date_input, "%Y-%m-%d").strftime("%d-%b-%Y")
+    helper.addOrder(product, float(units), amount, date_object)
+    return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"
