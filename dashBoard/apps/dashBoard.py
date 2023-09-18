@@ -42,8 +42,7 @@ def percentage(string: str) -> html.Font:
     return html.Font(f"({string})%", style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
 
 
-def prepareTable() -> list[dbc.Table]:
-    summary_table, MutualFund_table = helper.getMainTableData()
+def prepare_summary_table(summary_table):
     children_sum_tab = []
     for x in range(len(summary_table)):
         if x == 0:
@@ -66,8 +65,8 @@ def prepareTable() -> list[dbc.Table]:
                 tr.children.append(td)
             children_sum_tab.append(html.Tbody(tr))
 
-    sum_tab = dbc.Table(children=children_sum_tab,
-                        striped=True, bordered=True, hover=True, className="table table-striped")
+
+def prepare_children_mut_tab(MutualFund_table):
     children_mut_tab = []
     body = []
     for x in range(len(MutualFund_table)):
@@ -77,7 +76,6 @@ def prepareTable() -> list[dbc.Table]:
         else:
             # children_mut_tab.append(html.Tbody(
             #     html.Tr([html.Td(x) for x in MutualFund_table[x]])))
-
             tr = html.Tr(style={
                 'color': "black"})
             tr.children = []
@@ -113,6 +111,16 @@ def prepareTable() -> list[dbc.Table]:
             # children_mut_tab.append(html.Tbody(tr))
             body.append(tr)
     children_mut_tab.append(html.Tbody(body))
+    return children_mut_tab
+
+
+def prepareTable() -> list[dbc.Table]:
+    summary_table, MutualFund_table = helper.getMainTableData()
+    children_sum_tab = prepare_summary_table(summary_table)
+
+    sum_tab = dbc.Table(children=children_sum_tab,
+                        striped=True, bordered=True, hover=True, className="table table-striped")
+    children_mut_tab = prepare_children_mut_tab(MutualFund_table)
 
     mut_tab = dbc.Table(children=children_mut_tab,
                         striped=True, bordered=True, hover=True, className="table table-sm")

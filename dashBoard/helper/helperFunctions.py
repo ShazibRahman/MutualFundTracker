@@ -4,12 +4,24 @@ import logging
 import os
 import pathlib
 import sys
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 import aiofiles
 import nsepy
 import requests
 from pandas import DataFrame
+
+
+@asynccontextmanager
+async def gdrive_context(folder_name, logger):
+    gdrive = GDrive(folder_name, logger)
+    try:
+        yield gdrive
+    finally:
+        # Add any cleanup code here if needed
+        pass
+
 
 sys.path.append(
     pathlib.Path(__file__).parent.parent.parent.parent.absolute().as_posix()
@@ -100,7 +112,7 @@ class helper_functions:
         logging.info(f"writing asynchronously to {filename=}")
         async with aiofiles.open(filename, mode="w") as f:
             await f.write(json.dumps(obj=data, indent=indent))
-        async with GDrive(FOLDER_NAME, logging.getLogger()) as gdrive:
+        async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
             await gdrive._upload_async(filename)
 
 
@@ -119,7 +131,7 @@ class helper_functions:
 
     async def readJsonFileAsychronously(self ,filename: str | pathlib.Path):
         logging.info(f"reading asynchronously {filename=}")
-        async with GDrive(FOLDER_NAME, logging.getLogger()) as gdrive:
+        async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
             await gdrive._download_async(filename)
         async with aiofiles.open(filename, 'r') as f:
             content = await f.read()
