@@ -4,12 +4,12 @@ import sys
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-from app import app, server
-from apps import addOrder, dashBoard, stocks
 from dash.dependencies import Input, Output
 
 # autopep8 : off
 sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
+from app import app, server
+from apps import addOrder, dashBoard, stocks
 
 # connect to your app pages
 

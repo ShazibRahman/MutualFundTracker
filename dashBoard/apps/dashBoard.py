@@ -42,7 +42,7 @@ def percentage(string: str) -> html.Font:
     return html.Font(f"({string})%", style={'font-weight': 'bold', 'color': 'green' if float(string) > 0 else 'red'})
 
 
-def prepare_summary_table(summary_table):
+def prepare_summary_table(summary_table)->list[html.Table]:
     children_sum_tab = []
     for x in range(len(summary_table)):
         if x == 0:
@@ -64,6 +64,7 @@ def prepare_summary_table(summary_table):
                     td = html.Td(summary_table[x][y])
                 tr.children.append(td)
             children_sum_tab.append(html.Tbody(tr))
+    return children_sum_tab
 
 
 def prepare_children_mut_tab(MutualFund_table):

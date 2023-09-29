@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import os
 
-from MutualFundTracker import MutualFund
+from MutualFundTracker import mutualFundTracker
 
 git_dir = os.path.dirname(__file__)
 index_path = f"{os.path.dirname(__file__)}/dashBoard/index.py"
@@ -28,46 +28,48 @@ async def callMutualFund(args) -> None:
     if args.logs == "clear":
         clearLogs()
         return
+    async with mutualFundTracker() as tracker:
 
-    if args.add is not None:
-        tracker = MutualFund()
+        if args.add is not None:
 
-        tracker.addOrder(
-            args.add[0], float(args.add[1]), float(args.add[2]), args.add[3]
-        )
-        return
-    if args.dc == "y":
-        tracker = MutualFund()
-        await tracker._intialiaze()
+            tracker.addOrder(
+                args.add[0], float(args.add[1]), float(args.add[2]), args.add[3]
+            )
+            return
+        if args.dc == "y":
+            await tracker._intialiaze()
 
-        await tracker.DayChangeTable()
-        return
+            await tracker.DayChangeTable()
+            return
 
-    if args.r == "y":
-        tracker = MutualFund()
-        await tracker._intialiaze()
-        await tracker.getCurrentValues(False)
-        tracker.drawTable()
-        return
+        if args.r == "y":
+            await tracker._intialiaze()
+            await tracker.getCurrentValues(False)
+            tracker.drawTable()
+            return
 
-    if args.d == "y":
-        tracker = MutualFund()
-        await tracker._intialiaze()
+        if args.d == "y":
+            await tracker._intialiaze()
 
-        await tracker.getCurrentValues(True)
-        tracker.drawTable()
+            await tracker.getCurrentValues(True)
+            tracker.drawTable()
 
-        return
+            return
+        if args.dash == "y":
+            port =  3000
+            host = "127.0.0.1"
 
-    if args.g != "o":
-        tracker = MutualFund()
-        await tracker._intialiaze()
-        tracker.drawTable()
 
-    if args.g in ["y", "o"]:
-        tracker = MutualFund()
-        await tracker._intialiaze()
-        tracker.drawGraph()
+            os.system(f'firefox https://{host}:{port}')
+            os.system(f"/home/shazib/Desktop/Folder/python/MutualFund/.venv/bin/python3 {index_path}")
+
+        if args.g != "o":
+            await tracker._intialiaze()
+            tracker.drawTable()
+
+        if args.g in ["y", "o"]:
+            await tracker._intialiaze()
+            tracker.drawGraph()
 
 
 async def main():
