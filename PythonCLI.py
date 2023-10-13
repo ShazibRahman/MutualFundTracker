@@ -1,3 +1,4 @@
+import sys
 import argparse
 import asyncio
 import os
@@ -10,13 +11,15 @@ loggerPath = f"{os.path.dirname(__file__)}/data/logger.log"
 anacron_user = "Shazib_Anacron"
 # sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
 
+print(sys.path)
+
 
 def readLogs():
     os.system(f"bat --paging=never {loggerPath}")
 
 
 def clearLogs():
-    file_ = open(loggerPath, "w")
+    file_ = open(loggerPath, "w", encoding="utf-8")
     file_.close()
 
 
@@ -56,12 +59,9 @@ async def callMutualFund(args) -> None:
 
             return
         if args.dash == "y":
-            port =  3000
-            host = "127.0.0.1"
 
-
-            os.system(f'firefox https://{host}:{port}')
-            os.system(f"/home/shazib/Desktop/Folder/python/MutualFund/.venv/bin/python3 {index_path}")
+            os.system(f"/home/shazib/Desktop/linux/test/bin/python {index_path}")
+            return
 
         if args.g != "o":
             await tracker._intialiaze()
