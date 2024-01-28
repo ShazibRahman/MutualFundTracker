@@ -10,7 +10,6 @@ from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
-from tkinter import N
 from typing import Tuple
 
 import aiohttp
@@ -31,7 +30,6 @@ except ImportError as e:
     from rich.table import Table
 
 # autopep8: off
-sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
 from gdrive.GDrive import GDrive
 
 
@@ -49,23 +47,31 @@ INDIAN_TIMEZONE = pytz.timezone("Asia/Kolkata")
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath("data")
 FOLDER_NAME = "MutualFund"
 
-LOGGER_PATH = pathlib.Path(DATA_PATH).resolve().joinpath(
-    "logger.log").as_posix()
+LOGGER_PATH = pathlib.Path(DATA_PATH).resolve().joinpath("logger.log").as_posix()
+
+formatter = logging.Formatter(
+    "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])"
+)
+
+formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
+
 
 logging.basicConfig(
     filename=LOGGER_PATH,
     filemode="a",
-    level=logging.DEBUG,
-    format="%(asctime)s %(message)s",
+    level=logging.INFO,
+    format="%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
 
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+logging.getLogger().addHandler(stream_handler)
 
 
 def log_uncaught_exceptions(exctype, value, traceback):
-    logging.exception("Uncaught exception",
-                      exc_info=(exctype, value, traceback))
+    logging.exception("Uncaught exception", exc_info=(exctype, value, traceback))
 
 
 sys.excepthook = log_uncaught_exceptions
@@ -104,14 +110,15 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
     with open(file_name, "w") as file:
         file.write(data)
 
-def writeToFile(file_name: pathlib.Path  | str , data) ->None:
+
+def writeToFile(file_name: pathlib.Path | str, data) -> None:
     logging.info("writing to a file asynchronouslhy")
-    with open(file_name,'w') as file:
+    with open(file_name, "w") as file:
         json.dump(data, file, indent=4)
 
 
-def readJsonFile(filename: str|pathlib.Path):
-    logging.info(f"reading {filename=}")
+def readJsonFile(filename: str | pathlib.Path):
+    logging.info("reading fileName = %s ", filename)
 
     GDrive(FOLDER_NAME, logging.getLogger()).download(filename)
     with open(filename, "r") as f:
@@ -119,10 +126,10 @@ def readJsonFile(filename: str|pathlib.Path):
 
 
 async def readJsonFileAsychronously(filename: str | pathlib.Path):
-    logging.info(f"reading asynchronously {filename=}")
+    logging.info("reading asynchronously fileName = %s", filename)
     async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
         await gdrive._download_async(filename)
-    with open(filename, 'r') as f:
+    with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -138,43 +145,36 @@ class MutualFund:
         self.nav_my_file = ""
         logging.info("Initializing MutualFundTracker")
         logging.info("--Application has started---")
-        logging.info(f"--Logged in as {os.environ.get('USER')}")
+        logging.info("--Logged in as %s --", os.environ.get("USER"))
 
         self.logging = logging
 
-        self.directoryString: str = pathlib.Path(
-            __file__).parent.resolve().as_posix()
+        self.directoryString: str = pathlib.Path(__file__).parent.resolve().as_posix()
         self.sender_email: str = os.environ.get("shazmail")  # type: ignore
         self.password: str = os.environ.get("shazPassword")  # type: ignore
 
-        self.order_file: pathlib.Path = (
-            DATA_PATH.joinpath("order.json")
-        )
+        self.order_file: pathlib.Path = DATA_PATH.joinpath("order.json")
 
-        self.dayChangeJsonFileString: pathlib.Path = (
-            DATA_PATH.joinpath(
-                "dayChange.json")
+        self.dayChangeJsonFileString: pathlib.Path = DATA_PATH.joinpath(
+            "dayChange.json"
         )
-        self.dayChangeJsonFileStringBackupFile: pathlib.Path = (
-            DATA_PATH.joinpath("dayChange_bkc.json")
+        self.dayChangeJsonFileStringBackupFile: pathlib.Path = DATA_PATH.joinpath(
+            "dayChange_bkc.json"
         )
-        self.unitsFile: pathlib.Path = (
-            DATA_PATH.joinpath("units.json")
-        )
+        self.unitsFile: pathlib.Path = DATA_PATH.joinpath("units.json")
 
     async def _intialiaze(self):
-
         units_tasks = asyncio.create_task(
-            readJsonFileAsychronously(self.unitsFile) , name = "units")
+            readJsonFileAsychronously(self.unitsFile), name="units"
+        )
         order_tasks = asyncio.create_task(
-            readJsonFileAsychronously(self.order_file), name = "order")
+            readJsonFileAsychronously(self.order_file), name="order"
+        )
         daychange_tasks = asyncio.create_task(
-            readJsonFileAsychronously(self.dayChangeJsonFileString),name="daychange"
+            readJsonFileAsychronously(self.dayChangeJsonFileString), name="daychange"
         )
 
-        results = await asyncio.gather(
-            units_tasks, order_tasks,   daychange_tasks
-        )
+        results = await asyncio.gather(units_tasks, order_tasks, daychange_tasks)
 
         try:
             self.Units: dict = results[0]
@@ -221,8 +221,7 @@ class MutualFund:
         nav - 1 date = 13-May
         in this case orders should move to units file
         """
-        nav_date_format = datetime.strptime(
-            NavDate, self.formatString)  # type: ignore
+        nav_date_format = datetime.strptime(NavDate, self.formatString)  # type: ignore
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         return orderDateFormat <= nav_date_format
 
@@ -238,17 +237,20 @@ class MutualFund:
                         data[1] += order_data[1]
                         found = True
         if found:
-            self.tasks.extend([
-                writeToFileAsync(self.unitsFile, self.Units), # type: ignore
-                writeToFileAsync(self.order_file, self.Orders), # type: ignore
-            ])
+            self.tasks.extend(
+                [
+                    writeToFileAsync(self.unitsFile, self.Units),  # type: ignore
+                    writeToFileAsync(self.order_file, self.Orders),  # type: ignore
+                ]
+            )
 
         else:
             logging.info(
                 f"--No new Orders were found for {self.jsonData.funds[mfid].name}--"
             )
             logging.info(
-                f"No new orders were found for {self.jsonData.funds[mfid].name}")
+                f"No new orders were found for {self.jsonData.funds[mfid].name}"
+            )
 
     async def addToUnitsNotPreExisting(self) -> None:
         """
@@ -259,7 +261,7 @@ class MutualFund:
         key_list = list(self.Orders.keys())
         found = False
 
-    # Iterate over each key in the Orders dictionary
+        # Iterate over each key in the Orders dictionary
         for i in key_list:
             found = False
             if i not in self.Units:
@@ -275,10 +277,12 @@ class MutualFund:
                     self.Units[i][1] += date_data[1]
 
                 # Write the Units and Orders dictionaries to their respective files
-                self.tasks.append([
-                    writeToFileAsync(self.unitsFile, self.Units), # type: ignore
-                    writeToFileAsync(self.order_file, self.Orders),
-                ])
+                self.tasks.append(
+                    [
+                        writeToFileAsync(self.unitsFile, self.Units),  # type: ignore
+                        writeToFileAsync(self.order_file, self.Orders),
+                    ]
+                )
         # If no new mutual fund was found in the Orders dictionary
         if not key_list or not found:
             logging.info("--No new Mutual fund was found in Order--")
@@ -307,12 +311,13 @@ class MutualFund:
         if file is not None:
             writeToFile(file, data=asdict(InvestmentData()))
         elif pathlib.Path.exists(self.dayChangeJsonFileStringBackupFile):
-            backup_data = readJsonFile(
-                self.dayChangeJsonFileStringBackupFile)
+            backup_data = readJsonFile(self.dayChangeJsonFileStringBackupFile)
             writeToFile(self.dayChangeJsonFileString, backup_data)
             self.jsonData = getInvestmentData(backup_data)  # type: ignore
         else:
-            writeToFile(self.dayChangeJsonFileStringBackupFile, asdict(InvestmentData()))
+            writeToFile(
+                self.dayChangeJsonFileStringBackupFile, asdict(InvestmentData())
+            )
             self.jsonData = InvestmentData()
 
     def initializeTables(self) -> None:
@@ -326,13 +331,10 @@ class MutualFund:
         )
         self.summaryTable = Table.grid(expand=True, pad_edge=True, padding=2)
 
-        self.summaryTable.add_column(
-            "invested", justify="center", no_wrap=True)
+        self.summaryTable.add_column("invested", justify="center", no_wrap=True)
         self.summaryTable.add_column("current", justify="right", no_wrap=True)
-        self.summaryTable.add_column(
-            "total returns", justify="right", no_wrap=True)
-        self.summaryTable.add_column(
-            "lastUpdated", justify="right", no_wrap=True)
+        self.summaryTable.add_column("total returns", justify="right", no_wrap=True)
+        self.summaryTable.add_column("lastUpdated", justify="right", no_wrap=True)
 
         self.TableMutualFund.add_column("SCHEME NAME", justify="center")
         self.TableMutualFund.add_column("DAY CHANGE", justify="center")
@@ -342,7 +344,6 @@ class MutualFund:
 
     def summaryTableEdit(self) -> None:
         try:
-
             lastUpdated = self.jsonData.lastUpdated
             current = self.jsonData.sumTotal
             invested = self.jsonData.totalInvested
@@ -403,15 +404,14 @@ class MutualFund:
 
         returnString = f"₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]"
         currentString = f"₹{current}\n\n[b]₹{invested}[/b]"
-        nav_date = f'[yellow]{date}[/yellow]\n\n[b]{preMF.nav[date]}[/b]'
+        nav_date = f"[yellow]{date}[/yellow]\n\n[b]{preMF.nav[date]}[/b]"
 
         self.TableMutualFund.add_row(
             SchemeName, dayChangeString, returnString, currentString, nav_date
         )
 
     def dayChangeTableAll(self, dic: dict) -> None:
-        all_daily_table = Table(title="Day Change Total",
-                                show_lines=True, expand=True)
+        all_daily_table = Table(title="Day Change Total", show_lines=True, expand=True)
         all_daily_table.add_column("NAV", justify="center", no_wrap=True)
         all_daily_table.add_column("DayChange", justify="center", no_wrap=True)
         sum_daychange_sorted_keys = sorted(
@@ -437,8 +437,7 @@ class MutualFund:
         plt.xlabel("Date", xside="upper")
         plt.ylabel("profit", yside="left")
 
-        plt.plot_date(dates, dayChangeList, color="green",
-                      label="DayChange Plot")
+        plt.plot_date(dates, dayChangeList, color="green", label="DayChange Plot")
         plt.clear_color()
         plt.show()
 
@@ -447,8 +446,7 @@ class MutualFund:
 
     async def DayChangeTable(self):
         logging.info("--rendering day change table--")
-        daily_table = Table(title="Day Change table",
-                            show_lines=True, expand=True)
+        daily_table = Table(title="Day Change table", show_lines=True, expand=True)
         daily_table.add_column("SCHEME NAME", justify="center", no_wrap=True)
         daily_table.add_column("NAV", justify="center", no_wrap=True)
         daily_table.add_column("DayChange", justify="center", no_wrap=True)
@@ -546,20 +544,21 @@ class MutualFund:
                 logging.info("--Nothing to update--")
                 return False
             self.jsonData["hash2"] = new_hash
-            lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(f"{self.formatString} %X")
+            lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
+                f"{self.formatString} %X"
+            )
             self.jsonData["lastUpdated"] = lastUpdated
             self.tasks.append(
-                         writeToFileAsync(
-                self.dayChangeJsonFileStringBackupFile,
-                await readJsonFileAsychronously(self.dayChangeJsonFileString),
+                writeToFileAsync(
+                    self.dayChangeJsonFileStringBackupFile,
+                    await readJsonFileAsychronously(self.dayChangeJsonFileString),
+                )
             )
-                    )
 
         return True
 
     async def write_bakcup(self):
         ...
-
 
     async def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
@@ -593,7 +592,6 @@ class MutualFund:
     async def dayChangeMethod(
         self, ids: str, todayNav: float, latestNavDate: str, name: str
     ) -> float:
-
         self.isExistingId(ids, name, latestNavDate, todayNav)
         data = self.jsonData.funds[ids].nav
         latestDate = datetime.strptime(latestNavDate, self.formatString)
@@ -639,7 +637,9 @@ class MutualFund:
             if key.isnumeric() and key not in self.Units:
                 del self.jsonData.funds[key]
 
-        self.tasks.append( writeToFileAsync(self.dayChangeJsonFileString, asdict(self.jsonData)))
+        self.tasks.append(
+            writeToFileAsync(self.dayChangeJsonFileString, asdict(self.jsonData))
+        )
 
     async def readMyNavFile(self) -> Tuple[float, float, float]:
         """
@@ -651,7 +651,6 @@ class MutualFund:
         totalDayChange = 0
 
         for line in self.nav_my_file.splitlines():
-
             temp = line.strip().split(";")
             _id, name, nav, date = (
                 temp[0],
@@ -684,7 +683,7 @@ class MutualFund:
             if not await self.downloadAllNavFile():
                 return
 
-            if not await self.updateMyNaVFile(): # type: ignore
+            if not await self.updateMyNaVFile():  # type: ignore
                 return
 
         sumTotal, totalInvested, totalDaychange = await self.readMyNavFile()
@@ -701,10 +700,9 @@ class MutualFund:
         self.jsonData["totalProfitPercentage"] = totalProfitPercentage
         self.jsonData["totalDaychange"] = totalDaychange
         self.tasks.append(
-                writeToFileAsync(self.dayChangeJsonFileString,
-                                 data=asdict(self.jsonData))
-            )
-        
+            writeToFileAsync(self.dayChangeJsonFileString, data=asdict(self.jsonData))
+        )
+
     async def del_cleanup(self):
         print("destructor called")
         await asyncio.gather(*self.tasks)
@@ -721,14 +719,10 @@ async def mutualFundTracker():
         await tracker.del_cleanup()
 
 
-
 async def main():
-    ...
     async with mutualFundTracker() as tracker:
         await tracker.getCurrentValues(True)
         tracker.drawTable()
-
-
 
 
 if __name__ == "__main__":

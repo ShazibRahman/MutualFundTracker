@@ -11,12 +11,16 @@ import requests
 from pandas import DataFrame
 
 
-sys.path.append(
-    pathlib.Path(__file__).parent.parent.parent.absolute().as_posix()
-)
+sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
-from gdrive.GDrive import GDrive  # autopep8: off # pylint: disable=wrong-import-position
-from models.day_change import InvestmentData, getInvestmentData # autopep8: off # pylint: disable=wrong-import-position
+from gdrive.GDrive import (
+    GDrive,
+)  # autopep8: off # pylint: disable=wrong-import-position
+from models.day_change import (
+    InvestmentData,
+    getInvestmentData,
+)  # autopep8: off # pylint: disable=wrong-import-position
+
 
 @asynccontextmanager
 async def gdrive_context(folder_name, logger):
@@ -33,33 +37,41 @@ data_path = (
 )
 LOGGER_PATH = pathlib.Path(data_path).resolve().joinpath("logger.log").as_posix()
 
+formatter = logging.Formatter(
+    "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])"
+)
+formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
+
+
 logging.basicConfig(
     filename=LOGGER_PATH,
     filemode="a",
-    level=logging.DEBUG,
-    format="%(asctime)s %(message)s",
+    level=logging.INFO,
+    format="%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
 
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(formatter)
+logging.getLogger().addHandler(stream_handler)
 
 
 def log_uncaught_exceptions(exctype, value, traceback):
-    logging.exception("Uncaught exception",
-                      exc_info=(exctype, value, traceback))
+    logging.exception("Uncaught exception", exc_info=(exctype, value, traceback))
 
 
 sys.excepthook = log_uncaught_exceptions
 
 
-
 gdrive: GDrive = GDrive("MutualFund", logging.getLogger())
 
 
-FOLDER_NAME:str ="MutualFund" # type: ignore
+FOLDER_NAME: str = "MutualFund"  # type: ignore
+
 
 def roundup3(value: float) -> float:
-    return round(value , 3)
+    return round(value, 3)
+
 
 class helper_functions:
     _instance = None
@@ -78,29 +90,38 @@ class helper_functions:
             print("Already initialized")
             return
         self.unit_file_path = pathlib.Path(data_path).joinpath("units.json").resolve()
-        self.daychange_file_path = pathlib.Path(data_path).joinpath("dayChange.json").resolve()
+        self.daychange_file_path = (
+            pathlib.Path(data_path).joinpath("dayChange.json").resolve()
+        )
         self.order_file_path = pathlib.Path(data_path).joinpath("order.json").resolve()
-        self.json_data_file_path = pathlib.Path(data_path).joinpath("NAVAll.json").resolve()
-        self.stock_data_file_path = pathlib.Path(data_path).joinpath("stocks_data.json").resolve()
-        self.stock_order_file_path = pathlib.Path(data_path).joinpath("stock_order.json").resolve()
+        self.json_data_file_path = (
+            pathlib.Path(data_path).joinpath("NAVAll.json").resolve()
+        )
+        self.stock_data_file_path = (
+            pathlib.Path(data_path).joinpath("stocks_data.json").resolve()
+        )
+        self.stock_order_file_path = (
+            pathlib.Path(data_path).joinpath("stock_order.json").resolve()
+        )
         self.stock_order: dict
         self.stock_data: dict
 
-        self.unit_json:dict
-        self.daychange_json:InvestmentData
-        self.order:dict
-        self.tasks :list[asyncio.tasks.Task]  
+        self.unit_json: dict
+        self.daychange_json: InvestmentData
+        self.order: dict
+        self.tasks: list[asyncio.tasks.Task]
 
-        asyncio.run(self.load_on())    
+        asyncio.run(self.load_on())
 
-    def writeToFile(self ,filename: pathlib.Path, data:object, indent=4) -> None:
+    def writeToFile(self, filename: pathlib.Path, data: object, indent=4) -> None:
         logging.info(f"writing to {filename=}")
         with open(filename, "w") as f:
             json.dump(data, f, indent=indent)
         GDrive(FOLDER_NAME, logging.getLogger()).upload(filename)
 
-
-    async def writeToFileAsync(self,filename: pathlib.Path, data: dict, indent=4) -> None:
+    async def writeToFileAsync(
+        self, filename: pathlib.Path, data: dict, indent=4
+    ) -> None:
         logging.info(f"writing asynchronously to {filename=}")
         with open(filename, mode="w") as f:
             # f.write(json.dumps(obj=data, indent=indent))
@@ -108,35 +129,47 @@ class helper_functions:
         async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
             await gdrive._upload_async(filename)
 
-
-    def writeRawDataToFile(self,file_name: str, data: str) -> None:
+    def writeRawDataToFile(self, file_name: str, data: str) -> None:
         logging.info(f"writing raw string data to {file_name}")
-        with open(file_name, "w",encoding="utf-8") as file:
+        with open(file_name, "w", encoding="utf-8") as file:
             file.write(data)
 
-
-    def readJsonFile(self ,filename: str|pathlib.Path):
+    def readJsonFile(self, filename: str | pathlib.Path):
         logging.info(f"reading {filename=}")
 
         GDrive(FOLDER_NAME, logging.getLogger()).download(filename)
-        with open(filename, "r",encoding="utf-8") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    async def readJsonFileAsychronously(self ,filename: str | pathlib.Path):
+    async def readJsonFileAsychronously(self, filename: str | pathlib.Path):
         logging.info(f"reading asynchronously {filename=}")
         async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
             await gdrive._download_async(filename)
-        with open(filename, 'r') as f:
-
+        with open(filename, "r") as f:
             return json.load(f)
 
     async def load_on(self):
-        file_list =[self.daychange_file_path , self.unit_file_path , self.order_file_path , self.stock_order_file_path , self.stock_data_file_path]
-        self.tasks =[ asyncio.create_task(self.readJsonFileAsychronously(file),name=file.as_posix()) for file in file_list]
-        self.tasks.append(asyncio.create_task(asyncio.to_thread(self.create_index_all_mutual_fund),name="create_index_all_mutual_fund"))
+        file_list = [
+            self.daychange_file_path,
+            self.unit_file_path,
+            self.order_file_path,
+            self.stock_order_file_path,
+            self.stock_data_file_path,
+        ]
+        self.tasks = [
+            asyncio.create_task(
+                self.readJsonFileAsychronously(file), name=file.as_posix()
+            )
+            for file in file_list
+        ]
+        self.tasks.append(
+            asyncio.create_task(
+                asyncio.to_thread(self.create_index_all_mutual_fund),
+                name="create_index_all_mutual_fund",
+            )
+        )
 
-
-        results,_ = await asyncio.wait(self.tasks)
+        results, _ = await asyncio.wait(self.tasks)
 
         for result in results:
             print(result.get_name())
@@ -155,26 +188,26 @@ class helper_functions:
                 self.stock_data = result.result()
 
         self.tasks.clear()
-        self.mutual_funds_dic = {self.daychange_json.funds[unit].name: unit for unit in self.unit_json}
+        self.mutual_funds_dic = {
+            self.daychange_json.funds[unit].name: unit for unit in self.unit_json
+        }
         self.mutual_funds = list(self.mutual_funds_dic.keys())
 
-    def readJsonFromDataFolder(self,filename):
+    def readJsonFromDataFolder(self, filename):
         file_path = pathlib.Path(data_path).joinpath(filename).resolve()
         gdrive.download(file_path)
-        with open(file_path, "r",encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
 
-    async def readJsonFromDataFolderAsychronously(self,filename):
+    async def readJsonFromDataFolderAsychronously(self, filename):
         file_path = pathlib.Path(data_path).joinpath(filename).resolve()
         await gdrive._download_async(file_path)
-        with open(file_path, 'r',encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
-
-
 
     def add_order_stock(self, stock, units, amount):
         stock_order = self.stock_order
-        stock_data =self.stock_data
+        stock_data = self.stock_data
         if not stock_data.__contains__(stock):
             return False
         if stock_order.__contains__(stock):
@@ -187,11 +220,10 @@ class helper_functions:
         #     self.writeToFileAsync(self.stock_order_file_path, stock_order)
         #     )
         #     )
-        self.writeToFile(self.stock_order_file_path,stock_order)
+        self.writeToFile(self.stock_order_file_path, stock_order)
         return True
 
-
-    def addOrder(self,MFID, unit, amount, date) -> str:
+    def addOrder(self, MFID, unit, amount, date) -> str:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         """
@@ -206,14 +238,13 @@ class helper_functions:
             self.order[MFID] = {date: [unit, amount]}
             value = "new"
 
-        self.writeToFile(self.order_file_path,self.order)
+        self.writeToFile(self.order_file_path, self.order)
         return value
-
 
     def getDailyChange(self):
         sumDayChange: dict = {}
         units_json = self.unit_json
-        daychange_json  = self.daychange_json
+        daychange_json = self.daychange_json
 
         for val in units_json.keys():
             value: dict[str, float] = daychange_json.funds[val].nav
@@ -247,12 +278,11 @@ class helper_functions:
             }
         ]
 
-
-    def dailyChangePerMutualFund(self,id_):
+    def dailyChangePerMutualFund(self, id_):
         # print("called with id: ", id, " and value: ", daychange_json[id]['name'])
         sumDayChange: dict = {}
         units_json = self.unit_json
-        daychange_json  = self.daychange_json
+        daychange_json = self.daychange_json
 
         units: float = units_json[id_][0]
         value = daychange_json.funds[id_]["nav"]
@@ -280,10 +310,8 @@ class helper_functions:
             }
         ], daychange_json.funds[id_]["name"]
 
-
-    def return_data(self,value):
-        daychange_json  = self.daychange_json
-
+    def return_data(self, value):
+        daychange_json = self.daychange_json
 
         data = daychange_json.funds[value]["nav"]
         x = list(data.keys())
@@ -298,19 +326,17 @@ class helper_functions:
         ]
         return return_list, daychange_json.funds[value]["name"]
 
-
     def get_options(self):
         # print(mutual_funds_dic)
-        mutual_funds_dic =  self.mutual_funds_dic
-        mutual_funds  =  self.mutual_funds
+        mutual_funds_dic = self.mutual_funds_dic
+        mutual_funds = self.mutual_funds
         return [{"label": x, "value": mutual_funds_dic[x]} for x in mutual_funds]
-
 
     def getInvestmentDistribution(self):
         data_at_time_of_investment = {}
         data_current = {}
         units_json = self.unit_json
-        daychange_json  = self.daychange_json
+        daychange_json = self.daychange_json
 
         for val in units_json.keys():
             mutual_fund = daychange_json.funds[val]
@@ -318,10 +344,9 @@ class helper_functions:
             data_at_time_of_investment[mutual_fund.name] = mutual_fund.invested
         return data_at_time_of_investment, data_current
 
-
     def getMainTableData(self):
         units_json = self.unit_json
-        daychange_json  = self.daychange_json
+        daychange_json = self.daychange_json
 
         lastUpdated = daychange_json["lastUpdated"]
         current = daychange_json["sumTotal"]
@@ -342,7 +367,6 @@ class helper_functions:
         ]
 
         for val in units_json.keys():
-
             preMF = daychange_json.funds[val]
             SchemeName = preMF["name"]
             dayChange = preMF["dayChange"]
@@ -366,14 +390,12 @@ class helper_functions:
 
         return summaryTable, mutual_fund_table
 
-
     def get_history(self, symbol: str, start: str, end: str) -> DataFrame:
         start_date = datetime.strptime(start, "%Y-%m-%d")
         end_date = datetime.strptime(end, "%Y-%m-%d")
         return nsepy.get_history(symbol, start=start_date, end=end_date)
 
-
-    def create_index_all_mutual_fund(self,*args , **kwargs):
+    def create_index_all_mutual_fund(self, *args, **kwargs):
         index_all_mutual_fund = {}
         with requests.get("https://www.amfiindia.com/spages/NAVopen.txt") as response:
             for line in response.text.splitlines():
@@ -385,29 +407,25 @@ class helper_functions:
                         index_all_mutual_fund[data[3]] = data[0]
                     except IndexError:
                         continue
-        self.json_data : dict =  index_all_mutual_fund
+        self.json_data: dict = index_all_mutual_fund
         self.writeToFile(self.json_data_file_path, index_all_mutual_fund)
         # self.tasks_no_want_to_wait_till_finish.append(self.loop.create_task(self.writeToFileAsync(
         #     self.json_data_file_path , index_all_mutual_fund
         #         )))
         return self.json_data
 
-
     def get_index_all_mutual_fund(self):
-        return [{"label": x, "value": y} for x,y in self.json_data.items()]
+        return [{"label": x, "value": y} for x, y in self.json_data.items()]
 
-
-    def get_id_name_dic(self,value):
+    def get_id_name_dic(self, value):
         json_data = self.json_data
         value = str(value)
         key = [k for k, v in json_data.items() if value == v]
         return key[0]
 
-
     def get_all_stocks_list(self):
         stock_data = self.stock_data
         return [{"label": stock_data[x], "value": x} for x in stock_data]
-
 
     def get_all_stock_dic(self):
         return self.stock_data
@@ -415,4 +433,4 @@ class helper_functions:
 
 if __name__ == "__main__":
     # create_index_all_mutual_fund()
-    obj =  helper_functions()
+    obj = helper_functions()

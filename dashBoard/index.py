@@ -8,6 +8,7 @@ from dash.dependencies import Input, Output
 
 # autopep8 : off
 sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
+sys.path.append(pathlib.Path(__file__).parent.parent.parent.resolve().as_posix())
 from app import app, server
 from apps import addOrder, dashBoard, stocks
 
