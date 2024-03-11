@@ -11,7 +11,7 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
-
+from util.lock_manager import LockManager
 import aiohttp
 import pytz
 import ujson as json
@@ -45,6 +45,10 @@ async def gdrive_context(folder_name, logger):
 
 INDIAN_TIMEZONE = pytz.timezone("Asia/Kolkata")
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath("data")
+lock_file = os.path.join(DATA_PATH, "lock_file.lock")
+
+lock_manager = LockManager(lock_file)
+
 FOLDER_NAME = "MutualFund"
 
 LOGGER_PATH = pathlib.Path(DATA_PATH).resolve().joinpath("logger.log").as_posix()
@@ -55,15 +59,13 @@ formatter = logging.Formatter(
 
 formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
 
-
 logging.basicConfig(
     filename=LOGGER_PATH,
     filemode="a",
-    level=logging.INFO,
+    level=logging.ERROR,
     format="%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
-
 
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setFormatter(formatter)
@@ -135,6 +137,8 @@ async def readJsonFileAsychronously(filename: str | pathlib.Path):
 
 class MutualFund:
     def __init__(self) -> None:
+        if not lock_manager.acquire_control():
+            sys.exit(0)
         self.jsonData: InvestmentData = None  # type: ignore
         self.console = Console()  # type: ignore
         self.unitsKeyList = []
@@ -590,7 +594,7 @@ class MutualFund:
             return True
 
     async def dayChangeMethod(
-        self, ids: str, todayNav: float, latestNavDate: str, name: str
+            self, ids: str, todayNav: float, latestNavDate: str, name: str
     ) -> float:
         self.isExistingId(ids, name, latestNavDate, todayNav)
         data = self.jsonData.funds[ids].nav
@@ -623,7 +627,7 @@ class MutualFund:
         return dayChange
 
     def isExistingId(
-        self, ids: str, name: str, latestNavDate: str, todayNav: float
+            self, ids: str, name: str, latestNavDate: str, todayNav: float
     ) -> None:
         if not self.jsonData.funds.__contains__(ids):
             self.jsonData.funds[ids] = NavData()
@@ -706,7 +710,9 @@ class MutualFund:
     async def del_cleanup(self):
         print("destructor called")
         await asyncio.gather(*self.tasks)
+
         self.tasks.clear()
+        lock_manager.release_control()
 
 
 @asynccontextmanager
@@ -727,7 +733,8 @@ async def main():
 
 if __name__ == "__main__":
     start = time.time()
-    asyncio.run(main())
-    print(time.time() - start)
-    # import cProfile
-    # cProfile.run(statement="asyncio.run(main())",sort="cumtime",filename="profile.out")
+    # asyncio.run(main())
+    # print(time.time() - start)
+    import cProfile
+
+    cProfile.run(statement="asyncio.run(main())", sort="cumtime", filename="profile.out")
