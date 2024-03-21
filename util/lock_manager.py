@@ -48,7 +48,8 @@ class LockManager:
                     )
                     return False
                 else:
-                    # Remove stale lock file
+                    # Remove stale lock
+                    logging.info("removing stale lock")
                     self.release_control()
 
         with open(self.lock_file, "w", encoding="utf-8") as file:

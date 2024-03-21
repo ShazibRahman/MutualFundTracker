@@ -31,44 +31,35 @@ async def callMutualFund(args) -> None:
     if args.logs == "clear":
         clearLogs()
         return
-    async with mutualFundTracker() as tracker:
+    async with mutualFundTracker(args.d == 'y') as tracker:
 
         if args.add is not None:
-
             tracker.addOrder(
                 args.add[0], float(args.add[1]), float(args.add[2]), args.add[3]
             )
             return
         if args.dc == "y":
-            await tracker._intialiaze()
-
             await tracker.DayChangeTable()
             return
 
         if args.r == "y":
-            await tracker._intialiaze()
-            await tracker.getCurrentValues(False)
+            await tracker.getCurrentValues()
             tracker.drawTable()
             return
 
         if args.d == "y":
-            await tracker._intialiaze()
-
-            await tracker.getCurrentValues(True)
+            await tracker.getCurrentValues()
             tracker.drawTable()
 
             return
         if args.dash == "y":
-
             os.system(f"/home/shazib/Desktop/linux/test/bin/python {index_path}")
             return
 
         if args.g != "o":
-            await tracker._intialiaze()
             tracker.drawTable()
 
         if args.g in ["y", "o"]:
-            await tracker._intialiaze()
             tracker.drawGraph()
 
 

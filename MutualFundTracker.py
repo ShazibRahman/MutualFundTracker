@@ -29,6 +29,7 @@ except ImportError as e:
     from rich.console import Console
     from rich.table import Table
 
+from util.retry import retry
 # autopep8: off
 from gdrive.GDrive import GDrive
 
@@ -42,6 +43,8 @@ async def gdrive_context(folder_name, logger):
         # Add any cleanup code here if needed
         pass
 
+
+download = False
 
 INDIAN_TIMEZONE = pytz.timezone("Asia/Kolkata")
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath("data")
@@ -121,24 +124,29 @@ def writeToFile(file_name: pathlib.Path | str, data) -> None:
 
 def readJsonFile(filename: str | pathlib.Path):
     logging.info("reading fileName = %s ", filename)
-
-    GDrive(FOLDER_NAME, logging.getLogger()).download(filename)
+    if not pathlib.Path(filename).exists() or download:
+        GDrive(FOLDER_NAME, logging.getLogger()).download(filename)
     with open(filename, "r") as f:
         return json.load(f)
 
 
 async def readJsonFileAsychronously(filename: str | pathlib.Path):
     logging.info("reading asynchronously fileName = %s", filename)
-    async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
-        await gdrive._download_async(filename)
+    if not pathlib.Path(filename).exists() or download:
+        async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
+            await gdrive._download_async(filename)
+
     with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 class MutualFund:
-    def __init__(self) -> None:
+    def __init__(self, is_downloadable: bool) -> None:
         if not lock_manager.acquire_control():
             sys.exit(0)
+        self.is_downloadable = is_downloadable
+        global download
+        download = self.is_downloadable
         self.jsonData: InvestmentData = None  # type: ignore
         self.console = Console()  # type: ignore
         self.unitsKeyList = []
@@ -168,6 +176,7 @@ class MutualFund:
         self.unitsFile: pathlib.Path = DATA_PATH.joinpath("units.json")
 
     async def _intialiaze(self):
+        logging.debug("----initializing----")
         units_tasks = asyncio.create_task(
             readJsonFileAsychronously(self.unitsFile), name="units"
         )
@@ -368,7 +377,8 @@ class MutualFund:
             else f"[red]₹{current}[/red]"
         )
         currentString = f"Current\n\n[bold]{currentColor}[/bold]"
-        totalReturnString = f"[yellow]•[/yellow]Total Returns\n\n[bold]{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
+        totalReturnString = "[yellow]•[/yellow]Total Returns\n\n[bold]" \
+                            + f"{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
         dailyReturnString = f"[yellow]•[/yellow][bold]{getfv(totalDaychange)} {getfp(totalDaychangePercentage)}[/bold]"
         lastUpdatedString = f"Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]"
         self.summaryTable.add_row(
@@ -459,7 +469,7 @@ class MutualFund:
         self.UpdateKeyList()
         for key in self.unitsKeyList:
             if not self.jsonData.funds.__contains__(key):
-                await self.getCurrentValues(False)
+                await self.getCurrentValues()
             value = self.jsonData.funds[key].nav
             name: str = self.jsonData.funds[key].name
             units: float = self.Units[key][0]
@@ -564,18 +574,17 @@ class MutualFund:
     async def write_bakcup(self):
         ...
 
+    @retry(3)
     async def downloadAllNavFile(self) -> bool:
         logging.info("--downloading the NAV file from server--")
         start_time = time.time()
-        try:
-            async with aiohttp.client.ClientSession() as client:
-                res = await client.get("https://www.amfiindia.com/spages/NAVopen.txt")
-                status = res.status
-                text = await res.text()
 
-            if status != 200:
-                return False
-        except Exception:
+        async with aiohttp.client.ClientSession() as client:
+            res = await client.get("https://www.amfiindia.com/spages/NAVopen.txt", timeout=5)
+            status = res.status
+            text = await res.text()
+
+        if status != 200:
             return False
 
         else:
@@ -680,9 +689,10 @@ class MutualFund:
             cur_json_id["dayChange"] = dayChange
         return sumTotal, totalInvested, totalDayChange
 
-    async def getCurrentValues(self, download: bool) -> None:
+    async def getCurrentValues(self) -> None:
+
         logging.info("--Main calculation--")
-        if download:
+        if self.is_downloadable:
             await self.addToUnitsNotPreExisting()
             if not await self.downloadAllNavFile():
                 return
@@ -716,8 +726,8 @@ class MutualFund:
 
 
 @asynccontextmanager
-async def mutualFundTracker():
-    tracker = MutualFund()
+async def mutualFundTracker(is_downloadable: bool = True) -> MutualFund:
+    tracker = MutualFund(is_downloadable)
     await tracker._intialiaze()
     try:
         yield tracker
@@ -726,8 +736,8 @@ async def mutualFundTracker():
 
 
 async def main():
-    async with mutualFundTracker() as tracker:
-        await tracker.getCurrentValues(True)
+    async with mutualFundTracker(is_downloadable=True) as tracker:
+        await tracker.getCurrentValues()
         tracker.drawTable()
 
 
