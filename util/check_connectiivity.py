@@ -2,7 +2,7 @@ import socket
 from functools import lru_cache
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=2)
 def check_internet_connection():
     try:
         # Connect to a well-known website

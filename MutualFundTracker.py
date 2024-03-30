@@ -30,7 +30,6 @@ except ImportError as e:
     from rich.table import Table
 
 from util.retry import retry
-# autopep8: off
 from gdrive.GDrive import GDrive
 
 
@@ -65,7 +64,7 @@ formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
 logging.basicConfig(
     filename=LOGGER_PATH,
     filemode="a",
-    level=logging.ERROR,
+    level=logging.INFO,
     format="%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
@@ -476,15 +475,15 @@ class MutualFund:
             nav_col = ""
             daychange_col = ""
             i = True
-            prevdayChange = 0.0
+            prevDayChange = 0.0
 
             for nav, daychange in value.items():
                 if i:
-                    prevdayChange = units * daychange
+                    prevDayChange = units * daychange
                     i = False
                     continue
                 daychange *= units
-                daychangeData: float = round(daychange - prevdayChange, 3)
+                daychangeData: float = round(daychange - prevDayChange, 3)
 
                 if nav in sumDayChange:
                     sumDayChange[nav] += daychangeData
@@ -493,7 +492,7 @@ class MutualFund:
                 nav_col += f"[yellow]{nav}[/yellow]\n"
 
                 daychange_col += f"{getfv(daychangeData)}\n"
-                prevdayChange = daychange
+                prevDayChange = daychange
 
             daily_table.add_row(name, nav_col, daychange_col)
 
@@ -571,7 +570,7 @@ class MutualFund:
 
         return True
 
-    async def write_bakcup(self):
+    async def write_backup(self):
         ...
 
     @retry(3)
@@ -580,27 +579,28 @@ class MutualFund:
         start_time = time.time()
 
         async with aiohttp.client.ClientSession() as client:
-            res = await client.get("https://www.amfiindia.com/spages/NAVopen.txt", timeout=5)
+            res = await client.get("https://www.amfiindia.com/spages/navopen.txt", timeout=5)
             status = res.status
             text = await res.text()
 
-        if status != 200:
-            return False
+            if status != 200:
+                logging.error(f"HTTP status: {status}")
+                raise ValueError(f"HTTP status: {status}")
 
-        else:
-            self.nav_all_file = text
-            logging.info(
-                f"--took {(time.time() - start_time):.2f} Secs to download the file"
-            )
-            new_hash = hashlib.md5(self.nav_all_file.encode()).hexdigest()
-            if self.jsonData.hash:
-                prev_hash = self.jsonData.hash
-                if prev_hash == new_hash:
-                    logging.info("--No changes found in the new NAV file--")
-                    return False
-            self.jsonData.hash = new_hash
+            else:
+                self.nav_all_file = text
+                logging.info(
+                    f"--took {(time.time() - start_time):.2f} Secs to download the file"
+                )
+                new_hash = hashlib.md5(self.nav_all_file.encode()).hexdigest()
+                if self.jsonData.hash:
+                    prev_hash = self.jsonData.hash
+                    if prev_hash == new_hash:
+                        logging.info("--No changes found in the new NAV file--")
+                        return False
+                self.jsonData.hash = new_hash
 
-            return True
+                return True
 
     async def dayChangeMethod(
             self, ids: str, todayNav: float, latestNavDate: str, name: str
