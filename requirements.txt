@@ -12,7 +12,7 @@ nsepy==0.8
 pandas==2.0.2
 pydrive
 plotly==5.15.0
-requests==2.25.1
+requests==2.31.0
 argparse==1.4.0
 pytz==2022.1
 aiohttp~=3.9.1
