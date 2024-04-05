@@ -15,6 +15,7 @@ from util.lock_manager import LockManager
 import aiohttp
 import pytz
 import ujson as json
+from util.DesktopNotification import DesktopNotification
 
 from models.day_change import InvestmentData, NavData, getInvestmentData
 
@@ -76,6 +77,7 @@ logging.getLogger().addHandler(stream_handler)
 
 def log_uncaught_exceptions(exctype, value, traceback):
     logging.exception("Uncaught exception", exc_info=(exctype, value, traceback))
+    DesktopNotification("Uncaught exception", str(value))
 
 
 sys.excepthook = log_uncaught_exceptions
@@ -566,6 +568,9 @@ class MutualFund:
                     self.dayChangeJsonFileStringBackupFile,
                     await readJsonFileAsychronously(self.dayChangeJsonFileString),
                 )
+            )
+            DesktopNotification(
+                "Mutual Fund Tracker", f"Updated at {lastUpdated}"
             )
 
         return True

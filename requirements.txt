@@ -19,3 +19,4 @@ aiohttp~=3.9.1
 ujson~=5.8.0
 
 psutil~=5.9.8
+plyer~=2.1.0
