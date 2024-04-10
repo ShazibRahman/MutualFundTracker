@@ -11,13 +11,13 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
-from util.lock_manager import LockManager
+
 import aiohttp
 import pytz
 import ujson as json
-from util.DesktopNotification import DesktopNotification
-
 from models.day_change import InvestmentData, NavData, getInvestmentData
+from util.DesktopNotification import DesktopNotification
+from util.lock_manager import LockManager
 
 try:
     import plotext as plt
@@ -378,8 +378,10 @@ class MutualFund:
             else f"[red]₹{current}[/red]"
         )
         currentString = f"Current\n\n[bold]{currentColor}[/bold]"
-        totalReturnString = "[yellow]•[/yellow]Total Returns\n\n[bold]" \
-                            + f"{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
+        totalReturnString = (
+            "[yellow]•[/yellow]Total Returns\n\n[bold]"
+            + f"{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
+        )
         dailyReturnString = f"[yellow]•[/yellow][bold]{getfv(totalDaychange)} {getfp(totalDaychangePercentage)}[/bold]"
         lastUpdatedString = f"Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]"
         self.summaryTable.add_row(
@@ -403,8 +405,8 @@ class MutualFund:
                 "Incomplete info in Json file try[yellow][b]-d y[/yellow][/b] option"
             )
             exit(256)
-        except Exception:
-            self.console.print("Something went wrong")
+        except Exception as error_occurred:
+            self.console.print(error_occurred.__cause__)
 
             exit(256)
         if dayChange != -1:
@@ -569,14 +571,11 @@ class MutualFund:
                     await readJsonFileAsychronously(self.dayChangeJsonFileString),
                 )
             )
-            DesktopNotification(
-                "Mutual Fund Tracker", f"Updated at {lastUpdated}"
-            )
+            DesktopNotification("Mutual Fund Tracker", f"Updated at {lastUpdated}")
 
         return True
 
-    async def write_backup(self):
-        ...
+    async def write_backup(self): ...
 
     @retry(3)
     async def downloadAllNavFile(self) -> bool:
@@ -584,7 +583,9 @@ class MutualFund:
         start_time = time.time()
 
         async with aiohttp.client.ClientSession() as client:
-            res = await client.get("https://www.amfiindia.com/spages/navopen.txt", timeout=5)
+            res = await client.get(
+                "https://www.amfiindia.com/spages/navopen.txt", timeout=5
+            )
             status = res.status
             text = await res.text()
 
@@ -608,7 +609,7 @@ class MutualFund:
                 return True
 
     async def dayChangeMethod(
-            self, ids: str, todayNav: float, latestNavDate: str, name: str
+        self, ids: str, todayNav: float, latestNavDate: str, name: str
     ) -> float:
         self.isExistingId(ids, name, latestNavDate, todayNav)
         data = self.jsonData.funds[ids].nav
@@ -641,7 +642,7 @@ class MutualFund:
         return dayChange
 
     def isExistingId(
-            self, ids: str, name: str, latestNavDate: str, todayNav: float
+        self, ids: str, name: str, latestNavDate: str, todayNav: float
     ) -> None:
         if not self.jsonData.funds.__contains__(ids):
             self.jsonData.funds[ids] = NavData()
@@ -752,4 +753,6 @@ if __name__ == "__main__":
     # print(time.time() - start)
     import cProfile
 
-    cProfile.run(statement="asyncio.run(main())", sort="cumtime", filename="profile.out")
+    cProfile.run(
+        statement="asyncio.run(main())", sort="cumtime", filename="profile.out"
+    )

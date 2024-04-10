@@ -30,7 +30,7 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
                     if i == retries:
                         logging.error(f'Error: {repr(e)}.')
                         logging.error(f'"{func.__name__}()" failed after {retries} retries.')
-                        break
+                        raise e  # Re-raise the exception
                     else:
                         logging.debug(f'Error: {repr(e)} -> Retrying...')
                         await asyncio.sleep(delay)  # Add a delay before running the next iteration
