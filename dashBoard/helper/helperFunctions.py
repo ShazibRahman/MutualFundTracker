@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import ujson as json
 import pathlib
 import sys
 from contextlib import asynccontextmanager
@@ -8,8 +7,8 @@ from datetime import datetime
 
 import nsepy
 import requests
+import ujson as json
 from pandas import DataFrame
-
 
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
@@ -35,7 +34,7 @@ async def gdrive_context(folder_name, logger):
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
 )
-LOGGER_PATH = pathlib.Path(data_path).resolve().joinpath("logger.log").as_posix()
+LOGGER_PATH = pathlib.Path(data_path).joinpath("logs").resolve().joinpath("logger.log").as_posix()
 
 formatter = logging.Formatter(
     "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])"

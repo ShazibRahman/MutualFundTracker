@@ -1,37 +1,49 @@
-import sys
 import argparse
 import asyncio
 import os
 
-from MutualFundTracker import mutualFundTracker
+from MutualFundTracker import MutualFund
 
 git_dir = os.path.dirname(__file__)
 index_path = f"{os.path.dirname(__file__)}/dashBoard/index.py"
-loggerPath = f"{os.path.dirname(__file__)}/data/logger.log"
-anacron_user = "Shazib_Anacron"
+loggerPath = f"{os.path.dirname(__file__)}/logs/logger.log"
+ANACRON_USER = "Shazib_Anacron"
+
+
 # sys.path.append(pathlib.Path(__file__).parent.parent.resolve().as_posix())
 
-print(sys.path)
 
-
-def readLogs():
+def read_logs():
+    """
+    Read the logs using bat
+    :return:
+    """
     os.system(f"bat --paging=never {loggerPath}")
 
 
-def clearLogs():
-    file_ = open(loggerPath, "w", encoding="utf-8")
-    file_.close()
+def clear_logs():
+    """
+    Clear the logs
+    :return:
+    """
+    with open(loggerPath, "w", encoding="utf-8") as file_:
+        file_.truncate()
 
 
-async def callMutualFund(args) -> None:
+async def call_mutual_fund(args) -> None:  # pragma: no cover
+    """
+    Call the mutual fund tracker
+    :param args:
+    :return:
+    """
     if args.logs == "show":
-        readLogs()
+        read_logs()
         return
 
     if args.logs == "clear":
-        clearLogs()
+        clear_logs()
         return
-    async with mutualFundTracker(args.d == 'y') as tracker:
+    async with MutualFund(args.d == 'y') as tracker:
 
         if args.add is not None:
             tracker.addOrder(
@@ -39,17 +51,17 @@ async def callMutualFund(args) -> None:
             )
             return
         if args.dc == "y":
-            await tracker.DayChangeTable()
+            await tracker.day_change_table()
             return
 
         if args.r == "y":
-            await tracker.getCurrentValues()
-            tracker.drawTable()
+            await tracker.get_current_values()
+            tracker.draw_table()
             return
 
         if args.d == "y":
-            await tracker.getCurrentValues()
-            tracker.drawTable()
+            await tracker.get_current_values()
+            tracker.draw_table()
 
             return
         if args.dash == "y":
@@ -57,13 +69,17 @@ async def callMutualFund(args) -> None:
             return
 
         if args.g != "o":
-            tracker.drawTable()
+            tracker.draw_table()
 
         if args.g in ["y", "o"]:
-            tracker.drawGraph()
+            tracker.draw_graph()
 
 
 async def main():
+    """
+    Main function
+    :return:
+    """
     choices = ["y", "n"]
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -88,7 +104,7 @@ async def main():
     parser.add_argument("-dash", type=str, choices=["y", "n"], default="n")
 
     args = parser.parse_args()
-    await callMutualFund(args)
+    await call_mutual_fund(args)
 
 
 if __name__ == "__main__":
