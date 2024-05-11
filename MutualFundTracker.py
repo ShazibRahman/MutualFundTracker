@@ -17,7 +17,6 @@ import pytz
 import ujson as json
 from models.day_change import InvestmentData, NavData, getInvestmentData
 from util.DesktopNotification import DesktopNotification
-from util.lock_manager import LockManager
 
 try:
     import plotext as plt
@@ -39,7 +38,7 @@ INDIAN_TIMEZONE = pytz.timezone("Asia/Kolkata")
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath("data")
 lock_file = os.path.join(DATA_PATH, "lock_file.lock")
 
-lock_manager = LockManager(lock_file)
+# lock_manager = LockManager(lock_file)
 
 FOLDER_NAME = "MutualFund"
 
@@ -68,8 +67,9 @@ async def writeToFileAsync(filename: pathlib.Path, data: dict, indent=4) -> None
     logging.info(f"writing asynchronously to {filename=}")
     with open(file=filename, mode="w", encoding="utf-8") as f:
         json.dump(data, f, indent=indent)
-    async with GDrive(FOLDER_NAME, logging.getLogger()) as gdrive:
-        await gdrive.upload_async(filename)
+    # async with GDrive(FOLDER_NAME) as gdrive:  // no profit of using events because we are using context managers, and it will trigger __aexit__ method
+    #     gdrive.upload_event(filename)
+    await GDrive(FOLDER_NAME).upload_async(filename)
 
 
 def writeRawDataToFile(file_name: str, data: str) -> None:
@@ -79,7 +79,7 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
 
 
 def writeToFile(file_name: pathlib.Path | str, data) -> None:
-    logging.info("writing to a file asynchronouslhy")
+    logging.info("writing to a file asynchronously")
     with open(file_name, "w") as file:
         json.dump(data, file, indent=4)
 
@@ -87,7 +87,7 @@ def writeToFile(file_name: pathlib.Path | str, data) -> None:
 def readJsonFile(filename: str | pathlib.Path):
     logging.info("reading fileName = %s ", filename)
     if not pathlib.Path(filename).exists() or download:
-        GDrive(FOLDER_NAME, logging.getLogger()).download(filename)
+        GDrive(FOLDER_NAME).download(filename)
     with open(filename, "r") as f:
         return json.load(f)
 
@@ -95,7 +95,7 @@ def readJsonFile(filename: str | pathlib.Path):
 async def readJsonFileAsynchronously(filename: str | pathlib.Path):
     logging.info("reading asynchronously fileName = %s", filename)
     if not pathlib.Path(filename).exists() or download:
-        async with GDrive(FOLDER_NAME, logging.getLogger()) as gdrive:
+        async with GDrive(FOLDER_NAME) as gdrive:
             await gdrive.download_async(filename)
 
     with open(filename, "r", encoding="utf-8") as f:
@@ -105,11 +105,11 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
 class MutualFund:
     def __init__(self, is_downloadable: bool) -> None:
 
-        if not lock_manager.acquire_control():
-            sys.exit(0)
-        self.formatString = None
-        self.units = None
         self.Orders = None
+        self.units = None
+        self.Orders: dict[str:dict[str:list]]
+        self.formatString = None
+        self.units: dict
         self.is_downloadable = is_downloadable
         global download
         download = self.is_downloadable
@@ -160,13 +160,13 @@ class MutualFund:
         except JSONDecodeError:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.units = {}
-            self.runOnceInitialization(self.unitsFile)
+            self.run_once_initialization(self.unitsFile)
         try:
-            self.Orders: dict = results[1]
+            self.Orders: dict[str:dict[str:list]] = results[1]
         except JSONDecodeError:
             print("Something went wrong with the order file")
             self.Orders = {}
-            self.runOnceInitialization(self.order_file)
+            self.run_once_initialization(self.order_file)
 
         if not self.units:
             print(f"No mutual Fund specified to track please Add something in {self.unitsFile} file to track")
@@ -177,7 +177,7 @@ class MutualFund:
             self.json_data: InvestmentData = getInvestmentData(temp_data)
         except (FileNotFoundError, JSONDecodeError):
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
-            self.runOnceInitialization(None)
+            self.run_once_initialization(None)
         self.unitsKeyList = list(self.units.keys())
         self.console: Console
         self.TableMutualFund = Table()
@@ -202,69 +202,52 @@ class MutualFund:
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         return orderDateFormat <= nav_date_format
 
-    async def addToUnits(self, mfid, date) -> None:
-        found = False
+    async def addToUnits(self, mfid, date, name: str) -> None:
         if self.Orders.__contains__(mfid):
-            if keys_list := list(self.Orders[mfid].keys()):
-                for key in keys_list:
-                    if self.check_past_dates(date, key):
-                        order_data = self.Orders[mfid].pop(date)
-                        data = self.units[mfid]
-                        data[0] += order_data[0]
-                        data[1] += order_data[1]
-                        found = True
-        if found:
-            self.tasks.extend(
-                [
-                    writeToFileAsync(self.unitsFile, self.units),  # type: ignore
-                    writeToFileAsync(self.order_file, self.Orders),  # type: ignore
-                ]
-            )
+            for key in self.Orders[mfid]:
+                if self.check_past_dates(date, key):
+                    order_data = self.Orders[mfid].pop(date)
+                    data = self.units[mfid]
+                    data[0] += order_data[0]
+                    data[1] += order_data[1]
+                    logging.info("adding units: %s and amount: %s to units for %s",
+                                 order_data[0], order_data[1], name)
 
-        else:
-            logging.info(
-                f"--No new Orders were found for {self.json_data.funds[mfid].name}--"
-            )
-            logging.info(
-                f"No new orders were found for {self.json_data.funds[mfid].name}"
-            )
+                    self.tasks.extend(
+                        [
+                            writeToFileAsync(self.unitsFile, self.units),  # type: ignore
+                            writeToFileAsync(self.order_file, self.Orders),  # type: ignore
+                        ]
+                    )
 
     async def addToUnitsNotPreExisting(self) -> None:
         """
         Adds new mutual fund units to the unit file.
         """
-        logging.info("--adding new MF units to Unit file")
+        for order_key in self.Orders:
 
-        key_list = list(self.Orders.keys())
-        found = False
-
-        # Iterate over each key in the Orders dictionary
-        for i in key_list:
-            found = False
-            if i not in self.units:
-                found = True
-                self.units[i] = [0, 0]
-
-                date_list = list(self.Orders[i].keys())
-
-                # Iterate over each date in the Orders dictionary for the current key
-                for date in date_list:
-                    date_data = self.Orders[i].pop(date)
-                    self.units[i][0] += date_data[0]
-                    self.units[i][1] += date_data[1]
+            if order_key not in self.units and self.Orders[order_key]:
+                self.units[order_key] = [0, 0]
+                for date in self.Orders[order_key]:
+                    date_data = self.Orders[order_key].pop(date)
+                    self.units[order_key][0] += date_data[0]
+                    self.units[order_key][1] += date_data[1]
+                    logging.info(
+                        "Adding new mf  units: %s and amount: %s to units for %s",
+                        date_data[0],
+                        date_data[1],
+                        order_key
+                    )
 
                 # Write the Units and Orders dictionaries to their respective files
-                self.tasks.append(
+                self.tasks.extend(
                     [
                         writeToFileAsync(self.unitsFile, self.units),  # type: ignore
                         writeToFileAsync(self.order_file, self.Orders),
                     ]
                 )
-        # If no new mutual fund was found in the Orders dictionary
-        if not key_list or not found:
-            logging.info("--No new Mutual fund was found in Order--")
 
-    def addOrder(self, MFID: str, unit: float, amount: float, date: str) -> None:
+    def add_order(self, MFID: str, unit: float, amount: float, date: str) -> None:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         """
@@ -282,7 +265,7 @@ class MutualFund:
         )
         writeToFile(self.order_file, self.Orders)
 
-    def runOnceInitialization(self, file) -> None:
+    def run_once_initialization(self, file) -> None:
         if not pathlib.Path.exists(DATA_PATH):
             pathlib.Path.mkdir(DATA_PATH)
         if file is not None:
@@ -538,9 +521,6 @@ class MutualFund:
 
         return True
 
-    async def write_backup(self):
-        ...
-
     @retry(3)
     async def download_all_nav_file(self) -> bool:
         logging.info("--downloading the NAV file from server--")
@@ -596,7 +576,7 @@ class MutualFund:
             else:
                 prev_day_nav_date = key_list[-1]
 
-        await self.addToUnits(ids, prev_day_nav_date)
+        await self.addToUnits(ids, prev_day_nav_date, name)
         units: float = self.units[ids][0]
 
         prevDaySum: float = data[prev_day_nav_date] * units
@@ -678,11 +658,13 @@ class MutualFund:
         total_profit_percentage = round(total_profit_percentage, 3)
         total_profit = round(total_profit, 3)
         total_daychange = round(total_daychange, 3)
-        self.json_data["total_profit"] = total_profit
-        self.json_data["sum_total"] = round(sum_total, 3)
-        self.json_data["total_invested"] = total_invested
-        self.json_data["total_profit_percentage"] = total_profit_percentage
-        self.json_data["total_daychange"] = total_daychange
+
+        self.json_data.totalProfit = total_profit
+        self.json_data.sumTotal = round(sum_total, 3)
+        self.json_data.totalInvested = total_invested
+        self.json_data.totalProfitPercentage = total_profit_percentage
+
+        self.json_data.totalDaychange = total_daychange
         self.tasks.append(
             writeToFileAsync(self.dayChangeJsonFileString, data=asdict(self.json_data))
         )
@@ -692,14 +674,19 @@ class MutualFund:
 
         :return:
         """
-        print("destructor called")
-        await asyncio.gather(*self.tasks)
+        if self.tasks:
+            start_time = time.time()
+
+            await asyncio.gather(*self.tasks)
+
+            logging.debug(f"---Took {(time.time() - start_time):.2f} Secs to complete the tasks---")
+        else:
+            logging.debug("No tasks to run")
 
         self.tasks.clear()
-        lock_manager.release_control()
+        # lock_manager.release_control()
 
     async def __aenter__(self):
-        logging.debug("----entering----")
         await self.initialize()
         return self
 
@@ -716,8 +703,6 @@ async def main2():
 
 if __name__ == "__main__":
     start = time.time()
-    # asyncio.run(main())
-    # print(time.time() - start)
     import cProfile
 
     cProfile.run(

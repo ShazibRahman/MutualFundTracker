@@ -2,7 +2,8 @@ import argparse
 import asyncio
 import os
 
-from MutualFundTracker import MutualFund
+from MutualFundTracker import MutualFund, lock_file
+from util.lock_manager import LockManager
 
 git_dir = os.path.dirname(__file__)
 index_path = f"{os.path.dirname(__file__)}/dashBoard/index.py"
@@ -43,36 +44,39 @@ async def call_mutual_fund(args) -> None:  # pragma: no cover
     if args.logs == "clear":
         clear_logs()
         return
-    async with MutualFund(args.d == 'y') as tracker:
-
-        if args.add is not None:
-            tracker.addOrder(
-                args.add[0], float(args.add[1]), float(args.add[2]), args.add[3]
-            )
+    with LockManager(lock_file) as lock_acquired:
+        if not lock_acquired:
             return
-        if args.dc == "y":
-            await tracker.day_change_table()
-            return
+        async with MutualFund(args.d == 'y') as tracker:
 
-        if args.r == "y":
-            await tracker.get_current_values()
-            tracker.draw_table()
-            return
+            if args.add is not None:
+                tracker.add_order(
+                    args.add[0], float(args.add[1]), float(args.add[2]), args.add[3]
+                )
+                return
+            if args.dc == "y":
+                await tracker.day_change_table()
+                return
 
-        if args.d == "y":
-            await tracker.get_current_values()
-            tracker.draw_table()
+            if args.r == "y":
+                await tracker.get_current_values()
+                tracker.draw_table()
+                return
 
-            return
-        if args.dash == "y":
-            os.system(f"/home/shazib/Desktop/linux/test/bin/python {index_path}")
-            return
+            if args.d == "y":
+                await tracker.get_current_values()
+                tracker.draw_table()
 
-        if args.g != "o":
-            tracker.draw_table()
+                return
+            if args.dash == "y":
+                os.system(f"/home/shazib/Desktop/linux/test/bin/python {index_path}")
+                return
 
-        if args.g in ["y", "o"]:
-            tracker.draw_graph()
+            if args.g != "o":
+                tracker.draw_table()
+
+            if args.g in ["y", "o"]:
+                tracker.draw_graph()
 
 
 async def main():

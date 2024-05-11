@@ -2,7 +2,6 @@
 import logging as log
 import pathlib
 import sys
-from datetime import time
 from logging.handlers import TimedRotatingFileHandler
 
 from util.DesktopNotification import DesktopNotification
@@ -32,11 +31,11 @@ class ExcludeAESFilter(log.Filter):
 # Define a TimedRotatingFileHandler to rotate logs daily and keep only the last 5 days' logs
 handler = TimedRotatingFileHandler(
     filename=logger_path,
-    when="D",  # Rotate daily
+    when="midnight",  # Rotate daily
     interval=1,  # Interval in days
     backupCount=5,  # Keep logs for the last 5 days
-    atTime=time(0, 0, 0),  # Rotate at midnight
 )
+
 handler.addFilter(ExcludeAESFilter())
 
 # Define the log format
@@ -83,8 +82,3 @@ def log_uncaught_exceptions(exctype, value, traceback):
 
 # Set the exception hook
 sys.excepthook = log_uncaught_exceptions
-
-
-# Export the logger function
-def getLogger() -> log.Logger:
-    return logger

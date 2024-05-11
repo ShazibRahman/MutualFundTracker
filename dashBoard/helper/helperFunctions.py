@@ -34,7 +34,7 @@ async def gdrive_context(folder_name, logger):
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
 )
-LOGGER_PATH = pathlib.Path(data_path).joinpath("logs").resolve().joinpath("logger.log").as_posix()
+LOGGER_PATH = pathlib.Path(data_path).parent.joinpath("logs").resolve().joinpath("logger.log").as_posix()
 
 formatter = logging.Formatter(
     "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])"
@@ -78,7 +78,6 @@ class helper_functions:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            print("Telegram instance created")
             cls._initiated = False
         else:
             cls._initiated = True
@@ -126,7 +125,7 @@ class helper_functions:
             # f.write(json.dumps(obj=data, indent=indent))
             json.dump(data, f, indent=indent)
         async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
-            await gdrive._upload_async(filename)
+            await gdrive.upload_async(filename)
 
     def writeRawDataToFile(self, file_name: str, data: str) -> None:
         logging.info(f"writing raw string data to {file_name}")
@@ -143,7 +142,7 @@ class helper_functions:
     async def readJsonFileAsychronously(self, filename: str | pathlib.Path):
         logging.info(f"reading asynchronously {filename=}")
         async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
-            await gdrive._download_async(filename)
+            await gdrive.download_async(filename)
         with open(filename, "r") as f:
             return json.load(f)
 
@@ -222,7 +221,7 @@ class helper_functions:
         self.writeToFile(self.stock_order_file_path, stock_order)
         return True
 
-    def addOrder(self, MFID, unit, amount, date) -> str:
+    def add_order(self, MFID, unit, amount, date) -> str:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         """
