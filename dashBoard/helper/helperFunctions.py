@@ -2,7 +2,6 @@ import asyncio
 import logging
 import pathlib
 import sys
-from contextlib import asynccontextmanager
 from datetime import datetime
 
 import nsepy
@@ -20,15 +19,6 @@ from models.day_change import (
     getInvestmentData,
 )  # autopep8: off # pylint: disable=wrong-import-position
 
-
-@asynccontextmanager
-async def gdrive_context(folder_name, logger):
-    gdrive = GDrive(folder_name, logger)
-    try:
-        yield gdrive
-    finally:
-        # Add any cleanup code here if needed
-        pass
 
 
 data_path = (
@@ -62,7 +52,7 @@ def log_uncaught_exceptions(exctype, value, traceback):
 sys.excepthook = log_uncaught_exceptions
 
 
-gdrive: GDrive = GDrive("MutualFund", logging.getLogger())
+# gdrive: GDrive = GDrive("MutualFund")
 
 
 FOLDER_NAME: str = "MutualFund"  # type: ignore
@@ -70,6 +60,53 @@ FOLDER_NAME: str = "MutualFund"  # type: ignore
 
 def roundup3(value: float) -> float:
     return round(value, 3)
+
+
+async def readJsonFileAsychronously(filename: str | pathlib.Path):
+    logging.info(f"reading asynchronously {filename=}")
+    async with GDrive(FOLDER_NAME) as gdrive:
+        await gdrive.download_async(filename)
+    with open(filename, "r") as f:
+        return json.load(f)
+
+
+def readJsonFromDataFolder(filename):
+    file_path = pathlib.Path(data_path).joinpath(filename).resolve()
+    GDrive(FOLDER_NAME).download(file_path)
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+async def readJsonFromDataFolderAsychronously(filename):
+    file_path = pathlib.Path(data_path).joinpath(filename).resolve()
+    await GDrive(FOLDER_NAME).download_async(file_path)
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def readJsonFile(filename: str | pathlib.Path):
+    logging.info(f"reading {filename=}")
+
+    GDrive(FOLDER_NAME).download(filename)
+    with open(filename, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def writeRawDataToFile(file_name: str, data: str) -> None:
+    logging.info(f"writing raw string data to {file_name}")
+    with open(file_name, "w", encoding="utf-8") as file:
+        file.write(data)
+
+
+async def writeToFileAsync(
+        filename: pathlib.Path, data: dict, indent=4
+) -> None:
+    logging.info(f"writing asynchronously to {filename=}")
+    with open(filename, mode="w") as f:
+        # f.write(json.dumps(obj=data, indent=indent))
+        json.dump(data, f, indent=indent)
+    async with GDrive(FOLDER_NAME) as gdrive:
+        await gdrive.upload_async(filename)
 
 
 class helper_functions:
@@ -115,36 +152,7 @@ class helper_functions:
         logging.info(f"writing to {filename=}")
         with open(filename, "w") as f:
             json.dump(data, f, indent=indent)
-        GDrive(FOLDER_NAME, logging.getLogger()).upload(filename)
-
-    async def writeToFileAsync(
-        self, filename: pathlib.Path, data: dict, indent=4
-    ) -> None:
-        logging.info(f"writing asynchronously to {filename=}")
-        with open(filename, mode="w") as f:
-            # f.write(json.dumps(obj=data, indent=indent))
-            json.dump(data, f, indent=indent)
-        async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
-            await gdrive.upload_async(filename)
-
-    def writeRawDataToFile(self, file_name: str, data: str) -> None:
-        logging.info(f"writing raw string data to {file_name}")
-        with open(file_name, "w", encoding="utf-8") as file:
-            file.write(data)
-
-    def readJsonFile(self, filename: str | pathlib.Path):
-        logging.info(f"reading {filename=}")
-
-        GDrive(FOLDER_NAME, logging.getLogger()).download(filename)
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    async def readJsonFileAsychronously(self, filename: str | pathlib.Path):
-        logging.info(f"reading asynchronously {filename=}")
-        async with gdrive_context(FOLDER_NAME, logging.getLogger()) as gdrive:
-            await gdrive.download_async(filename)
-        with open(filename, "r") as f:
-            return json.load(f)
+        GDrive(FOLDER_NAME).upload(filename)
 
     async def load_on(self):
         file_list = [
@@ -156,7 +164,7 @@ class helper_functions:
         ]
         self.tasks = [
             asyncio.create_task(
-                self.readJsonFileAsychronously(file), name=file.as_posix()
+                readJsonFileAsychronously(file), name=file.as_posix()
             )
             for file in file_list
         ]
@@ -190,18 +198,6 @@ class helper_functions:
             self.daychange_json.funds[unit].name: unit for unit in self.unit_json
         }
         self.mutual_funds = list(self.mutual_funds_dic.keys())
-
-    def readJsonFromDataFolder(self, filename):
-        file_path = pathlib.Path(data_path).joinpath(filename).resolve()
-        gdrive.download(file_path)
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-
-    async def readJsonFromDataFolderAsychronously(self, filename):
-        file_path = pathlib.Path(data_path).joinpath(filename).resolve()
-        await gdrive._download_async(file_path)
-        with open(file_path, "r", encoding="utf-8") as f:
-            return json.load(f)
 
     def add_order_stock(self, stock, units, amount):
         stock_order = self.stock_order

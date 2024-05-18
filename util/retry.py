@@ -1,14 +1,15 @@
-import logging
 import asyncio
+import logging
 from functools import wraps
 from time import sleep
 from typing import Callable, Any, Union
 
 
-def retry(retries: int = 3, delay: float = 1) -> Callable:
+def retry(retries: int = 3, delay: float = 1, fail_after_retry_exhausted: bool = True) -> Callable:
     """
     Attempt to call a function, if it fails, try again with a specified delay.
 
+    :param fail_after_retry_exhausted:
     :param retries: The max amount of retries you want for the function call
     :param delay: The delay (in seconds) between each function retry
     :return:
@@ -30,7 +31,8 @@ def retry(retries: int = 3, delay: float = 1) -> Callable:
                     if i == retries:
                         logging.error(f'Error: {repr(e)}.')
                         logging.error(f'"{func.__name__}()" failed after {retries} retries.')
-                        raise e  # Re-raise the exception
+                        if fail_after_retry_exhausted:
+                            raise e
                     else:
                         logging.debug(f'Error: {repr(e)} -> Retrying...')
                         await asyncio.sleep(delay)  # Add a delay before running the next iteration
