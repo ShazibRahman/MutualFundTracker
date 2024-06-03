@@ -48,6 +48,8 @@ def retry(retries: int = 3, delay: float = 1, fail_after_retry_exhausted: bool =
                     if i == retries:
                         logging.error(f'Error: {repr(e)}.')
                         logging.error(f'"{func.__name__}()" failed after {retries} retries.')
+                        if fail_after_retry_exhausted:
+                            raise e
                         break
                     else:
                         logging.debug(f'Error: {repr(e)} -> Retrying...')

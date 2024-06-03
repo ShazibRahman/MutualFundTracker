@@ -202,12 +202,12 @@ class MutualFund:
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         return orderDateFormat <= nav_date_format
 
-    async def addToUnits(self, mfid, date, name: str) -> None:
-        if self.Orders.__contains__(mfid):
-            for key in self.Orders[mfid]:
+    async def addToUnits(self, mutualfund_id, date, name: str) -> None:
+        if self.Orders.__contains__(mutualfund_id):
+            for key in self.Orders[mutualfund_id]:
                 if self.check_past_dates(date, key):
-                    order_data = self.Orders[mfid].pop(date)
-                    data = self.units[mfid]
+                    order_data = self.Orders[mutualfund_id].pop(date)
+                    data = self.units[mutualfund_id]
                     data[0] += order_data[0]
                     data[1] += order_data[1]
                     logging.info("adding units: %s and amount: %s to units for %s",
@@ -506,11 +506,11 @@ class MutualFund:
             if prev_hash == new_hash:
                 logging.info("--Nothing to update--")
                 return False
-            self.json_data["hash2"] = new_hash
+            self.json_data.hash2 = new_hash
             lastUpdated = datetime.now(INDIAN_TIMEZONE).strftime(
                 f"{self.formatString} %X"
             )
-            self.json_data["lastUpdated"] = lastUpdated
+            self.json_data.lastUpdated = lastUpdated
             self.tasks.append(
                 writeToFileAsync(
                     self.dayChangeJsonFileStringBackupFile,
@@ -581,7 +581,7 @@ class MutualFund:
 
         prevDaySum: float = data[prev_day_nav_date] * units
         dayChange: float = round(today_nav * units - prevDaySum, 3)
-        self.json_data.funds[ids]["dayChange"] = dayChange
+        self.json_data.funds[ids].dayChange = dayChange
         data[latest_nav_date] = today_nav
         return dayChange
 
@@ -633,10 +633,10 @@ class MutualFund:
                 total_day_change += dayChange
 
             cur_json_id = self.json_data.funds[_id]
-            cur_json_id["latestNavDate"] = date
-            cur_json_id["current"] = current
-            cur_json_id["invested"] = invested
-            cur_json_id["dayChange"] = dayChange
+            cur_json_id.latestNavDate = date
+            cur_json_id.current = current
+            cur_json_id.invested = invested
+            cur_json_id.dayChange = dayChange
         return sum_total, total_invested, total_day_change
 
     async def get_current_values(self) -> None:
