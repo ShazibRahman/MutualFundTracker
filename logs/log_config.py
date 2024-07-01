@@ -15,7 +15,7 @@ logger_path = (
 
 # Create the logger
 logger = log.getLogger()
-logger.setLevel(log.DEBUG)
+logger.setLevel(log.INFO)
 
 
 class ExcludeAESFilter(log.Filter):
