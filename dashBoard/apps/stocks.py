@@ -1,4 +1,3 @@
-import asyncio
 from datetime import date
 
 import dash_bootstrap_components as dbc
@@ -107,7 +106,7 @@ def add_graph(n_clicks, input1, start_date, end_date):
 
                 }
                 }, {}, {'border': '1px solid red'}
-    plots: pd.DataFrame = helper.get_history(input1, start_date, end_date)
+    plots: pd.DataFrame = get_history(input1, start_date, end_date)
     if plots.empty:
         return {'layout': {
             'title': 'History Graph',

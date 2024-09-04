@@ -6,7 +6,6 @@ from rich.console import Console
 console = Console()
 
 
-
 def get_stock_data_in_form_of_table():
     helpers = helper_functions()
 
@@ -25,7 +24,6 @@ def get_stock_data_in_form_of_table():
     table = []
 
     for k, v in my_stocks_json.items():
-
         total_invested = v[1]
         quote = {
             "closePrice": round(total_invested / v[0], 2),
@@ -110,7 +108,7 @@ def get_stock_data_in_form_of_table():
         responsive=True,
         striped=True,
         className="table table-hover table-bordered table-striped  p-10 table-responsive-sm table-responsive-md "
-        "table-responsive-lg table-responsive-xl text-align-center",
+                  "table-responsive-lg table-responsive-xl text-align-center",
         style={
             "margin-top": "100px",
             "margin-bottom": "10px",

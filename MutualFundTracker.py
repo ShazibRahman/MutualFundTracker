@@ -524,11 +524,11 @@ class MutualFund:
     @retry(retries=3, delay=1, fail_after_retry_exhausted=False)
     async def download_all_nav_file(self) -> bool:
         logging.info("--downloading the NAV file from server--")
-        start_time = time.time()
 
         async with aiohttp.client.ClientSession() as client:
+            start_time = time.time()
             res = await client.get(
-                "https://www.amfiindia.com/spages/navopen.txt", timeout=10
+                "https://www.amfiindia.com/spages/navopen.txt", timeout=20
             )
             status = res.status
             text = await res.text()

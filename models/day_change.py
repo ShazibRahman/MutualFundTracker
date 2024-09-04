@@ -5,7 +5,7 @@ from typing import Any, Dict
 @dataclass
 class NavData:
     name: str = ""
-    nav: Dict[str, float] = field(default_factory=dict)
+    nav: dict[str, float] = field(default_factory=dict)
     latestNavDate: str = ""
     current: float = 0
     invested: float = 0

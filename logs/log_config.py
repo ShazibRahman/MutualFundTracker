@@ -40,7 +40,7 @@ handler.addFilter(ExcludeAESFilter())
 
 # Define the log format
 formatter = log.Formatter(
-    "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s]"
+        "%(levelname)s - (%(asctime)s): [PID: %(process)d] %(message)s (Line: %(lineno)d [%(filename)s])"
 )
 formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
 

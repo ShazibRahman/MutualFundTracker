@@ -19,8 +19,6 @@ from models.day_change import (
     getInvestmentData,
 )  # autopep8: off # pylint: disable=wrong-import-position
 
-
-
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
 )
@@ -30,7 +28,6 @@ formatter = logging.Formatter(
     "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])"
 )
 formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
-
 
 logging.basicConfig(
     filename=LOGGER_PATH,
@@ -50,7 +47,6 @@ def log_uncaught_exceptions(exctype, value, traceback):
 
 
 sys.excepthook = log_uncaught_exceptions
-
 
 # gdrive: GDrive = GDrive("MutualFund")
 
@@ -109,6 +105,19 @@ async def writeToFileAsync(
         await gdrive.upload_async(filename)
 
 
+def writeToFile(filename: pathlib.Path, data: object, indent=4) -> None:
+    logging.info(f"writing to {filename=}")
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=indent)
+    GDrive(FOLDER_NAME).upload(filename)
+
+
+def get_history(symbol: str, start: str, end: str) -> DataFrame:
+    start_date = datetime.strptime(start, "%Y-%m-%d")
+    end_date = datetime.strptime(end, "%Y-%m-%d")
+    return nsepy.get_history(symbol, start=start_date, end=end_date)
+
+
 class helper_functions:
     _instance = None
 
@@ -124,6 +133,15 @@ class helper_functions:
         if self._initiated:
             print("Already initialized")
             return
+        self.json_data = None
+        self.mutual_funds_dic = None
+        self.stock_data = None
+        self.stock_order = None
+        self.daychange_json = None
+        self.unit_json = None
+        self.mutual_funds = None
+        self.order = None
+        self.tasks = None
         self.unit_file_path = pathlib.Path(data_path).joinpath("units.json").resolve()
         self.daychange_file_path = (
             pathlib.Path(data_path).joinpath("dayChange.json").resolve()
@@ -147,12 +165,6 @@ class helper_functions:
         self.tasks: list[asyncio.tasks.Task]
 
         asyncio.run(self.load_on())
-
-    def writeToFile(self, filename: pathlib.Path, data: object, indent=4) -> None:
-        logging.info(f"writing to {filename=}")
-        with open(filename, "w") as f:
-            json.dump(data, f, indent=indent)
-        GDrive(FOLDER_NAME).upload(filename)
 
     async def load_on(self):
         file_list = [
@@ -214,7 +226,7 @@ class helper_functions:
         #     self.writeToFileAsync(self.stock_order_file_path, stock_order)
         #     )
         #     )
-        self.writeToFile(self.stock_order_file_path, stock_order)
+        writeToFile(self.stock_order_file_path, stock_order)
         return True
 
     def add_order(self, MFID, unit, amount, date) -> str:
@@ -232,7 +244,7 @@ class helper_functions:
             self.order[MFID] = {date: [unit, amount]}
             value = "new"
 
-        self.writeToFile(self.order_file_path, self.order)
+        writeToFile(self.order_file_path, self.order)
         return value
 
     def getDailyChange(self):
@@ -244,20 +256,20 @@ class helper_functions:
             value: dict[str, float] = daychange_json.funds[val].nav
             units: float = units_json[val][0]
             i = True
-            prevdayChange = 0.0
+            prevDayChange = 0.0
             for nav, daychange in value.items():
                 if i:
-                    prevdayChange = units * daychange
+                    prevDayChange = units * daychange
                     i = False
                     continue
                 daychange *= units
-                daychangeData: float = round(daychange - prevdayChange, 3)
+                daychangeData: float = round(daychange - prevDayChange, 3)
 
                 if nav in sumDayChange:
                     sumDayChange[nav] += daychangeData
                 else:
                     sumDayChange[nav] = daychangeData
-                prevdayChange = daychange
+                prevDayChange = daychange
         sum_daychange_sorted_keys = sorted(
             sumDayChange.keys(), key=lambda x: datetime.strptime(x, "%d-%b-%Y")
         )
@@ -281,20 +293,20 @@ class helper_functions:
         units: float = units_json[id_][0]
         value = daychange_json.funds[id_]["nav"]
         i = True
-        prevdayChange = 0.0
+        prevDayChange = 0.0
         for nav, daychange in value.items():
             if i:
-                prevdayChange = units * daychange
+                prevDayChange = units * daychange
                 i = False
                 continue
             daychange *= units
-            daychangeData: float = round(daychange - prevdayChange, 3)
+            daychangeData: float = round(daychange - prevDayChange, 3)
 
             if nav in sumDayChange:
                 sumDayChange[nav] += daychangeData
             else:
                 sumDayChange[nav] = daychangeData
-            prevdayChange = daychange
+            prevDayChange = daychange
         return [
             {
                 "x": list(sumDayChange.keys()),
@@ -321,9 +333,9 @@ class helper_functions:
         return return_list, daychange_json.funds[value]["name"]
 
     def get_options(self):
-        # print(mutual_funds_dic)
+        print(self.mutual_funds_dic, self.mutual_funds)
         mutual_funds_dic = self.mutual_funds_dic
-        mutual_funds = self.mutual_funds
+        mutual_funds = list(self.mutual_funds_dic.keys())
         return [{"label": x, "value": mutual_funds_dic[x]} for x in mutual_funds]
 
     def getInvestmentDistribution(self):
@@ -384,11 +396,6 @@ class helper_functions:
 
         return summaryTable, mutual_fund_table
 
-    def get_history(self, symbol: str, start: str, end: str) -> DataFrame:
-        start_date = datetime.strptime(start, "%Y-%m-%d")
-        end_date = datetime.strptime(end, "%Y-%m-%d")
-        return nsepy.get_history(symbol, start=start_date, end=end_date)
-
     def create_index_all_mutual_fund(self, *args, **kwargs):
         index_all_mutual_fund = {}
         with requests.get("https://www.amfiindia.com/spages/NAVopen.txt") as response:
@@ -402,7 +409,7 @@ class helper_functions:
                     except IndexError:
                         continue
         self.json_data: dict = index_all_mutual_fund
-        self.writeToFile(self.json_data_file_path, index_all_mutual_fund)
+        # writeToFile(self.json_data_file_path, index_all_mutual_fund) # no point of writing it to the gdrive
         # self.tasks_no_want_to_wait_till_finish.append(self.loop.create_task(self.writeToFileAsync(
         #     self.json_data_file_path , index_all_mutual_fund
         #         )))
