@@ -37,7 +37,7 @@ class InvestmentData:
         setattr(self, key, value)
 
 
-def getInvestmentData(data: Dict[str, Any]) -> InvestmentData:
+def get_investment_data(data: Dict[str, Any]) -> InvestmentData:
     funds: Dict[str, Dict[str, Any]] = data.pop("funds") if "funds" in data else {}
     return InvestmentData(
         **data,

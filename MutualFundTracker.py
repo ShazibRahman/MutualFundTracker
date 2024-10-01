@@ -15,7 +15,7 @@ import aiohttp
 import logs.log_config as log_config  # type: ignore # noqa
 import pytz
 import ujson as json
-from models.day_change import InvestmentData, NavData, getInvestmentData
+from models.day_change import InvestmentData, NavData, get_investment_data
 from util.DesktopNotification import DesktopNotification
 
 try:
@@ -174,7 +174,7 @@ class MutualFund:
 
         try:
             temp_data = results[2]
-            self.json_data: InvestmentData = getInvestmentData(temp_data)
+            self.json_data: InvestmentData = get_investment_data(temp_data)
         except (FileNotFoundError, JSONDecodeError):
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.run_once_initialization(None)
@@ -273,7 +273,7 @@ class MutualFund:
         elif pathlib.Path.exists(self.dayChangeJsonFileStringBackupFile):
             backup_data = readJsonFile(self.dayChangeJsonFileStringBackupFile)
             writeToFile(self.dayChangeJsonFileString, backup_data)
-            self.json_data = getInvestmentData(backup_data)  # type: ignore
+            self.json_data = get_investment_data(backup_data)  # type: ignore
         else:
             writeToFile(
                 self.dayChangeJsonFileStringBackupFile, asdict(InvestmentData())

@@ -13,11 +13,11 @@ sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix(
 
 from gdrive.GDrive import (
     GDrive,
-)  # autopep8: off # pylint: disable=wrong-import-position
+)
 from models.day_change import (
     InvestmentData,
-    getInvestmentData,
-)  # autopep8: off # pylint: disable=wrong-import-position
+    get_investment_data,
+)
 
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
@@ -58,7 +58,7 @@ def roundup3(value: float) -> float:
     return round(value, 3)
 
 
-async def readJsonFileAsychronously(filename: str | pathlib.Path):
+async def readJsonFileAsynchronously(filename: str | pathlib.Path):
     logging.info(f"reading asynchronously {filename=}")
     async with GDrive(FOLDER_NAME) as gdrive:
         await gdrive.download_async(filename)
@@ -94,12 +94,13 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
         file.write(data)
 
 
-async def writeToFileAsync(
+async def write_to_file_async(
         filename: pathlib.Path, data: dict, indent=4
 ) -> None:
     logging.info(f"writing asynchronously to {filename=}")
     with open(filename, mode="w") as f:
         # f.write(json.dumps(obj=data, indent=indent))
+        # noinspection PyTypeChecker
         json.dump(data, f, indent=indent)
     async with GDrive(FOLDER_NAME) as gdrive:
         await gdrive.upload_async(filename)
@@ -108,6 +109,7 @@ async def writeToFileAsync(
 def writeToFile(filename: pathlib.Path, data: object, indent=4) -> None:
     logging.info(f"writing to {filename=}")
     with open(filename, "w") as f:
+        # noinspection PyTypeChecker
         json.dump(data, f, indent=indent)
     GDrive(FOLDER_NAME).upload(filename)
 
@@ -176,7 +178,7 @@ class helper_functions:
         ]
         self.tasks = [
             asyncio.create_task(
-                readJsonFileAsychronously(file), name=file.as_posix()
+                readJsonFileAsynchronously(file), name=file.as_posix()
             )
             for file in file_list
         ]
@@ -194,7 +196,7 @@ class helper_functions:
             if result.get_name() == "create_index_all_mutual_fund":
                 continue
             elif result.get_name() == self.daychange_file_path.as_posix():
-                self.daychange_json = getInvestmentData(result.result())
+                self.daychange_json = get_investment_data(result.result())
             elif result.get_name() == self.unit_file_path.as_posix():
                 self.unit_json = result.result()
 
@@ -285,7 +287,7 @@ class helper_functions:
         ]
 
     def dailyChangePerMutualFund(self, id_):
-        # print("called with id: ", id, " and value: ", daychange_json[id]['name'])
+
         sumDayChange: dict = {}
         units_json = self.unit_json
         daychange_json = self.daychange_json
@@ -396,7 +398,7 @@ class helper_functions:
 
         return summaryTable, mutual_fund_table
 
-    def create_index_all_mutual_fund(self, *args, **kwargs):
+    def create_index_all_mutual_fund(self):
         index_all_mutual_fund = {}
         with requests.get("https://www.amfiindia.com/spages/NAVopen.txt") as response:
             for line in response.text.splitlines():
