@@ -1,4 +1,4 @@
-
+from dataclasses import asdict
 from datetime import date, datetime
 
 import dash_bootstrap_components as dbc
@@ -43,12 +43,17 @@ def get_all_order() -> dbc.Table:
     children.append(html.Tbody(body))
 
     return (
-        dbc.Table(
-            children=children,
-            className="table table-striped table-bordered  justify-content-center",
-        )
-        if body
-        else dbc.Table()
+       html.Span(
+            [
+                html.H1("All Orders"),
+                dbc.Table(
+                    children=children,
+                    className="table table-striped table-bordered  justify-content-center",
+                    responsive=True
+                )
+                ]
+       ) if body
+        else html.Div("No orders added yet")
     )
 
 
@@ -119,8 +124,11 @@ layout = html.Div(
         ),
         html.Div(id="output", className="output"),
         html.Div(
-            id="view-order", style={"margin-top": "150px"}, children=[get_all_order()]
-        ),
+                    id = "output-2", className="output",style={"margin-top": "20px"}
+                ),
+        html.Div(
+            id="view-order", style={"margin-top": "300px"}, children=[get_all_order()]
+        )
     ],
     className="container",
 )
@@ -155,3 +163,27 @@ def add_order(n_clicks, units, amount, date_input, product):
     date_object = datetime.strptime(date_input, "%Y-%m-%d").strftime("%d-%b-%Y")
     helper.add_order(product, float(units), amount, date_object)
     return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"
+
+
+@app.callback(
+    Output("output-2", "children"),
+    [
+        Input("dropdown", "value"),
+    ],
+    prevent_initial_call=True,
+)
+def update_output(value):
+    print(value)
+    print(type(value))
+    if value is None or value == "":
+        return "Please select a product"
+
+    day_change = asdict(helper.daychange_json)
+    funds = day_change["funds"]
+    # check if the fund is in the funds
+
+    if value not in funds:
+        return "No data available for this fund"
+    fund = funds[value]
+    return f"Invested {fund['invested']} Current {fund['current']} Day Change {fund['dayChange']}"
+

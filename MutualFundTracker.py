@@ -203,8 +203,9 @@ class MutualFund:
         return orderDateFormat <= nav_date_format
 
     async def addToUnits(self, mutualfund_id, date, name: str) -> None:
-        if self.Orders.__contains__(mutualfund_id):
-            for key in self.Orders[mutualfund_id]:
+        if mutualfund_id in self.Orders:
+            keys =  list(self.Orders[mutualfund_id].keys())
+            for key in keys:
                 if self.check_past_dates(date, key):
                     order_data = self.Orders[mutualfund_id].pop(date)
                     data = self.units[mutualfund_id]

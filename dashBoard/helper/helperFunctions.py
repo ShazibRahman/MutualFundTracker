@@ -16,7 +16,7 @@ from gdrive.GDrive import (
 )
 from models.day_change import (
     InvestmentData,
-    get_investment_data,
+    get_investment_data
 )
 
 data_path = (
@@ -139,7 +139,7 @@ class helper_functions:
         self.mutual_funds_dic = None
         self.stock_data = None
         self.stock_order = None
-        self.daychange_json = None
+        self.daychange_json:InvestmentData = None
         self.unit_json = None
         self.mutual_funds = None
         self.order = None
