@@ -107,7 +107,7 @@ class MutualFund:
 
         self.Orders = None
         self.units = None
-        self.Orders: dict[str:dict[str:list]]
+        self.Orders: dict[str : dict[str:list]]
         self.formatString = None
         self.units: dict
         self.is_downloadable = is_downloadable
@@ -162,14 +162,16 @@ class MutualFund:
             self.units = {}
             self.run_once_initialization(self.unitsFile)
         try:
-            self.Orders: dict[str:dict[str:list]] = results[1]
+            self.Orders: dict[str : dict[str:list]] = results[1]
         except JSONDecodeError:
             print("Something went wrong with the order file")
             self.Orders = {}
             self.run_once_initialization(self.order_file)
 
         if not self.units:
-            print(f"No mutual Fund specified to track please Add something in {self.unitsFile} file to track")
+            print(
+                f"No mutual Fund specified to track please Add something in {self.unitsFile} file to track"
+            )
             sys.exit(0)
 
         try:
@@ -204,15 +206,19 @@ class MutualFund:
 
     async def addToUnits(self, mutualfund_id, date, name: str) -> None:
         if mutualfund_id in self.Orders:
-            keys =  list(self.Orders[mutualfund_id].keys())
+            keys = list(self.Orders[mutualfund_id].keys())
             for key in keys:
                 if self.check_past_dates(date, key):
                     order_data = self.Orders[mutualfund_id].pop(date)
                     data = self.units[mutualfund_id]
                     data[0] += order_data[0]
                     data[1] += order_data[1]
-                    logging.info("adding units: %s and amount: %s to units for %s",
-                                 order_data[0], order_data[1], name)
+                    logging.info(
+                        "adding units: %s and amount: %s to units for %s",
+                        order_data[0],
+                        order_data[1],
+                        name,
+                    )
 
                     self.tasks.extend(
                         [
@@ -237,7 +243,7 @@ class MutualFund:
                         "Adding new mf  units: %s and amount: %s to units for %s",
                         date_data[0],
                         date_data[1],
-                        order_key
+                        order_key,
                     )
 
                 # Write the Units and Orders dictionaries to their respective files
@@ -326,8 +332,8 @@ class MutualFund:
         )
         currentString = f"Current\n\n[bold]{currentColor}[/bold]"
         totalReturnString = (
-                "[yellow]•[/yellow]Total Returns\n\n[bold]"
-                + f"{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
+            "[yellow]•[/yellow]Total Returns\n\n[bold]"
+            + f"{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
         )
         dailyReturnString = f"[yellow]•[/yellow][bold]{getfv(totalDaychange)} {getfp(totalDaychangePercentage)}[/bold]"
         lastUpdatedString = f"Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]"
@@ -554,7 +560,7 @@ class MutualFund:
                 return True
 
     async def day_change_method(
-            self, ids: str, today_nav: float, latest_nav_date: str, name: str
+        self, ids: str, today_nav: float, latest_nav_date: str, name: str
     ) -> float:
         self.is_existing_id(ids, name, latest_nav_date, today_nav)
         data = self.json_data.funds[ids].nav
@@ -587,7 +593,7 @@ class MutualFund:
         return dayChange
 
     def is_existing_id(
-            self, ids: str, name: str, latest_nav_date: str, today_nav: float
+        self, ids: str, name: str, latest_nav_date: str, today_nav: float
     ) -> None:
         if not self.json_data.funds.__contains__(ids):
             self.json_data.funds[ids] = NavData()
@@ -680,7 +686,9 @@ class MutualFund:
 
             await asyncio.gather(*self.tasks)
 
-            logging.debug(f"---Took {(time.time() - start_time):.2f} Secs to complete the tasks---")
+            logging.debug(
+                f"---Took {(time.time() - start_time):.2f} Secs to complete the tasks---"
+            )
         else:
             logging.debug("No tasks to run")
 

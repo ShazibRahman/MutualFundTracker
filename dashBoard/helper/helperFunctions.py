@@ -3,6 +3,7 @@ import logging
 import pathlib
 import sys
 from datetime import datetime
+from typing import Any
 
 import nsepy
 import requests
@@ -231,7 +232,7 @@ class helper_functions:
         writeToFile(self.stock_order_file_path, stock_order)
         return True
 
-    def add_order(self, MFID, unit, amount, date) -> str:
+    def add_order(self, MFID, unit, amount, date) -> tuple[str, Any]:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         """
@@ -247,7 +248,7 @@ class helper_functions:
             value = "new"
 
         writeToFile(self.order_file_path, self.order)
-        return value
+        return value,self.order
 
     def getDailyChange(self):
         sumDayChange: dict = {}

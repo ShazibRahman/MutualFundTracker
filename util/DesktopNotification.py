@@ -4,7 +4,7 @@ import pathlib
 
 import plyer
 
-os.environ["DISPLAY"] = ":0"
+os.environ["DISPLAY"] = ":1"
 os.environ["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=/run/user/1000/bus"
 
 pwd = pathlib.Path(__file__).parent.parent.resolve()

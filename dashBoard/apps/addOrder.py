@@ -28,7 +28,9 @@ def get_all_order() -> dbc.Table:
         )
     ]
     body = []
-    for k, v in helper.order.items():  # id , dic
+    print("printing all order", helper.order)
+    for k, v in helper.order.items():
+        # id , dic
         body.extend(
             html.Tr(
                 [
@@ -161,7 +163,7 @@ def add_order(n_clicks, units, amount, date_input, product):
     ):
         return "Please fill all the fields"
     date_object = datetime.strptime(date_input, "%Y-%m-%d").strftime("%d-%b-%Y")
-    helper.add_order(product, float(units), amount, date_object)
+    _,order=helper.add_order(product, float(units), amount, date_object)
     return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"
 
 
