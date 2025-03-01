@@ -12,9 +12,10 @@ from json.decoder import JSONDecodeError
 from typing import Tuple
 
 import aiohttp
-import logs.log_config as log_config  # type: ignore # noqa
 import pytz
 import ujson as json
+
+import logs.log_config as log_config  # type: ignore # noqa
 from models.day_change import InvestmentData, NavData, get_investment_data
 from util.DesktopNotification import DesktopNotification
 
@@ -54,6 +55,11 @@ def getfv(number: float) -> str:
         else f"[red]-₹{abs(roundUp3(number))}[/red]"
     )
 
+def get_colored_string_based_digit_being_positive_or_negative(string:str ,number: float) -> str:
+    # return string in green color if number is positive else in red color
+    string = f"[bold]{string}[/bold]"
+    return f"[green]{string}[/green]" if number >= 0 else f"[red]{string}[/red]"
+
 
 def getfp(percentage: float) -> str:
     return (
@@ -64,7 +70,7 @@ def getfp(percentage: float) -> str:
 
 
 async def writeToFileAsync(filename: pathlib.Path, data: dict, indent=4) -> None:
-    logging.info(f"writing asynchronously to {filename=}")
+    logging.info("writing asynchronously to %s", filename)
     with open(file=filename, mode="w", encoding="utf-8") as f:
         json.dump(data, f, indent=indent)
     # async with GDrive(FOLDER_NAME) as gdrive:  // no profit of using events because we are using context managers, and it will trigger __aexit__ method
@@ -73,14 +79,14 @@ async def writeToFileAsync(filename: pathlib.Path, data: dict, indent=4) -> None
 
 
 def writeRawDataToFile(file_name: str, data: str) -> None:
-    logging.info(f"writing raw string data to {file_name}")
+    logging.info("writing raw string data to %s", file_name)
     with open(file_name, "w", encoding="utf-8") as file:
         file.write(data)
 
 
 def writeToFile(file_name: pathlib.Path | str, data) -> None:
     logging.info("writing to a file asynchronously")
-    with open(file_name, "w") as file:
+    with open(file_name, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
 
 
@@ -88,7 +94,7 @@ def readJsonFile(filename: str | pathlib.Path):
     logging.info("reading fileName = %s ", filename)
     if not pathlib.Path(filename).exists() or download:
         GDrive(FOLDER_NAME).download(filename)
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -181,7 +187,6 @@ class MutualFund:
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.run_once_initialization(None)
         self.unitsKeyList = list(self.units.keys())
-        self.console: Console
         self.TableMutualFund = Table()
         self.summaryTable = Table()
         self.formatString = "%d-%b-%Y"
@@ -202,14 +207,17 @@ class MutualFund:
         """
         nav_date_format = datetime.strptime(NavDate, self.formatString)  # type: ignore
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
+        print(f"{nav_date_format=} {orderDateFormat=}")
         return orderDateFormat <= nav_date_format
 
     async def addToUnits(self, mutualfund_id, date, name: str) -> None:
         if mutualfund_id in self.Orders:
             keys = list(self.Orders[mutualfund_id].keys())
             for key in keys:
-                if self.check_past_dates(date, key):
-                    order_data = self.Orders[mutualfund_id].pop(date)
+                print(f"date inside addToUnits = {key}")
+                if  self.check_past_dates(date, key):
+            
+                    order_data = self.Orders[mutualfund_id].pop(key) 
                     data = self.units[mutualfund_id]
                     data[0] += order_data[0]
                     data[1] += order_data[1]
@@ -319,7 +327,7 @@ class MutualFund:
             totalDaychange = self.json_data.totalDaychange
             totalDaychangePercentage = totalDaychange / invested * 100
         except KeyError:
-            self.console.print(
+            self.consolnumbere.print(
                 "Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option"
             )
             sys.exit()
@@ -375,9 +383,10 @@ class MutualFund:
         returnString = f"₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]"
         currentString = f"₹{current}\n\n[b]₹{invested}[/b]"
         nav_date = f"[yellow]{date}[/yellow]\n\n[b]{preMF.nav[date]}[/b]"
+        schemeName = get_colored_string_based_digit_being_positive_or_negative(SchemeName, current - invested)
 
         self.TableMutualFund.add_row(
-            SchemeName, dayChangeString, returnString, currentString, nav_date
+            schemeName, dayChangeString, returnString, currentString, nav_date
         )
 
     def dayChangeTableAll(self, dic: dict) -> None:
@@ -466,7 +475,10 @@ class MutualFund:
         self.summaryTableEdit()
         self.console.print(self.summaryTable)
         self.UpdateKeyList()
-        for ids in self.unitsKeyList:
+        sortedKeys = sorted(
+            self.json_data.funds.keys(), key=lambda x: self.json_data.funds[x]["invested"] ,reverse=True
+        )
+        for ids in sortedKeys:
             self.MutualFundTableEdit(ids)
         self.console.print(self.TableMutualFund)
 
@@ -569,6 +581,8 @@ class MutualFund:
         prev_day_nav_date: str = datetime.strftime(
             latestDate - timedelta(1), self.formatString
         )
+        print(f"latest_nav_date = {latest_nav_date}")
+        print(f"prev_day_nav_date = {prev_day_nav_date}")
 
         if prev_day_nav_date not in data:
             key_list = list(data.keys())
@@ -582,6 +596,8 @@ class MutualFund:
                 prev_day_nav_date = key_list[-2]
             else:
                 prev_day_nav_date = key_list[-1]
+
+        print(f"prev_day_nav_date = {prev_day_nav_date}")
 
         await self.addToUnits(ids, prev_day_nav_date, name)
         units: float = self.units[ids][0]
