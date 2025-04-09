@@ -19,3 +19,7 @@ ujson~=5.8.0
 
 psutil~=5.9.8
 plyer~=2.1.0
+
+sqlmodel>=0.0.14 
+sqlalchemy>=2.0
+

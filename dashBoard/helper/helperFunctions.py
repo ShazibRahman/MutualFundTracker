@@ -2,15 +2,23 @@ import asyncio
 import logging
 import pathlib
 import sys
-from datetime import datetime
+from datetime import datetime ,timedelta
 from typing import Any
 
 import nsepy
 import requests
+from sqlalchemy import Tuple
 import ujson as json
 from pandas import DataFrame
 
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
+
+from models import InvestmentHistory, OrderHistory
+from repository import InvestmentHistoryRepository, OrderHistoryRepository
+
+
+investment_history_repo = InvestmentHistoryRepository()
+order_history_repo = OrderHistoryRepository()
 
 from gdrive.GDrive import (
     GDrive,
@@ -66,6 +74,19 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
     with open(filename, "r") as f:
         return json.load(f)
 
+
+def calculate_date_range(filter:str):
+    if filter == "1M":
+        start_date = datetime.now() - timedelta(days=30)
+    elif filter == "6M":
+        start_date = datetime.now() - timedelta(days=180)
+    elif filter == "1Y":
+        start_date = datetime.now() - timedelta(days=365)
+    elif filter == "5Y":
+        start_date = datetime.now() - timedelta(days=1825)
+    else:
+        start_date = datetime(2000, 1, 1)  # Default to a very old date
+    return start_date.date(), datetime.now().date()
 
 def readJsonFromDataFolder(filename):
     file_path = pathlib.Path(data_path).joinpath(filename).resolve()
@@ -433,6 +454,49 @@ class helper_functions:
 
     def get_all_stock_dic(self):
         return self.stock_data
+    
+    def get_current_invest_data(self,filter:str,fund:str):
+        start_date, end_date = calculate_date_range(filter)
+        data: list[InvestmentHistory] = investment_history_repo.find_by_mfid_and_date_range(fund, start_date=start_date, end_date=end_date)
+
+        x = [x.date for x in data]
+
+        invested_data = [x.invested_amount for x in data]
+        current_data = [x.current_amount for x in data]
+
+        return [
+                {
+                    "x": x,
+                    "y": invested_data,
+                    "type": "line",
+                    "name": "Investment History",
+                },
+                {
+                "x": x,
+                "y": current_data,
+                "type": "line",
+                "name": "Current Amount History",
+                "line": {
+                    "dash": "dot",  # Dotted line
+                    "color": "grey",  # Line color
+                }
+            }
+        ]
+    
+    def get_all_mfid_mfname(self):
+        data: list[dict[str, str]] = investment_history_repo.find_all_distinct_mfids_and_name()
+        return data
+    
+    def get_fund_name_options(self):
+        data = self.get_all_mfid_mfname()
+        data_to_return = [{"label": x["mfname"], "value": x["mfid"]} for x in data]
+        data_to_return = [x for x in data_to_return if x["label"] is not None]
+        data_to_return.append({"label": "ALL", "value": "ALL"})
+        return data_to_return   
+    
+
+       
+
 
 
 if __name__ == "__main__":

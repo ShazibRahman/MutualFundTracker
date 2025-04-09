@@ -10,14 +10,20 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
-
+import datetime as dtime
 import aiohttp
 import pytz
 import ujson as json
 
+
 import logs.log_config as log_config  # type: ignore # noqa
+from models.Investment_history import OrderHistory
 from models.day_change import InvestmentData, NavData, get_investment_data
 from util.DesktopNotification import DesktopNotification
+
+from repository import InvestmentHistoryRepository ,OrderHistoryRepository
+from models import InvestmentHistory ,OrderHistory
+from repository import db_path
 
 try:
     import plotext as plt
@@ -42,6 +48,9 @@ lock_file = os.path.join(DATA_PATH, "lock_file.lock")
 # lock_manager = LockManager(lock_file)
 
 FOLDER_NAME = "MutualFund"
+
+investment_history_repo = InvestmentHistoryRepository()
+order_history_repo = OrderHistoryRepository()
 
 
 def roundUp3(number: float) -> float:
@@ -83,6 +92,9 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
     with open(file_name, "w", encoding="utf-8") as file:
         file.write(data)
 
+async def download_file(file_name: str) -> None:
+    if download:
+        await GDrive(FOLDER_NAME).download_async(file_name)
 
 def writeToFile(file_name: pathlib.Path | str, data) -> None:
     logging.info("writing to a file asynchronously")
@@ -159,7 +171,9 @@ class MutualFund:
             readJsonFileAsynchronously(self.dayChangeJsonFileString), name="daychange"
         )
 
-        results = await asyncio.gather(units_tasks, order_tasks, daychange_tasks)
+        db_task = asyncio.create_task(download_file(db_path), name="db")
+
+        results = await asyncio.gather(units_tasks, order_tasks, daychange_tasks, db_task)
 
         try:
             self.units: dict = results[0]
@@ -209,6 +223,114 @@ class MutualFund:
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         print(f"{nav_date_format=} {orderDateFormat=}")
         return orderDateFormat <= nav_date_format
+    
+    def check_for_current_date_investment_history_and_update_it(
+        self, mfid: str, date_str: str, invested_amount: float, current_amount: float, day_change: float,nav:float
+    ) -> None:
+        """
+        Check if the current date is already in the investment history for the given MFID.
+        If it is, update the invested and current amounts.
+        """
+
+        # fill the missing dates cause sat and sun if off for market
+
+        lastest_investment_history = investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
+
+        
+
+        date: datetime.date = datetime.strptime(date_str, self.formatString).date()
+        existing_record = investment_history_repo.find_by_mfid_and_date(mfid, date)
+        if existing_record:
+            existing_record.invested_amount = invested_amount
+            existing_record.current_amount = current_amount
+            existing_record.day_change = day_change
+            existing_record.nav = nav
+            investment_history_repo.save(existing_record)
+        else:
+            new_record = InvestmentHistory(
+                mfid=mfid,
+                mfname=self.json_data.funds[mfid].name if mfid in self.json_data.funds else None,
+                date=date,
+                invested_amount=invested_amount,
+                current_amount=current_amount,
+                day_change=day_change,
+                nav=nav,
+            )
+            investment_history_repo.save(new_record)
+
+        
+            logging.info(
+                "Saving investment history for %s on %s with invested amount %s and current amount %s",
+                mfid,
+                date,
+                invested_amount,
+                current_amount,
+            )
+        
+        if lastest_investment_history:
+            latest_date = lastest_investment_history.date
+            if date > latest_date:
+                for i in range(1, (date - latest_date).days):
+                    new_date = latest_date + timedelta(days=i)
+                    new_record = InvestmentHistory(
+                        mfid=lastest_investment_history.mfid,
+                        mfname=lastest_investment_history.mfname,
+                        date=new_date,
+                        invested_amount=lastest_investment_history.invested_amount,
+                        current_amount=lastest_investment_history.current_amount,
+                        day_change=0,
+                        nav=lastest_investment_history.nav,
+                    )
+                    investment_history_repo.save(new_record)
+                    
+
+   
+
+
+    def check_for_current_date_investment_history_and_update_it_for_all(self) -> None:
+        """
+        Check and update investment history for all mutual funds for the current date.
+        """
+
+
+        lastest_investment_history = investment_history_repo.find_first_by_mfid_order_by_date_desc("ALL")
+        
+        lastest_date = lastest_investment_history.date if lastest_investment_history else datetime.now(INDIAN_TIMEZONE).date()
+
+        current_date = lastest_date + timedelta(days=1)
+
+        invested_amount = 0
+        current_amount = 0
+        day_change = 0
+
+        investmentHistories: list[InvestmentHistory] = investment_history_repo.find_all_by_date(current_date)
+        if len(investmentHistories) == len(self.unitsKeyList):
+            for investmentHistory in investmentHistories:
+                invested_amount += investmentHistory.invested_amount
+                current_amount += investmentHistory.current_amount
+                day_change += investmentHistory.day_change
+        else:
+            logging.debug("Investment histories do not match the number of units. for date %s", current_date)
+            return
+        
+        
+    
+        logging.debug(
+            "Total invested amount: %s, Total current amount: %s, Total day change: %s for date %s",
+            invested_amount,
+            current_amount,
+            day_change,
+            current_date
+        )
+
+        current_date_str = current_date.strftime(self.formatString)
+
+        self.check_for_current_date_investment_history_and_update_it(
+            "ALL", current_date_str, invested_amount, current_amount, day_change, None
+        )
+        
+
+
 
     async def addToUnits(self, mutualfund_id, date, name: str) -> None:
         if mutualfund_id in self.Orders:
@@ -221,6 +343,7 @@ class MutualFund:
                     data = self.units[mutualfund_id]
                     data[0] += order_data[0]
                     data[1] += order_data[1]
+
                     logging.info(
                         "adding units: %s and amount: %s to units for %s",
                         order_data[0],
@@ -234,6 +357,64 @@ class MutualFund:
                             writeToFileAsync(self.order_file, self.Orders),  # type: ignore
                         ]
                     )
+
+
+    def check_for_order_history_and_fill_data(self) -> None:
+        """
+        Check and update investment history for the current date.
+        """
+
+        print("inside -- check_for_order_history_and_fill_data(self) -> None:\n")
+
+        orders:dict = self.Orders
+
+        for mfid, order_data in orders.items():
+            for date, data in order_data.items():
+                actual_date = datetime.strptime(date, self.formatString).date()
+                if not order_history_repo.find_by_mfid_and_date(mfid, actual_date):
+                    # now check for the investment history
+                    investment_history = investment_history_repo.find_by_mfid_and_date(mfid, actual_date)
+                    nav = investment_history.nav if investment_history else None
+                    order_history = OrderHistory(
+                        mfid=mfid,
+                        mfname=self.json_data.funds[mfid].name if mfid in self.json_data.funds else None,
+                        nav_date=actual_date,
+                        amount=data[1],
+                        unit=data[0],
+                        nav=nav,
+                    )
+                    order_history_repo.save(order_history)
+                    logging.debug(
+                        "Saving order history for %s on %s with amount %s and unit %s",
+                        mfid,
+                        actual_date,
+                        data[1],
+                        data[0],
+                    )
+
+        # updating the order history for null nav 
+
+        print("updating orlder oder history for null nav")
+
+        order_histories: list[OrderHistory] = order_history_repo.find_all_by_nav_is_null()
+        print(order_histories)
+
+        for order_history in order_histories:
+            mfid = order_history.mfid
+            date: datetime.date = order_history.nav_date
+            if mfid in self.json_data.funds:
+                investment_history = investment_history_repo.find_by_mfid_and_date(mfid, date)
+                
+                nav = investment_history.nav if investment_history else None
+                order_history.nav = nav
+                order_history_repo.save(order_history)
+                logging.debug(
+                    "Updating order history for %s on %s with name %s",
+                    mfid,
+                    date,
+                    self.json_data.funds[mfid].name,
+                )
+    
 
     async def addToUnitsNotPreExisting(self) -> None:
         """
@@ -508,6 +689,34 @@ class MutualFund:
             plt.clear_figure()
         print()
 
+    def draw_graph_current_vs_invested(self) -> None:
+        print()
+        data: list[InvestmentHistory] = investment_history_repo.find_by_mfid("ALL")
+
+        dates: list = []
+        invested_amounts: list = []
+        current_amounts: list = []
+        d = 0
+
+        for entry in data:
+            d = d+1
+            dates.append(d)
+            invested_amounts.append(entry.invested_amount)
+            current_amounts.append(entry.current_amount)
+       
+        plt.plot_size(100, 30)
+        plt.title("Current vs Invested Amount")
+    
+        plt.ylabel("Amount", yside="left")
+        plt.plot(dates, invested_amounts, color="blue", label="Invested Amount")
+        plt.plot(dates, current_amounts, color="green", label="Current Amount")
+
+        plt.clear_color()
+        plt.show()
+        plt.clear_figure()
+
+
+
     async def update_my_nav_file(self):
         if self.nav_all_file is None and not self.download_all_nav_file():
             return False
@@ -635,8 +844,9 @@ class MutualFund:
         sum_total = 0
         total_invested = 0
         total_day_change = 0
-
+        latest_date = None
         for line in self.nav_my_file.splitlines():
+            print(line)
             temp = line.strip().split(";")
             _id, name, nav, date = (
                 temp[0],
@@ -644,6 +854,7 @@ class MutualFund:
                 float(temp[4]),
                 temp[5],
             )
+            latest_date = date
 
             # type: ignore
             dayChange: float = await self.day_change_method(_id, nav, date, name)
@@ -660,7 +871,11 @@ class MutualFund:
             cur_json_id.current = current
             cur_json_id.invested = invested
             cur_json_id.dayChange = dayChange
-        return sum_total, total_invested, total_day_change
+            self.check_for_current_date_investment_history_and_update_it(
+                _id, date, invested, current, dayChange, nav
+            )
+        
+        return sum_total, total_invested, total_day_change, latest_date
 
     async def get_current_values(self) -> None:
 
@@ -672,8 +887,10 @@ class MutualFund:
 
             if not await self.update_my_nav_file():  # type: ignore
                 return
+            
+        self.check_for_order_history_and_fill_data()
 
-        sum_total, total_invested, total_daychange = await self.read_my_nav_file()
+        sum_total, total_invested, total_daychange, latest_date = await self.read_my_nav_file()
 
         total_profit = sum_total - total_invested
         total_profit_percentage = total_profit / total_invested * 100
@@ -688,8 +905,15 @@ class MutualFund:
         self.json_data.totalProfitPercentage = total_profit_percentage
 
         self.json_data.totalDaychange = total_daychange
+
+        self.check_for_current_date_investment_history_and_update_it_for_all()
+
+
         self.tasks.append(
             writeToFileAsync(self.dayChangeJsonFileString, data=asdict(self.json_data))
+        )
+        self.tasks.append(
+            GDrive(FOLDER_NAME).upload_async(db_path)
         )
 
     async def del_cleanup(self):
@@ -723,10 +947,15 @@ class MutualFund:
 async def main2():
     async with MutualFund(is_downloadable=True) as tracker:
         await tracker.get_current_values()
-        tracker.draw_table()
+        # tracker.draw_table()
+    
+        tracker.draw_graph_current_vs_invested()
 
 
 if __name__ == "__main__":
+    from repository import create_db_and_tables
+    
+    create_db_and_tables()
     start = time.time()
     import cProfile
 

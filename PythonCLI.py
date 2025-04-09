@@ -44,6 +44,8 @@ async def handle_tracker_operations(args, tracker):
         )
     elif args.dc == "y":
         await tracker.day_change_table()
+    elif args.ic == "y":
+        tracker.draw_graph_current_vs_invested()
     elif args.r == "y":
         await tracker.get_current_values()
         tracker.draw_table()
@@ -96,6 +98,8 @@ async def main():
     )
     parser.add_argument("--logs", type=str, choices=["show", "clear", "n"], default="n")
     parser.add_argument("-dash", type=str, choices=choices, default="n")
+    parser.add_argument("-ic", type=str, choices=choices, default="n")
+
 
     args = parser.parse_args()
     await call_mutual_fund(args)

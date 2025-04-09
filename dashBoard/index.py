@@ -10,7 +10,7 @@ from dash.dependencies import Input, Output
 sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.resolve().as_posix())
 from app import app, server
-from apps import addOrder, dashBoard, stocks
+from apps import addOrder, dashBoard, stocks,graphs
 
 # connect to your app pages
 
@@ -39,6 +39,12 @@ app.layout = html.Div(
                     ),
                     id="stockLink",
                 ),
+                dbc.NavItem(
+                    dbc.NavLink(
+                        "Graphs", id="graphs", href="/apps/graphs", className=""
+                    ),
+                    id="graphsLink",
+                ),
             ],
             style={
                 "width": "100%",
@@ -58,6 +64,7 @@ app.layout = html.Div(
     Output("dashLink", component_property="style"),
     Output("orderLink", component_property="style"),
     Output("stockLink", component_property="style"),
+    Output("graphsLink", component_property="style"),
     [Input("url", "pathname")],
 )
 def display_page(pathname: str):
@@ -73,24 +80,40 @@ def display_page(pathname: str):
         "color": "grey",
     }  # inactive style for navbar links
 
-    data = {
-        "/apps/dashBoard": (
-            dashBoard.layout,
-            active_Style,
-            inactive_Style,
-            inactive_Style,
-        ),
-        "/apps/addOrder": (
-            addOrder.layout,
-            inactive_Style,
-            active_Style,
-            inactive_Style,
-        ),
-        "/apps/stocks": (stocks.layout, inactive_Style, inactive_Style, active_Style),
-        "/": (dashBoard.layout, active_Style, inactive_Style, inactive_Style),
+    routes = {
+        "/apps/dashBoard": dashBoard.layout,
+        "/apps/addOrder": addOrder.layout,
+        "/apps/stocks": stocks.layout,
+        "/apps/graphs": graphs.layout, 
     }
+    # Generate data for the routes
+    data = generate_data(routes, active_Style, inactive_Style)
+    # Set the styles for the navbar links based on the current pathname
 
+    if pathname == "/":
+        return data["/apps/dashBoard"]
+    
     return data[pathname]
+
+
+def generate_data(routes, active_Style, inactive_Style):
+    data = {}
+    all_routes = list(routes.keys())  # List of all routes
+    
+    for i, route in enumerate(all_routes):
+        # Create a list of styles with all inactive styles
+        styles = [inactive_Style] * len(all_routes)
+        
+        # Set the active style for the current route
+        styles[i] = active_Style
+        
+        # Add the route and its corresponding layout and styles to the data dictionary
+        data[route] = (routes[route], *styles)
+    
+    return data
+
+
+
 
 
 if __name__ == "__main__":
