@@ -21,8 +21,8 @@ from models.Investment_history import OrderHistory
 from models.day_change import InvestmentData, NavData, get_investment_data
 from util.DesktopNotification import DesktopNotification
 
-from repository import InvestmentHistoryRepository ,OrderHistoryRepository
-from models import InvestmentHistory ,OrderHistory
+from repository import InvestmentHistoryRepository ,OrderHistoryRepository,UnitsRepository
+from models import InvestmentHistory ,OrderHistory, Units
 from repository import db_path
 
 try:
@@ -51,6 +51,7 @@ FOLDER_NAME = "MutualFund"
 
 investment_history_repo = InvestmentHistoryRepository()
 order_history_repo = OrderHistoryRepository()
+units_repo = UnitsRepository()
 
 
 def roundUp3(number: float) -> float:
@@ -123,11 +124,7 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
 class MutualFund:
     def __init__(self, is_downloadable: bool) -> None:
 
-        self.Orders = None
-        self.units = None
-        self.Orders: dict[str : dict[str:list]]
         self.formatString = None
-        self.units: dict
         self.is_downloadable = is_downloadable
         global download
         download = self.is_downloadable
@@ -149,58 +146,31 @@ class MutualFund:
         self.sender_email: str = os.environ.get("shazmail")  # type: ignore
         self.password: str = os.environ.get("shazPassword")  # type: ignore
 
-        self.order_file: pathlib.Path = DATA_PATH.joinpath("order.json")
-
         self.dayChangeJsonFileString: pathlib.Path = DATA_PATH.joinpath(
             "dayChange.json"
         )
         self.dayChangeJsonFileStringBackupFile: pathlib.Path = DATA_PATH.joinpath(
             "dayChange_bkc.json"
         )
-        self.unitsFile: pathlib.Path = DATA_PATH.joinpath("units.json")
 
     async def initialize(self):
         logging.debug("----initializing----")
-        units_tasks = asyncio.create_task(
-            readJsonFileAsynchronously(self.unitsFile), name="units"
-        )
-        order_tasks = asyncio.create_task(
-            readJsonFileAsynchronously(self.order_file), name="order"
-        )
+  
+
         daychange_tasks = asyncio.create_task(
             readJsonFileAsynchronously(self.dayChangeJsonFileString), name="daychange"
         )
 
         db_task = asyncio.create_task(download_file(db_path), name="db")
 
-        results = await asyncio.gather(units_tasks, order_tasks, daychange_tasks, db_task)
-
+        results = await asyncio.gather(daychange_tasks, db_task)
         try:
-            self.units: dict = results[0]
-        except JSONDecodeError:
-            # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
-            self.units = {}
-            self.run_once_initialization(self.unitsFile)
-        try:
-            self.Orders: dict[str : dict[str:list]] = results[1]
-        except JSONDecodeError:
-            print("Something went wrong with the order file")
-            self.Orders = {}
-            self.run_once_initialization(self.order_file)
-
-        if not self.units:
-            print(
-                f"No mutual Fund specified to track please Add something in {self.unitsFile} file to track"
-            )
-            sys.exit(0)
-
-        try:
-            temp_data = results[2]
+            temp_data = results[0]
             self.json_data: InvestmentData = get_investment_data(temp_data)
         except (FileNotFoundError, JSONDecodeError):
             # initialize to an empty dic inCase the JsonFile Doesn't exist or have invalid data
             self.run_once_initialization(None)
-        self.unitsKeyList = list(self.units.keys())
+        self.unitsKeyList = units_repo.find_all_distinct_mfids()
         self.TableMutualFund = Table()
         self.summaryTable = Table()
         self.formatString = "%d-%b-%Y"
@@ -241,8 +211,6 @@ class MutualFund:
         # fill the missing dates cause sat and sun if off for market
 
         lastest_investment_history = investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
-
-        
 
         date: datetime.date = datetime.strptime(date_str, self.formatString).date()
         existing_record = investment_history_repo.find_by_mfid_and_date(mfid, date)
@@ -298,7 +266,6 @@ class MutualFund:
         Check and update investment history for all mutual funds for the current date.
         """
 
-
         lastest_investment_history = investment_history_repo.find_first_by_mfid_order_by_date_desc("ALL")
         
         lastest_date = lastest_investment_history.date if lastest_investment_history else datetime.now(INDIAN_TIMEZONE).date()
@@ -322,8 +289,6 @@ class MutualFund:
             logging.debug("Investment histories do not match the number of units. for date %s", current_date)
             return
         
-        
-    
         logging.debug(
             "Total invested amount: %s, Total current amount: %s, Total day change: %s for date %s",
             invested_amount,
@@ -375,10 +340,13 @@ class MutualFund:
         for order_history in order_histories:
             order_date = order_history.nav_date
             if order_date is not None and order_date <= dtime_date:
-                data = self.units[order_history.mfid]
-                data[0] += order_history.unit
-                data[1] += order_history.amount
-
+        
+                unit_entity  = units_repo.find_by_mfid(order_history.mfid)
+                
+                unit_entity.total_units += order_history.unit
+                unit_entity.total_invested += order_history.amount
+                units_repo.save(unit_entity)
+        
                 logging.info(
                     "Adding units: %s and amount: %s to units for %s",
                     order_history.unit,
@@ -386,14 +354,11 @@ class MutualFund:
                     order_history.mfname,
                 )
 
-            
-
                 # Mark the order as consumed
                 order_history.consumed = True
                 order_history_repo.save(order_history)
 
 
-                self.tasks.append(writeToFileAsync(self.unitsFile, self.units))  
                 self.tasks.append(
                         GDrive(FOLDER_NAME).upload_async(db_path)
                     )
@@ -432,10 +397,15 @@ class MutualFund:
 
         order_histories: list[OrderHistory] = order_history_repo.find_all_by_mfid_and_consumed(False)
         for order_history in order_histories:
-            if order_history.mfid not in self.units:
-                self.units[order_history.mfid] = [0, 0]
-                self.units[order_history.mfid][0] += order_history.unit
-                self.units[order_history.mfid][1] += order_history.amount
+            if order_history.mfid not in self.unitsKeyList:
+               
+
+                unit_entity  = Units(
+                    mfid=order_history.mfid,
+                    total_units=order_history.unit,
+                    total_invested=order_history.amount,
+                )
+                units_repo.save(unit_entity)
 
                 logging.info(
                     "Adding new mf units: %s and amount: %s to units for %s",
@@ -450,14 +420,10 @@ class MutualFund:
             
                 order_history_repo.save(order_history)
 
-                self.tasks.append(writeToFileAsync(self.unitsFile, self.units))  # type: ignore
                 self.tasks.append(
                     GDrive(FOLDER_NAME).upload_async(db_path)
-                )  # type: ignore
-          
+                ) 
 
-            
-   
 
     def run_once_initialization(self, file) -> None:
         if not pathlib.Path.exists(DATA_PATH):
@@ -475,7 +441,6 @@ class MutualFund:
             self.json_data = InvestmentData()
 
     def initializeTables(self) -> None:
-        self.unitsKeyList = list(self.units.keys())
         if not self.unitsKeyList:  # type: ignore
             print("no Mutual Fund found")
             exit()
@@ -626,7 +591,7 @@ class MutualFund:
         plt.show()
 
     def UpdateKeyList(self):
-        self.unitsKeyList = self.units.keys()
+        self.unitsKeyList = units_repo.find_all_distinct_mfids()
 
     async def day_change_table(self):
         logging.info("--rendering day change table--")
@@ -642,7 +607,8 @@ class MutualFund:
                 await self.get_current_values()
             value = self.json_data.funds[key].nav
             name: str = self.json_data.funds[key].name
-            units: float = self.units[key][0]
+            unit_entity = units_repo.find_by_mfid(key)
+            units: float = unit_entity.total_units
             nav_col = ""
             daychange_col = ""
             i = True
@@ -688,7 +654,7 @@ class MutualFund:
         self.console.print(self.TableMutualFund)
 
     def get_grep_string(self) -> str:
-        unitKeyList = list(self.units.keys())
+        unitKeyList = self.unitsKeyList
 
         return "".join(
             unitKeyList[i] if i == 0 else f"|{unitKeyList[i]}"
@@ -833,7 +799,8 @@ class MutualFund:
         print(f"prev_day_nav_date = {prev_day_nav_date}")
 
         await self.add_to_units_db(ids, prev_day_nav_date, name)
-        units: float = self.units[ids][0]
+        units_entity = units_repo.find_by_mfid(ids)
+        units: float = units_entity.total_units
 
         prevDaySum: float = data[prev_day_nav_date] * units
         dayChange: float = round(today_nav * units - prevDaySum, 3)
@@ -853,7 +820,7 @@ class MutualFund:
     async def clean_up(self) -> None:
         keys: list[str] = list(self.json_data.funds.keys())
         for key in keys:
-            if key.isnumeric() and key not in self.units:
+            if key.isnumeric() and key not in self.unitsKeyList:
                 del self.json_data.funds[key]
 
         self.tasks.append(
@@ -883,8 +850,11 @@ class MutualFund:
             # type: ignore
             dayChange: float = await self.day_change_method(_id, nav, date, name)
 
-            current = round(self.units[_id][0] * nav, 3)
-            invested = self.units[_id][1]
+            unit_entity = units_repo.find_by_mfid(_id)
+            
+
+            current = round(unit_entity.total_units * nav, 3)
+            invested = unit_entity.total_invested
             sum_total += current
             total_invested += invested
             if dayChange != -1:
