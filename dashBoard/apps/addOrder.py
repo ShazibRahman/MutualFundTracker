@@ -7,14 +7,12 @@ import dash_html_components as html
 from app import app
 from dash.dependencies import Input, Output, State
 from helper.helperFunctions import helper_functions
+from models import InvestmentHistory
 
 helper = helper_functions()
 
 
 def get_all_order() -> dbc.Table:
-
-    mfs = helper.json_data
-    MfsReversed = {v: k for k, v in mfs.items()}
     children = [
         html.Thead(
             html.Tr(
@@ -28,19 +26,20 @@ def get_all_order() -> dbc.Table:
         )
     ]
     body = []
-    print("printing all order", helper.order)
-    for k, v in helper.order.items():
+    # get all orders
+    orders = helper.get_all_open_orders()
+    print("printing all order",orders)
+    for order in orders:    
         # id , dic
-        body.extend(
+        body.append(
             html.Tr(
                 [
-                    html.Td(MfsReversed[k]),
-                    html.Td(v2[1]),
-                    html.Td(v2[0]),
-                    html.Td(k2),
+                    html.Td(order.mfname),
+                    html.Td(order.amount),
+                    html.Td(order.unit),
+                    html.Td(order.nav_date),
                 ]
             )
-            for k2, v2 in v.items()
         )
     children.append(html.Tbody(body))
 
@@ -54,8 +53,7 @@ def get_all_order() -> dbc.Table:
                     responsive=True
                 )
                 ]
-       ) if body
-        else html.Div("No orders added yet")
+       )
     )
 
 
@@ -162,10 +160,15 @@ def add_order(n_clicks, units, amount, date_input, product):
         or date_input is None
     ):
         return "Please fill all the fields"
-    date_object = datetime.strptime(date_input, "%Y-%m-%d").strftime("%d-%b-%Y")
-    _,order=helper.add_order(product, float(units), amount, date_object)
-    return f"Order added for {units} units of {helper.get_id_name_dic(product)} at {amount} on {date_object}"
+    date_object = datetime.strptime(date_input, "%Y-%m-%d").date()
+    # _, order = helper.add_order(product, float(units), amount, date_object)
 
+
+    order_history = helper.add_order_db(
+    
+        product, float(units), amount, date_object
+    )
+    return f"Order added for {order_history.mfname} on {order_history.nav_date} with amount {order_history.amount} and units {order_history.unit}"
 
 @app.callback(
     Output("output-2", "children"),
@@ -175,17 +178,22 @@ def add_order(n_clicks, units, amount, date_input, product):
     prevent_initial_call=True,
 )
 def update_output(value):
-    print(value)
-    print(type(value))
     if value is None or value == "":
         return "Please select a product"
 
-    day_change = asdict(helper.daychange_json)
-    funds = day_change["funds"]
-    # check if the fund is in the funds
+    # day_change = asdict(helper.daychange_json)
+    # funds = day_change["funds"]
+    # # check if the fund is in the funds
 
-    if value not in funds:
+    # if value not in funds:
+    #     return "No data available for this fund"
+    # fund = funds[value]
+    # return f"Invested {fund['invested']} Current {fund['current']} Day Change {fund['dayChange']}"
+
+    investment_history: InvestmentHistory = helper.get_mfid_by_id_order_by_date_desc(value)
+    if investment_history is None:
         return "No data available for this fund"
-    fund = funds[value]
-    return f"Invested {fund['invested']} Current {fund['current']} Day Change {fund['dayChange']}"
+    return f"Fund Name: {investment_history.mfname}, Invested Amount: {investment_history.invested_amount}, Current Amount: {investment_history.current_amount}"
+
+
 

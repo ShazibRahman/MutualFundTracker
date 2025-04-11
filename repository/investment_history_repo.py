@@ -1,7 +1,7 @@
 from sqlmodel import Session, select
 from typing import List, Literal, Optional
 from datetime import date
-from sqlalchemy import Tuple, asc, desc, func
+from sqlalchemy import asc, desc, func
 from models import InvestmentHistory
 from .db import engine
 
@@ -24,7 +24,7 @@ class InvestmentHistoryRepository:
             )
             return session.exec(statement).first()
 
-    def find_by_mfid(
+    def find_all_by_mfid(
         self,
         mfid: str,
         order_by: str = "date",
@@ -102,6 +102,30 @@ class InvestmentHistoryRepository:
             )
             result = session.exec(statement).first()
             return result
+        
+    def find_first_by_mfid_order_by_updated_at_desc(self, mfid: str) -> Optional[InvestmentHistory]:
+        with Session(engine) as session:
+            order_column = getattr(InvestmentHistory, "updated_at")
+            statement = (
+                select(InvestmentHistory)
+                .where(InvestmentHistory.mfid == mfid)
+                .order_by(desc(order_column))
+                .limit(1)
+            )
+            result = session.exec(statement).first()
+            return result
+        
+    def find_first_by_mfid_order_by_date_asc(self, mfid: str) -> Optional[InvestmentHistory]:
+        with Session(engine) as session:
+            order_column = getattr(InvestmentHistory, "date")
+            statement = (
+                select(InvestmentHistory)
+                .where(InvestmentHistory.mfid == mfid)
+                .order_by(asc(order_column))
+                .limit(1)
+            )
+            result = session.exec(statement).first()
+            return result
     
     def find_by_mfid_and_date(self, mfid: str, entry_date: date) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
@@ -132,3 +156,42 @@ class InvestmentHistoryRepository:
             
             # list of dict
             return [dict(row._mapping) for row in results]
+        
+
+    def find_first_by_mfid_order_by(
+            self,
+            mfid: str,
+            order_by: str = "nav_date",
+            direction: OrderType = "asc"
+    ) -> Optional[InvestmentHistory]:
+        with Session(engine) as session:
+            order_column = getattr(InvestmentHistory, order_by)
+            order_func = asc if direction == "asc" else desc
+            statement = (
+                select(InvestmentHistory)
+                .where(InvestmentHistory.mfid == mfid)
+                .order_by(order_func(order_column))
+            )
+            return session.exec(statement).first()
+        
+
+    def find_first_by_mfid_is_filled_order_by(
+            self,
+            mfid: str,
+            is_filled:bool = True,
+            order_by: str = "nav_date",
+            direction: OrderType = "asc"
+    ) -> Optional[InvestmentHistory]:
+        with Session(engine) as session:
+            is_filled_value = int(is_filled)
+            order_column = getattr(InvestmentHistory, order_by)
+            order_func = asc if direction == "asc" else desc
+            statement = (
+                select(InvestmentHistory)
+                .where(InvestmentHistory.mfid == mfid)
+                .where(InvestmentHistory.is_filled == is_filled_value)
+                .order_by(order_func(order_column))
+            )
+            return session.exec(statement).first()
+        
+

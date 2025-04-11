@@ -225,7 +225,13 @@ class MutualFund:
         return orderDateFormat <= nav_date_format
     
     def check_for_current_date_investment_history_and_update_it(
-        self, mfid: str, date_str: str, invested_amount: float, current_amount: float, day_change: float,nav:float
+        self, mfid: str,
+          date_str: str, 
+          invested_amount: float,
+            current_amount: float, 
+            day_change: float,
+            nav:float,
+            is_filled:bool=False
     ) -> None:
         """
         Check if the current date is already in the investment history for the given MFID.
@@ -245,6 +251,7 @@ class MutualFund:
             existing_record.current_amount = current_amount
             existing_record.day_change = day_change
             existing_record.nav = nav
+            existing_record.is_filled = is_filled
             investment_history_repo.save(existing_record)
         else:
             new_record = InvestmentHistory(
@@ -255,6 +262,7 @@ class MutualFund:
                 current_amount=current_amount,
                 day_change=day_change,
                 nav=nav,
+                is_filled=is_filled
             )
             investment_history_repo.save(new_record)
 
@@ -280,11 +288,9 @@ class MutualFund:
                         current_amount=lastest_investment_history.current_amount,
                         day_change=0,
                         nav=lastest_investment_history.nav,
+                        is_filled=True
                     )
                     investment_history_repo.save(new_record)
-                    
-
-   
 
 
     def check_for_current_date_investment_history_and_update_it_for_all(self) -> None:
@@ -303,12 +309,15 @@ class MutualFund:
         current_amount = 0
         day_change = 0
 
+        is_filled = False
+
         investmentHistories: list[InvestmentHistory] = investment_history_repo.find_all_by_date(current_date)
         if len(investmentHistories) == len(self.unitsKeyList):
             for investmentHistory in investmentHistories:
                 invested_amount += investmentHistory.invested_amount
                 current_amount += investmentHistory.current_amount
                 day_change += investmentHistory.day_change
+                is_filled = investmentHistory.is_filled
         else:
             logging.debug("Investment histories do not match the number of units. for date %s", current_date)
             return
@@ -326,140 +335,129 @@ class MutualFund:
         current_date_str = current_date.strftime(self.formatString)
 
         self.check_for_current_date_investment_history_and_update_it(
-            "ALL", current_date_str, invested_amount, current_amount, day_change, None
+            "ALL", current_date_str, invested_amount, current_amount, day_change, None,is_filled
         )
         
 
 
 
-    async def addToUnits(self, mutualfund_id, date, name: str) -> None:
-        if mutualfund_id in self.Orders:
-            keys = list(self.Orders[mutualfund_id].keys())
-            for key in keys:
-                print(f"date inside addToUnits = {key}")
-                if  self.check_past_dates(date, key):
+    # async def addToUnits(self, mutualfund_id, date, name: str) -> None:
+    #     if mutualfund_id in self.Orders:
+    #         keys = list(self.Orders[mutualfund_id].keys())
+    #         for key in keys:
+    #             print(f"date inside addToUnits = {key}")
+    #             if  self.check_past_dates(date, key):
             
-                    order_data = self.Orders[mutualfund_id].pop(key) 
-                    data = self.units[mutualfund_id]
-                    data[0] += order_data[0]
-                    data[1] += order_data[1]
+    #                 order_data = self.Orders[mutualfund_id].pop(key) 
+    #                 data = self.units[mutualfund_id]
+    #                 data[0] += order_data[0]
+    #                 data[1] += order_data[1]
 
-                    logging.info(
-                        "adding units: %s and amount: %s to units for %s",
-                        order_data[0],
-                        order_data[1],
-                        name,
-                    )
+    #                 logging.info(
+    #                     "adding units: %s and amount: %s to units for %s",
+    #                     order_data[0],
+    #                     order_data[1],
+    #                     name,
+    #                 )
 
-                    self.tasks.extend(
-                        [
-                            writeToFileAsync(self.unitsFile, self.units),  # type: ignore
-                            writeToFileAsync(self.order_file, self.Orders),  # type: ignore
-                        ]
-                    )
+    #                 self.tasks.extend(
+    #                     [
+    #                         writeToFileAsync(self.unitsFile, self.units),  # type: ignore
+    #                         writeToFileAsync(self.order_file, self.Orders),  # type: ignore
+    #                     ]
+    #                 )
 
+    async def add_to_units_db(self, mfid:str, date:str,name:str)->None:
+        dtime_date = datetime.strptime(date, self.formatString).date()
 
-    def check_for_order_history_and_fill_data(self) -> None:
-        """
-        Check and update investment history for the current date.
-        """
-
-        print("inside -- check_for_order_history_and_fill_data(self) -> None:\n")
-
-        orders:dict = self.Orders
-
-        for mfid, order_data in orders.items():
-            for date, data in order_data.items():
-                actual_date = datetime.strptime(date, self.formatString).date()
-                if not order_history_repo.find_by_mfid_and_date(mfid, actual_date):
-                    # now check for the investment history
-                    investment_history = investment_history_repo.find_by_mfid_and_date(mfid, actual_date)
-                    nav = investment_history.nav if investment_history else None
-                    order_history = OrderHistory(
-                        mfid=mfid,
-                        mfname=self.json_data.funds[mfid].name if mfid in self.json_data.funds else None,
-                        nav_date=actual_date,
-                        amount=data[1],
-                        unit=data[0],
-                        nav=nav,
-                    )
-                    order_history_repo.save(order_history)
-                    logging.debug(
-                        "Saving order history for %s on %s with amount %s and unit %s",
-                        mfid,
-                        actual_date,
-                        data[1],
-                        data[0],
-                    )
-
-        # updating the order history for null nav 
-
-        print("updating orlder oder history for null nav")
-
-        order_histories: list[OrderHistory] = order_history_repo.find_all_by_nav_is_null()
-        print(order_histories)
+        order_histories: list[OrderHistory] = order_history_repo.find_all_by_mfid_and_consumed(mfid, False)
 
         for order_history in order_histories:
-            mfid = order_history.mfid
-            date: datetime.date = order_history.nav_date
-            if mfid in self.json_data.funds:
-                investment_history = investment_history_repo.find_by_mfid_and_date(mfid, date)
-                
-                nav = investment_history.nav if investment_history else None
-                order_history.nav = nav
-                order_history_repo.save(order_history)
-                logging.debug(
-                    "Updating order history for %s on %s with name %s",
-                    mfid,
-                    date,
-                    self.json_data.funds[mfid].name,
+            order_date = order_history.nav_date
+            if order_date is not None and order_date <= dtime_date:
+                data = self.units[order_history.mfid]
+                data[0] += order_history.unit
+                data[1] += order_history.amount
+
+                logging.info(
+                    "Adding units: %s and amount: %s to units for %s",
+                    order_history.unit,
+                    order_history.amount,
+                    order_history.mfname,
                 )
-    
 
-    async def addToUnitsNotPreExisting(self) -> None:
-        """
-        Adds new mutual fund units to the unit file.
-        """
-        for order_key in self.Orders:
+            
 
-            if order_key not in self.units and self.Orders[order_key]:
-                self.units[order_key] = [0, 0]
-                for date in self.Orders[order_key]:
-                    date_data = self.Orders[order_key].pop(date)
-                    self.units[order_key][0] += date_data[0]
-                    self.units[order_key][1] += date_data[1]
-                    logging.info(
-                        "Adding new mf  units: %s and amount: %s to units for %s",
-                        date_data[0],
-                        date_data[1],
-                        order_key,
+                # Mark the order as consumed
+                order_history.consumed = True
+                order_history_repo.save(order_history)
+
+
+                self.tasks.append(writeToFileAsync(self.unitsFile, self.units))  
+                self.tasks.append(
+                        GDrive(FOLDER_NAME).upload_async(db_path)
                     )
 
-                # Write the Units and Orders dictionaries to their respective files
-                self.tasks.extend(
-                    [
-                        writeToFileAsync(self.unitsFile, self.units),  # type: ignore
-                        writeToFileAsync(self.order_file, self.Orders),
-                    ]
+
+   
+    # async def addToUnitsNotPreExisting(self) -> None:
+    #     """
+    #     Adds new mutual fund units to the unit file.
+    #     """
+    #     for order_key in self.Orders:
+
+    #         if order_key not in self.units and self.Orders[order_key]:
+    #             self.units[order_key] = [0, 0]
+    #             for date in self.Orders[order_key]:
+    #                 date_data = self.Orders[order_key].pop(date)
+    #                 self.units[order_key][0] += date_data[0]
+    #                 self.units[order_key][1] += date_data[1]
+    #                 logging.info(
+    #                     "Adding new mf  units: %s and amount: %s to units for %s",
+    #                     date_data[0],
+    #                     date_data[1],
+    #                     order_key,
+    #                 )
+
+    #             # Write the Units and Orders dictionaries to their respective files
+    #             self.tasks.extend(
+    #                 [
+    #                     writeToFileAsync(self.unitsFile, self.units),  # type: ignore
+    #                     writeToFileAsync(self.order_file, self.Orders),
+    #                 ]
+    #             )
+
+
+    async def add_to_units_not_pre_existing(self)->None:
+
+        order_histories: list[OrderHistory] = order_history_repo.find_all_by_mfid_and_consumed(False)
+        for order_history in order_histories:
+            if order_history.mfid not in self.units:
+                self.units[order_history.mfid] = [0, 0]
+                self.units[order_history.mfid][0] += order_history.unit
+                self.units[order_history.mfid][1] += order_history.amount
+
+                logging.info(
+                    "Adding new mf units: %s and amount: %s to units for %s",
+                    order_history.unit,
+                    order_history.amount,
+                    order_history.mfname,
                 )
 
-    def add_order(self, MFID: str, unit: float, amount: float, date: str) -> None:
-        """
-        mfid , unit : float , amount :float , date : for ex 07-May-2022
-        """
-        logging.info("--adding order to Unit file--")
-        if self.Orders.__contains__(MFID) and self.Orders[MFID].__contains__(date):
-            data = self.Orders[MFID][date]
-            data[0] += unit
-            data[1] += amount
-        elif self.Orders.__contains__(MFID):
-            self.Orders[MFID][date] = [unit, amount]
-        else:
-            self.Orders[MFID] = {date: [unit, amount]}
-        logging.info(
-            f"--Adding  Units={unit}, amount={amount}, date={date} to {self.json_data.funds[MFID].name}--"
-        )
-        writeToFile(self.order_file, self.Orders)
+                # Mark the order as consumed
+                order_history.consumed = True
+
+            
+                order_history_repo.save(order_history)
+
+                self.tasks.append(writeToFileAsync(self.unitsFile, self.units))  # type: ignore
+                self.tasks.append(
+                    GDrive(FOLDER_NAME).upload_async(db_path)
+                )  # type: ignore
+          
+
+            
+   
 
     def run_once_initialization(self, file) -> None:
         if not pathlib.Path.exists(DATA_PATH):
@@ -497,18 +495,34 @@ class MutualFund:
         self.TableMutualFund.add_column("RETURNS", justify="center")
         self.TableMutualFund.add_column("CURRENT", justify="center")
         self.TableMutualFund.add_column("NAV", justify="center")
+        self.TableMutualFund.add_column("LAST UPDDATED", justify="center")
+
 
     def summaryTableEdit(self) -> None:
         try:
-            lastUpdated = self.json_data.lastUpdated
-            current = self.json_data.sumTotal
-            invested = self.json_data.totalInvested
-            totalProfitPercentage = self.json_data.totalProfitPercentage
-            totalProfit = self.json_data.totalProfit
-            totalDaychange = self.json_data.totalDaychange
+
+            latest_investment_history = investment_history_repo.find_first_by_mfid_is_filled_order_by("ALL", False, "date", "desc")
+
+            lastUpdated = latest_investment_history.updated_at.strftime(self.formatString+" %X")
+            current = latest_investment_history.current_amount
+            invested = latest_investment_history.invested_amount
+
+            totalProfit = current - invested
+            totalProfitPercentage = totalProfit / invested * 100
+            totalDaychange = latest_investment_history.day_change
             totalDaychangePercentage = totalDaychange / invested * 100
-        except KeyError:
-            self.consolnumbere.print(
+
+
+            logging.debug(
+                "Total Profit: %s, Total Profit Percentage: %s, Total Day Change: %s, Total Day Change Percentage: %s",
+                totalProfit,
+                totalProfitPercentage,
+                totalDaychange,
+                totalDaychangePercentage,
+            )
+
+        except Exception:
+            self.console.print(
                 "Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option"
             )
             sys.exit()
@@ -535,12 +549,21 @@ class MutualFund:
 
     def MutualFundTableEdit(self, id_: str) -> None:
         try:
-            preMF = self.json_data.funds[id_]
-            SchemeName = preMF.name
-            dayChange = preMF.dayChange
-            current = preMF.current
-            invested = preMF.invested
-            date = preMF.latestNavDate
+
+            ihis:InvestmentHistory = investment_history_repo.find_first_by_mfid_is_filled_order_by(id_, False, "date", "desc")
+
+            SchemeName = ihis.mfname
+            dayChange = ihis.day_change
+            current = ihis.current_amount
+            invested = ihis.invested_amount
+            date = ihis.date.strftime(self.formatString)
+            nav = ihis.nav
+            updated_at = ihis.updated_at.strftime(self.formatString + " %X")
+
+            logging.debug(
+                "Retrieved values - Scheme Name: %s, Day Change: %s, Current: %s, Invested: %s, Date: %s, Updated At: %s",
+                SchemeName, dayChange, current, invested, date, updated_at
+            )
         except KeyError:
             self.console.print(
                 # type: ignore
@@ -563,11 +586,12 @@ class MutualFund:
 
         returnString = f"₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]"
         currentString = f"₹{current}\n\n[b]₹{invested}[/b]"
-        nav_date = f"[yellow]{date}[/yellow]\n\n[b]{preMF.nav[date]}[/b]"
+        nav_date = f"[yellow]{date}[/yellow]\n\n[b]{nav}[/b]"
         schemeName = get_colored_string_based_digit_being_positive_or_negative(SchemeName, current - invested)
+        lastUpdated = f"[cyan][b]{updated_at.split(' ')[0]}[/b][/cyan]\n\n[bright_cyan][b]{updated_at.split(' ')[1]}[/b][/bright_cyan]"
 
         self.TableMutualFund.add_row(
-            schemeName, dayChangeString, returnString, currentString, nav_date
+            schemeName, dayChangeString, returnString, currentString, nav_date, lastUpdated
         )
 
     def dayChangeTableAll(self, dic: dict) -> None:
@@ -691,7 +715,7 @@ class MutualFund:
 
     def draw_graph_current_vs_invested(self) -> None:
         print()
-        data: list[InvestmentHistory] = investment_history_repo.find_by_mfid("ALL")
+        data: list[InvestmentHistory] = investment_history_repo.find_all_by_mfid("ALL")
 
         dates: list = []
         invested_amounts: list = []
@@ -699,7 +723,7 @@ class MutualFund:
         d = 0
 
         for entry in data:
-            d = d+1
+            d +=1
             dates.append(d)
             invested_amounts.append(entry.invested_amount)
             current_amounts.append(entry.current_amount)
@@ -808,7 +832,7 @@ class MutualFund:
 
         print(f"prev_day_nav_date = {prev_day_nav_date}")
 
-        await self.addToUnits(ids, prev_day_nav_date, name)
+        await self.add_to_units_db(ids, prev_day_nav_date, name)
         units: float = self.units[ids][0]
 
         prevDaySum: float = data[prev_day_nav_date] * units
@@ -881,14 +905,13 @@ class MutualFund:
 
         logging.info("--Main calculation--")
         if self.is_downloadable:
-            await self.addToUnitsNotPreExisting()
+            await self.add_to_units_not_pre_existing()
             if not await self.download_all_nav_file():
                 return
 
             if not await self.update_my_nav_file():  # type: ignore
                 return
             
-        self.check_for_order_history_and_fill_data()
 
         sum_total, total_invested, total_daychange, latest_date = await self.read_my_nav_file()
 

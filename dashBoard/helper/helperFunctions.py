@@ -270,6 +270,41 @@ class helper_functions:
 
         writeToFile(self.order_file_path, self.order)
         return value,self.order
+    
+    def add_order_db(self, MFID, unit, amount, date) -> OrderHistory:
+        """
+        mfid , unit : float , amount :float , date : for ex 07-May-2022
+        """
+        order_history = order_history_repo.find_by_mfid_and_date(MFID, date)
+        investment_history = investment_history_repo.find_by_mfid_and_date(MFID, date) 
+
+        print(f"{MFID=}, {unit=}, {amount=}, {date=}")
+
+    
+
+        nav: float = investment_history.nav if investment_history else None
+        mfname: str = investment_history.mfname if investment_history else None
+       
+
+        if order_history:
+            order_history.unit += unit
+            order_history.amount += amount
+            order_history_repo.save(order_history)
+            return order_history
+        else:
+            order_history = OrderHistory(
+                mfid=MFID,
+                mfname="mfname",
+                unit=unit,
+                amount=amount,
+                nav_date=date,
+                nav=0,
+                consumed=False
+            )
+            order_history_repo.save(order_history)
+            return order_history
+
+
 
     def getDailyChange(self):
         sumDayChange: dict = {}
@@ -494,9 +529,18 @@ class helper_functions:
         data_to_return.append({"label": "ALL", "value": "ALL"})
         return data_to_return   
     
+    def get_mfid_by_id_order_by_date_desc(self, mfid: str):
+        data: InvestmentHistory = investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
+        return data
+    
+    def get_all_open_orders(self):
+        data: list[OrderHistory] = order_history_repo.find_all_by_consumed(False)
+        print("Fetching all open orders...")
+        return data
+    
 
        
-
+    
 
 
 if __name__ == "__main__":

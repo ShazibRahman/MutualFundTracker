@@ -90,6 +90,34 @@ class OrderHistoryRepository:
             )
             return session.exec(statement).first()
         
+    def find_first_by_mfid_order_by_updated_at_desc(
+        self,
+        mfid: str,
+    ) -> Optional[OrderHistory]:
+        with Session(engine) as session:
+            order_column = getattr(OrderHistory, "updated_at")
+           
+            statement = (
+                select(OrderHistory)
+                .where(OrderHistory.mfid == mfid)
+                .order_by(desc(order_column))
+            )
+            return session.exec(statement).first()
+        
+
+    def find_first_by_mfid_order_by_updated_at_asc(
+        self,
+        mfid: str,
+    ) -> Optional[OrderHistory]:
+        with Session(engine) as session:
+            order_column = getattr(OrderHistory, "updated_at")
+            statement = (
+                select(OrderHistory)
+                .where(OrderHistory.mfid == mfid)
+                .order_by(asc(order_column))
+            )
+            return session.exec(statement).first()
+        
     def find_all_by_date(self, nav_date: date) -> List[OrderHistory]:
         with Session(engine) as session:
             statement = select(OrderHistory).where(
@@ -105,3 +133,47 @@ class OrderHistoryRepository:
                 OrderHistory.nav.is_(None)
             )
             return session.exec(statement).all()
+        
+
+    def find_all_by_mfid_and_consumed(
+        self,
+        mfid: str,
+        consumed: bool = False
+    ) -> List[OrderHistory]:
+        with Session(engine) as session:
+            statement = select(OrderHistory).where(
+                OrderHistory.mfid == mfid,
+                OrderHistory.consumed.is_(consumed)
+            )
+            return session.exec(statement).all()
+        
+    def find_all_by_consumed(
+        self,
+        consumed: bool = False
+    ) -> List[OrderHistory]:
+        with Session(engine) as session:
+            consumed_value = int(consumed)  # Converts True -> 1, False -> 0
+
+            print(f"Consumed value: {consumed_value}")
+
+            statement = select(OrderHistory).where(
+                OrderHistory.consumed == consumed_value
+            )
+            return session.exec(statement).all()
+
+    def find_first_by_mfid_order_by(
+            self,
+            mfid: str,
+            order_by: str = "nav_date",
+            direction: OrderType = "asc"
+    ) -> Optional[OrderHistory]:
+        with Session(engine) as session:
+            order_column = getattr(OrderHistory, order_by)
+            order_func = asc if direction == "asc" else desc
+            statement = (
+                select(OrderHistory)
+                .where(OrderHistory.mfid == mfid)
+                .order_by(order_func(order_column))
+            )
+            return session.exec(statement).first(
+    )

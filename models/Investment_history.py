@@ -1,6 +1,6 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import Column, DateTime, SQLModel, Field
 from typing import Optional
-from datetime import date
+from datetime import date,datetime
 from sqlalchemy import UniqueConstraint
 
 class InvestmentHistory(SQLModel, table=True):
@@ -18,7 +18,15 @@ class InvestmentHistory(SQLModel, table=True):
     day_change: Optional[float] = None
     nav: Optional[float] = None
 
+    is_filled: Optional[bool] = Field(default=False)
 
+    
+    created_at: datetime = Field(
+        sa_column=Column(DateTime, default=datetime.now, nullable=True)
+    )
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=True)
+    )
 
 class OrderHistory(SQLModel, table=True):
     __tablename__ = "order_history"
@@ -33,3 +41,11 @@ class OrderHistory(SQLModel, table=True):
     amount: float
     unit: float
     nav: Optional[float] = None
+    consumed: Optional[bool] = Field(default=False) 
+
+    created_at: datetime = Field(
+        sa_column=Column(DateTime, default=datetime.now, nullable=True)
+    )
+    updated_at: datetime = Field(
+        sa_column=Column(DateTime, default=datetime.now, onupdate=datetime.now, nullable=True)
+    )
