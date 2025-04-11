@@ -95,6 +95,7 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
 
 async def download_file(file_name: str) -> None:
     if download:
+        logging.info("downloading file %s", file_name)
         await GDrive(FOLDER_NAME).download_async(file_name)
 
 def writeToFile(file_name: pathlib.Path | str, data) -> None:
@@ -460,21 +461,37 @@ class MutualFund:
         self.TableMutualFund.add_column("RETURNS", justify="center")
         self.TableMutualFund.add_column("CURRENT", justify="center")
         self.TableMutualFund.add_column("NAV", justify="center")
-        self.TableMutualFund.add_column("LAST UPDDATED", justify="center")
+        # self.TableMutualFund.add_column("LAST UPDDATED", justify="center")
 
 
     def summaryTableEdit(self) -> None:
         try:
 
-            latest_investment_history = investment_history_repo.find_first_by_mfid_is_filled_order_by("ALL", False, "date", "desc")
+            # latest_investment_history = investment_history_repo.find_first_by_mfid_order_by("ALL", "date", "desc")
+            all_inv_his_latest = list(filter(
+                lambda x: x.mfid != "ALL",
+                investment_history_repo.find_latest_records_for_all_mfids(),
+            ))
 
-            lastUpdated = latest_investment_history.updated_at.strftime(self.formatString+" %X")
-            current = latest_investment_history.current_amount
-            invested = latest_investment_history.invested_amount
+            invested = 0
+            current = 0
+            totalDaychange = 0
+            latest_date: datetime = all_inv_his_latest[0].updated_at
+
+            for latest_investment_history in all_inv_his_latest:
+                if latest_investment_history.updated_at > latest_date:
+                    latest_date = latest_investment_history.updated_at
+                    
+
+                current += latest_investment_history.current_amount
+                invested += latest_investment_history.invested_amount
+                totalDaychange += latest_investment_history.day_change
+
+            lastUpdated = latest_date.strftime(self.formatString+" %X")
+
 
             totalProfit = current - invested
             totalProfitPercentage = totalProfit / invested * 100
-            totalDaychange = latest_investment_history.day_change
             totalDaychangePercentage = totalDaychange / invested * 100
 
 
@@ -486,7 +503,8 @@ class MutualFund:
                 totalDaychangePercentage,
             )
 
-        except Exception:
+        except Exception as e:
+            print(str(e))
             self.console.print(
                 "Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option"
             )
@@ -515,7 +533,7 @@ class MutualFund:
     def MutualFundTableEdit(self, id_: str) -> None:
         try:
 
-            ihis:InvestmentHistory = investment_history_repo.find_first_by_mfid_is_filled_order_by(id_, False, "date", "desc")
+            ihis:InvestmentHistory = investment_history_repo.find_first_by_mfid_order_by(id_, "date", "desc")
 
             SchemeName = ihis.mfname
             dayChange = ihis.day_change
@@ -553,10 +571,10 @@ class MutualFund:
         currentString = f"₹{current}\n\n[b]₹{invested}[/b]"
         nav_date = f"[yellow]{date}[/yellow]\n\n[b]{nav}[/b]"
         schemeName = get_colored_string_based_digit_being_positive_or_negative(SchemeName, current - invested)
-        lastUpdated = f"[cyan][b]{updated_at.split(' ')[0]}[/b][/cyan]\n\n[bright_cyan][b]{updated_at.split(' ')[1]}[/b][/bright_cyan]"
+        # lastUpdated = f"[cyan][b]{updated_at.split(' ')[0]}[/b][/cyan]\n\n[bright_cyan][b]{updated_at.split(' ')[1]}[/b][/bright_cyan]"
 
         self.TableMutualFund.add_row(
-            schemeName, dayChangeString, returnString, currentString, nav_date, lastUpdated
+            schemeName, dayChangeString, returnString, currentString, nav_date
         )
 
     def dayChangeTableAll(self, dic: dict) -> None:

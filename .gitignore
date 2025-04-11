@@ -176,3 +176,5 @@ cython_debug/
 *.db
 *.sqlite
 *.sqlite3
+
+temp.*

@@ -78,10 +78,14 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
 def calculate_date_range(filter:str):
     if filter == "1M":
         start_date = datetime.now() - timedelta(days=30)
+    elif filter == "3M":
+        start_date = datetime.now() - timedelta(days=90)
     elif filter == "6M":
         start_date = datetime.now() - timedelta(days=180)
     elif filter == "1Y":
         start_date = datetime.now() - timedelta(days=365)
+    elif filter == "3Y":
+        start_date = datetime.now() - timedelta(days=1095)
     elif filter == "5Y":
         start_date = datetime.now() - timedelta(days=1825)
     else:
@@ -513,7 +517,7 @@ class helper_functions:
                 "name": "Current Amount History",
                 "line": {
                     "dash": "dot",  # Dotted line
-                    "color": "grey",  # Line color
+                    "color": "red",  # Line color
                 }
             }
         ]

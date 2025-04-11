@@ -12,6 +12,7 @@ class UnitsRepository:
             session.commit()
             session.refresh(record)
             return record
+        
     def find_by_mfid(self, mfid: str) -> Optional[Units]:
         with Session(engine) as session:
             statement = select(Units).where(

@@ -67,29 +67,6 @@ class InvestmentHistoryRepository:
         with Session(engine) as session:
             return session.exec(select(InvestmentHistory)).all()
 
-    def delete_by_id(self, record_id: int) -> bool:
-        with Session(engine) as session:
-            obj = session.get(InvestmentHistory, record_id)
-            if obj:
-                session.delete(obj)
-                session.commit()
-                return True
-            return False
-
-    def get_aggregated_data_by_date(self):
-        with Session(engine) as session:
-            statement = (
-                select(
-                    InvestmentHistory.date,
-                    func.sum(InvestmentHistory.invested_amount).label("total_invested_amount"),
-                    func.sum(InvestmentHistory.current_amount).label("total_current_amount"),
-                    func.sum(InvestmentHistory.day_change).label("total_day_change")
-                )
-                .group_by(InvestmentHistory.date)
-                .order_by(InvestmentHistory.date)
-            )
-            results = session.exec(statement).all()
-            return [dict(row._mapping) for row in results]
         
     def find_first_by_mfid_order_by_date_desc(self, mfid: str) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
@@ -175,23 +152,41 @@ class InvestmentHistoryRepository:
             return session.exec(statement).first()
         
 
-    def find_first_by_mfid_is_filled_order_by(
+    def find_first_by_mfid_order_by(
             self,
             mfid: str,
-            is_filled:bool = True,
-            order_by: str = "nav_date",
+            order_by: str = "date",
             direction: OrderType = "asc"
     ) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
-            is_filled_value = int(is_filled)
             order_column = getattr(InvestmentHistory, order_by)
             order_func = asc if direction == "asc" else desc
             statement = (
                 select(InvestmentHistory)
                 .where(InvestmentHistory.mfid == mfid)
-                .where(InvestmentHistory.is_filled == is_filled_value)
                 .order_by(order_func(order_column))
             )
             return session.exec(statement).first()
         
+    def find_latest_records_for_all_mfids(self) -> List[InvestmentHistory]:
+        """Fetch the latest record for each MFID."""
+        with Session(engine) as session:
+            subquery = (
+                select(
+                    InvestmentHistory.mfid,
+                    func.max(InvestmentHistory.date).label("latest_date")
+                )
+                .group_by(InvestmentHistory.mfid)
+                .subquery()
+            )
 
+            statement = (
+                select(InvestmentHistory)
+                .join(
+                    subquery,
+                    (InvestmentHistory.mfid == subquery.c.mfid) &
+                    (InvestmentHistory.date == subquery.c.latest_date)
+                )
+            )
+
+            return session.exec(statement).all()

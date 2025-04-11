@@ -31,8 +31,10 @@ layout = dbc.Container(
                     options=[
                         {"label": "All", "value": "all"},
                         {"label": "1M", "value": "1M"},
+                        {"label": "3M", "value": "3M"},
                         {"label": "6M", "value": "6M"},
                         {"label": "1Y", "value": "1Y"},
+                        {"label": "3Y", "value": "3Y"},
                         {"label": "5Y", "value": "5Y"},
                     ],
                     value="all",  # Default value
