@@ -21,8 +21,12 @@ from models.Investment_history import OrderHistory
 from models.day_change import InvestmentData, NavData, get_investment_data
 from util.DesktopNotification import DesktopNotification
 
-from repository import InvestmentHistoryRepository ,OrderHistoryRepository,UnitsRepository
-from models import InvestmentHistory ,OrderHistory, Units
+from repository import (
+    InvestmentHistoryRepository,
+    OrderHistoryRepository,
+    UnitsRepository,
+)
+from models import InvestmentHistory, OrderHistory, Units
 from repository import db_path
 
 try:
@@ -65,7 +69,10 @@ def getfv(number: float) -> str:
         else f"[red]-₹{abs(roundUp3(number))}[/red]"
     )
 
-def get_colored_string_based_digit_being_positive_or_negative(string:str ,number: float) -> str:
+
+def get_colored_string_based_digit_being_positive_or_negative(
+    string: str, number: float
+) -> str:
     # return string in green color if number is positive else in red color
     string = f"[bold]{string}[/bold]"
     return f"[green]{string}[/green]" if number >= 0 else f"[red]{string}[/red]"
@@ -93,10 +100,12 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
     with open(file_name, "w", encoding="utf-8") as file:
         file.write(data)
 
+
 async def download_file(file_name: str) -> None:
     if download:
         logging.info("downloading file %s", file_name)
         await GDrive(FOLDER_NAME).download_async(file_name)
+
 
 def writeToFile(file_name: pathlib.Path | str, data) -> None:
     logging.info("writing to a file asynchronously")
@@ -125,7 +134,7 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
 class MutualFund:
     def __init__(self, is_downloadable: bool) -> None:
 
-        self.formatString = None
+        self.formatString = ""
         self.is_downloadable = is_downloadable
         global download
         download = self.is_downloadable
@@ -137,6 +146,7 @@ class MutualFund:
         self.tasks: list = []
         self.nav_all_file = ""
         self.nav_my_file = ""
+        self.past_nav_data: dict = {}
         logging.info("Initializing MutualFundTracker")
         logging.info("--Application has started---")
         logging.info("--Logged in as %s --", os.environ.get("USER"))
@@ -156,7 +166,6 @@ class MutualFund:
 
     async def initialize(self):
         logging.debug("----initializing----")
-  
 
         daychange_tasks = asyncio.create_task(
             readJsonFileAsynchronously(self.dayChangeJsonFileString), name="daychange"
@@ -175,6 +184,7 @@ class MutualFund:
         self.TableMutualFund = Table()
         self.summaryTable = Table()
         self.formatString = "%d-%b-%Y"
+        self.dd_mm_yyyy = "%d-%m-%Y"
         plt.datetime.set_datetime_form(date_form=self.formatString)
 
     def check_past_dates(self, NavDate: str, orderDate) -> bool:
@@ -194,24 +204,29 @@ class MutualFund:
         orderDateFormat = datetime.strptime(orderDate, self.formatString)
         print(f"{nav_date_format=} {orderDateFormat=}")
         return orderDateFormat <= nav_date_format
-    
+
     def check_for_current_date_investment_history_and_update_it(
-        self, mfid: str,
-          date_str: str, 
-          invested_amount: float,
-            current_amount: float, 
-            day_change: float,
-            nav:float,
-            is_filled:bool=False
+        self,
+        mfid: str,
+        date_str: str,
+        invested_amount: float,
+        current_amount: float,
+        day_change: float,
+        nav: float,
+        is_filled: bool = False,
     ) -> None:
         """
         Check if the current date is already in the investment history for the given MFID.
         If it is, update the invested and current amounts.
         """
 
-        # fill the missing dates cause sat and sun if off for market
+        lastest_investment_history = (
+            investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
+        )
 
-        lastest_investment_history = investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
+        mfname: str = (
+            lastest_investment_history.mfname if lastest_investment_history else None
+        )
 
         date: datetime.date = datetime.strptime(date_str, self.formatString).date()
         existing_record = investment_history_repo.find_by_mfid_and_date(mfid, date)
@@ -225,25 +240,24 @@ class MutualFund:
         else:
             new_record = InvestmentHistory(
                 mfid=mfid,
-                mfname=self.json_data.funds[mfid].name if mfid in self.json_data.funds else None,
+                mfname=mfname,
                 date=date,
                 invested_amount=invested_amount,
                 current_amount=current_amount,
                 day_change=day_change,
                 nav=nav,
-                is_filled=is_filled
+                is_filled=is_filled,
             )
             investment_history_repo.save(new_record)
 
-        
             logging.info(
                 "Saving investment history for %s on %s with invested amount %s and current amount %s",
-                mfid,
+                mfname,
                 date,
                 invested_amount,
                 current_amount,
             )
-        
+
         if lastest_investment_history:
             latest_date = lastest_investment_history.date
             if date > latest_date:
@@ -257,19 +271,24 @@ class MutualFund:
                         current_amount=lastest_investment_history.current_amount,
                         day_change=0,
                         nav=lastest_investment_history.nav,
-                        is_filled=True
+                        is_filled=True,
                     )
                     investment_history_repo.save(new_record)
-
 
     def check_for_current_date_investment_history_and_update_it_for_all(self) -> None:
         """
         Check and update investment history for all mutual funds for the current date.
         """
 
-        lastest_investment_history = investment_history_repo.find_first_by_mfid_order_by_date_desc("ALL")
-        
-        lastest_date = lastest_investment_history.date if lastest_investment_history else datetime.now(INDIAN_TIMEZONE).date()
+        lastest_investment_history = (
+            investment_history_repo.find_first_by_mfid_order_by_date_desc("ALL")
+        )
+
+        lastest_date = (
+            lastest_investment_history.date
+            if lastest_investment_history
+            else datetime.now(INDIAN_TIMEZONE).date()
+        )
 
         current_date = lastest_date + timedelta(days=1)
 
@@ -279,7 +298,9 @@ class MutualFund:
 
         is_filled = False
 
-        investmentHistories: list[InvestmentHistory] = investment_history_repo.find_all_by_date(current_date)
+        investmentHistories: list[InvestmentHistory] = (
+            investment_history_repo.find_all_by_date(current_date)
+        )
         if len(investmentHistories) == len(self.unitsKeyList):
             for investmentHistory in investmentHistories:
                 invested_amount += investmentHistory.invested_amount
@@ -287,25 +308,31 @@ class MutualFund:
                 day_change += investmentHistory.day_change
                 is_filled = investmentHistory.is_filled
         else:
-            logging.debug("Investment histories do not match the number of units. for date %s", current_date)
+            logging.debug(
+                "Investment histories do not match the number of units. for date %s",
+                current_date,
+            )
             return
-        
+
         logging.debug(
             "Total invested amount: %s, Total current amount: %s, Total day change: %s for date %s",
             invested_amount,
             current_amount,
             day_change,
-            current_date
+            current_date,
         )
 
         current_date_str = current_date.strftime(self.formatString)
 
         self.check_for_current_date_investment_history_and_update_it(
-            "ALL", current_date_str, invested_amount, current_amount, day_change, None,is_filled
+            "ALL",
+            current_date_str,
+            invested_amount,
+            current_amount,
+            day_change,
+            None,
+            is_filled,
         )
-        
-
-
 
     # async def addToUnits(self, mutualfund_id, date, name: str) -> None:
     #     if mutualfund_id in self.Orders:
@@ -313,8 +340,8 @@ class MutualFund:
     #         for key in keys:
     #             print(f"date inside addToUnits = {key}")
     #             if  self.check_past_dates(date, key):
-            
-    #                 order_data = self.Orders[mutualfund_id].pop(key) 
+
+    #                 order_data = self.Orders[mutualfund_id].pop(key)
     #                 data = self.units[mutualfund_id]
     #                 data[0] += order_data[0]
     #                 data[1] += order_data[1]
@@ -333,21 +360,23 @@ class MutualFund:
     #                     ]
     #                 )
 
-    async def add_to_units_db(self, mfid:str, date:str,name:str)->None:
+    async def add_to_units_db(self, mfid: str, date: str, name: str) -> None:
         dtime_date = datetime.strptime(date, self.formatString).date()
 
-        order_histories: list[OrderHistory] = order_history_repo.find_all_by_mfid_and_consumed(mfid, False)
+        order_histories: list[OrderHistory] = (
+            order_history_repo.find_all_by_mfid_and_consumed(mfid, False)
+        )
 
         for order_history in order_histories:
             order_date = order_history.nav_date
             if order_date is not None and order_date <= dtime_date:
-        
-                unit_entity  = units_repo.find_by_mfid(order_history.mfid)
-                
+
+                unit_entity = units_repo.find_by_mfid(order_history.mfid)
+
                 unit_entity.total_units += order_history.unit
                 unit_entity.total_invested += order_history.amount
                 units_repo.save(unit_entity)
-        
+
                 logging.info(
                     "Adding units: %s and amount: %s to units for %s",
                     order_history.unit,
@@ -359,13 +388,8 @@ class MutualFund:
                 order_history.consumed = True
                 order_history_repo.save(order_history)
 
+                self.tasks.append(GDrive(FOLDER_NAME).upload_async(db_path))
 
-                self.tasks.append(
-                        GDrive(FOLDER_NAME).upload_async(db_path)
-                    )
-
-
-   
     # async def addToUnitsNotPreExisting(self) -> None:
     #     """
     #     Adds new mutual fund units to the unit file.
@@ -393,15 +417,15 @@ class MutualFund:
     #                 ]
     #             )
 
+    async def add_to_units_not_pre_existing(self) -> None:
 
-    async def add_to_units_not_pre_existing(self)->None:
-
-        order_histories: list[OrderHistory] = order_history_repo.find_all_by_mfid_and_consumed(False)
+        order_histories: list[OrderHistory] = (
+            order_history_repo.find_all_by_mfid_and_consumed(False)
+        )
         for order_history in order_histories:
             if order_history.mfid not in self.unitsKeyList:
-               
 
-                unit_entity  = Units(
+                unit_entity = Units(
                     mfid=order_history.mfid,
                     total_units=order_history.unit,
                     total_invested=order_history.amount,
@@ -418,13 +442,9 @@ class MutualFund:
                 # Mark the order as consumed
                 order_history.consumed = True
 
-            
                 order_history_repo.save(order_history)
 
-                self.tasks.append(
-                    GDrive(FOLDER_NAME).upload_async(db_path)
-                ) 
-
+                self.tasks.append(GDrive(FOLDER_NAME).upload_async(db_path))
 
     def run_once_initialization(self, file) -> None:
         if not pathlib.Path.exists(DATA_PATH):
@@ -463,15 +483,16 @@ class MutualFund:
         self.TableMutualFund.add_column("NAV", justify="center")
         # self.TableMutualFund.add_column("LAST UPDDATED", justify="center")
 
-
     def summaryTableEdit(self) -> None:
         try:
 
             # latest_investment_history = investment_history_repo.find_first_by_mfid_order_by("ALL", "date", "desc")
-            all_inv_his_latest = list(filter(
-                lambda x: x.mfid != "ALL",
-                investment_history_repo.find_latest_records_for_all_mfids(),
-            ))
+            all_inv_his_latest = list(
+                filter(
+                    lambda x: x.mfid != "ALL",
+                    investment_history_repo.find_latest_records_for_all_mfids(),
+                )
+            )
 
             invested = 0
             current = 0
@@ -481,19 +502,23 @@ class MutualFund:
             for latest_investment_history in all_inv_his_latest:
                 if latest_investment_history.updated_at > latest_date:
                     latest_date = latest_investment_history.updated_at
-                    
 
                 current += latest_investment_history.current_amount
                 invested += latest_investment_history.invested_amount
                 totalDaychange += latest_investment_history.day_change
 
-            lastUpdated = latest_date.strftime(self.formatString+" %X")
-
+            lastUpdated = latest_date.strftime(self.formatString + " %X")
 
             totalProfit = current - invested
             totalProfitPercentage = totalProfit / invested * 100
-            totalDaychangePercentage = totalDaychange / invested * 100
 
+
+            Investment_history_second_latest_by_nav_date =  investment_history_repo.find_second_latest_by_mfid("ALL")
+
+
+            current_amount_second_latest_by_nav_date = Investment_history_second_latest_by_nav_date.current_amount  if Investment_history_second_latest_by_nav_date else invested
+
+            totalDaychangePercentage = totalDaychange / current_amount_second_latest_by_nav_date * 100
 
             logging.debug(
                 "Total Profit: %s, Total Profit Percentage: %s, Total Day Change: %s, Total Day Change Percentage: %s",
@@ -533,7 +558,11 @@ class MutualFund:
     def MutualFundTableEdit(self, id_: str) -> None:
         try:
 
-            ihis:InvestmentHistory = investment_history_repo.find_first_by_mfid_order_by(id_, "date", "desc")
+            ihis: InvestmentHistory = (
+                investment_history_repo.find_first_by_mfid_order_by(id_, "date", "desc")
+            )
+            ihis_second_last = investment_history_repo.find_second_latest_by_mfid(id_)
+            current_amount_second_latest_by_nav_date = ihis_second_last.current_amount  if ihis_second_last else invested
 
             SchemeName = ihis.mfname
             dayChange = ihis.day_change
@@ -545,7 +574,12 @@ class MutualFund:
 
             logging.debug(
                 "Retrieved values - Scheme Name: %s, Day Change: %s, Current: %s, Invested: %s, Date: %s, Updated At: %s",
-                SchemeName, dayChange, current, invested, date, updated_at
+                SchemeName,
+                dayChange,
+                current,
+                invested,
+                date,
+                updated_at,
             )
         except KeyError:
             self.console.print(
@@ -558,7 +592,7 @@ class MutualFund:
 
             exit(256)
         if dayChange != -1:
-            dayChangePercentage: float = roundUp3(dayChange / invested * 100)
+            dayChangePercentage: float = roundUp3(dayChange / current_amount_second_latest_by_nav_date * 100)
             dayChangeString = f"{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]"
         else:
             dayChangeString = "N.A.\n\n[b]N.A.[/b]"
@@ -570,7 +604,9 @@ class MutualFund:
         returnString = f"₹{returns}\n\n[b]{getfp(returnsPercentage)}[/b]"
         currentString = f"₹{current}\n\n[b]₹{invested}[/b]"
         nav_date = f"[yellow]{date}[/yellow]\n\n[b]{nav}[/b]"
-        schemeName = get_colored_string_based_digit_being_positive_or_negative(SchemeName, current - invested)
+        schemeName = get_colored_string_based_digit_being_positive_or_negative(
+            SchemeName, current - invested
+        )
         # lastUpdated = f"[cyan][b]{updated_at.split(' ')[0]}[/b][/cyan]\n\n[bright_cyan][b]{updated_at.split(' ')[1]}[/b][/bright_cyan]"
 
         self.TableMutualFund.add_row(
@@ -665,7 +701,9 @@ class MutualFund:
         self.console.print(self.summaryTable)
         self.UpdateKeyList()
         sortedKeys = sorted(
-            self.json_data.funds.keys(), key=lambda x: self.json_data.funds[x]["invested"] ,reverse=True
+            self.json_data.funds.keys(),
+            key=lambda x: self.json_data.funds[x]["invested"],
+            reverse=True,
         )
         for ids in sortedKeys:
             self.MutualFundTableEdit(ids)
@@ -707,14 +745,14 @@ class MutualFund:
         d = 0
 
         for entry in data:
-            d +=1
+            d += 1
             dates.append(d)
             invested_amounts.append(entry.invested_amount)
             current_amounts.append(entry.current_amount)
-       
+
         plt.plot_size(100, 30)
         plt.title("Current vs Invested Amount")
-    
+
         plt.ylabel("Amount", yside="left")
         plt.plot(dates, invested_amounts, color="blue", label="Invested Amount")
         plt.plot(dates, current_amounts, color="green", label="Current Amount")
@@ -722,8 +760,6 @@ class MutualFund:
         plt.clear_color()
         plt.show()
         plt.clear_figure()
-
-
 
     async def update_my_nav_file(self):
         if self.nav_all_file is None and not self.download_all_nav_file():
@@ -798,8 +834,6 @@ class MutualFund:
         prev_day_nav_date: str = datetime.strftime(
             latestDate - timedelta(1), self.formatString
         )
-        print(f"latest_nav_date = {latest_nav_date}")
-        print(f"prev_day_nav_date = {prev_day_nav_date}")
 
         if prev_day_nav_date not in data:
             key_list = list(data.keys())
@@ -813,8 +847,6 @@ class MutualFund:
                 prev_day_nav_date = key_list[-2]
             else:
                 prev_day_nav_date = key_list[-1]
-
-        print(f"prev_day_nav_date = {prev_day_nav_date}")
 
         await self.add_to_units_db(ids, prev_day_nav_date, name)
         units_entity = units_repo.find_by_mfid(ids)
@@ -869,7 +901,6 @@ class MutualFund:
             dayChange: float = await self.day_change_method(_id, nav, date, name)
 
             unit_entity = units_repo.find_by_mfid(_id)
-            
 
             current = round(unit_entity.total_units * nav, 3)
             invested = unit_entity.total_invested
@@ -886,7 +917,7 @@ class MutualFund:
             self.check_for_current_date_investment_history_and_update_it(
                 _id, date, invested, current, dayChange, nav
             )
-        
+
         return sum_total, total_invested, total_day_change, latest_date
 
     async def get_current_values(self) -> None:
@@ -899,9 +930,10 @@ class MutualFund:
 
             if not await self.update_my_nav_file():  # type: ignore
                 return
-            
 
-        sum_total, total_invested, total_daychange, latest_date = await self.read_my_nav_file()
+        sum_total, total_invested, total_daychange, latest_date = (
+            await self.read_my_nav_file()
+        )
 
         total_profit = sum_total - total_invested
         total_profit_percentage = total_profit / total_invested * 100
@@ -919,13 +951,10 @@ class MutualFund:
 
         self.check_for_current_date_investment_history_and_update_it_for_all()
 
-
         self.tasks.append(
             writeToFileAsync(self.dayChangeJsonFileString, data=asdict(self.json_data))
         )
-        self.tasks.append(
-            GDrive(FOLDER_NAME).upload_async(db_path)
-        )
+        self.tasks.append(GDrive(FOLDER_NAME).upload_async(db_path))
 
     async def del_cleanup(self):
         """
@@ -958,14 +987,14 @@ class MutualFund:
 async def main2():
     async with MutualFund(is_downloadable=True) as tracker:
         await tracker.get_current_values()
-        # tracker.draw_table()
-    
+        tracker.draw_table()
+
         tracker.draw_graph_current_vs_invested()
 
 
 if __name__ == "__main__":
     from repository import create_db_and_tables
-    
+
     create_db_and_tables()
     start = time.time()
     import cProfile

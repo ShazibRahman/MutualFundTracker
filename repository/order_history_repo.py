@@ -154,8 +154,6 @@ class OrderHistoryRepository:
         with Session(engine) as session:
             consumed_value = int(consumed)  # Converts True -> 1, False -> 0
 
-            print(f"Consumed value: {consumed_value}")
-
             statement = select(OrderHistory).where(
                 OrderHistory.consumed == consumed_value
             )

@@ -190,3 +190,23 @@ class InvestmentHistoryRepository:
             )
 
             return session.exec(statement).all()
+
+    def find_second_latest_by_mfid(
+    self,
+    mfid: str
+) -> Optional[InvestmentHistory]:
+        with Session(engine) as session:
+            # Subquery to filter and order records by date in descending order
+            subquery = (
+                select(InvestmentHistory)
+                .where(
+                    InvestmentHistory.mfid == mfid,
+                )
+                .order_by(desc(InvestmentHistory.date))  # Order by date descending
+                .offset(1)  # Skip the first record (latest)
+                .limit(1)   # Fetch only the second record
+            )
+
+            # Execute the query and return the result
+            result = session.exec(subquery).first()
+            return result

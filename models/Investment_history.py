@@ -12,7 +12,7 @@ class InvestmentHistory(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     mfid: str
     mfname: Optional[str] = None  # ✅ Make nullable
-    date: date
+    date: date   #nav_date
     invested_amount: float
     current_amount: float
     day_change: Optional[float] = None
