@@ -288,25 +288,24 @@ class helper_functions:
 
         nav: float = investment_history.nav if investment_history else None
         mfname: str = investment_history.mfname if investment_history else None
+    
        
 
         if order_history:
             order_history.unit += unit
             order_history.amount += amount
-            order_history_repo.save(order_history)
-            return order_history
+            return order_history_repo.save(order_history)
         else:
             order_history = OrderHistory(
                 mfid=MFID,
-                mfname="mfname",
+                mfname=mfname,
                 unit=unit,
                 amount=amount,
                 nav_date=date,
-                nav=0,
+                nav=nav,
                 consumed=False
             )
-            order_history_repo.save(order_history)
-            return order_history
+            return order_history_repo.save(order_history)
 
 
 

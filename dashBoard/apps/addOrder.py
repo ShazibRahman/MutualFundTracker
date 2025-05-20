@@ -168,7 +168,7 @@ def add_order(n_clicks, units, amount, date_input, product):
     
         product, float(units), amount, date_object
     )
-    return f"Order added for {order_history.mfname} on {order_history.nav_date} with amount {order_history.amount} and units {order_history.unit}"
+    return f"Order added for {order_history.mfname} on {order_history.nav_date} with amount {order_history.amount} and units {order_history.unit} and nav {order_history.nav}"
 
 @app.callback(
     Output("output-2", "children"),

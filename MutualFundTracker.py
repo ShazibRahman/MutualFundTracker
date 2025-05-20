@@ -289,50 +289,56 @@ class MutualFund:
             if lastest_investment_history
             else datetime.now(INDIAN_TIMEZONE).date()
         )
+        current_date = lastest_date
+        while True:
 
-        current_date = lastest_date + timedelta(days=1)
+            current_date = current_date + timedelta(days=1)
 
-        invested_amount = 0
-        current_amount = 0
-        day_change = 0
+            invested_amount = 0
+            current_amount = 0
+            day_change = 0
 
-        is_filled = False
+            is_filled = False
 
-        investmentHistories: list[InvestmentHistory] = (
-            investment_history_repo.find_all_by_date(current_date)
-        )
-        if len(investmentHistories) == len(self.unitsKeyList):
-            for investmentHistory in investmentHistories:
-                invested_amount += investmentHistory.invested_amount
-                current_amount += investmentHistory.current_amount
-                day_change += investmentHistory.day_change
-                is_filled = investmentHistory.is_filled
-        else:
+            investmentHistories: list[InvestmentHistory] = (
+                investment_history_repo.find_all_by_date(current_date)
+            )
+            if len(investmentHistories) ==len(self.unitsKeyList):
+                for investmentHistory in investmentHistories:
+                    invested_amount += investmentHistory.invested_amount
+                    current_amount += investmentHistory.current_amount
+                    day_change += investmentHistory.day_change
+                    is_filled = investmentHistory.is_filled
+            else:
+                logging.debug(
+                    "Investment histories do not match the number of units. for date %s",
+                    current_date,
+                )
+                return
+
+            current_amount = roundUp3(current_amount)
+
+            day_change = roundUp3(day_change)
+
             logging.debug(
-                "Investment histories do not match the number of units. for date %s",
+                "Total invested amount: %s, Total current amount: %s, Total day change: %s for date %s",
+                invested_amount,
+                current_amount,
+                day_change,
                 current_date,
             )
-            return
 
-        logging.debug(
-            "Total invested amount: %s, Total current amount: %s, Total day change: %s for date %s",
-            invested_amount,
-            current_amount,
-            day_change,
-            current_date,
-        )
+            current_date_str = current_date.strftime(self.formatString)
 
-        current_date_str = current_date.strftime(self.formatString)
-
-        self.check_for_current_date_investment_history_and_update_it(
-            "ALL",
-            current_date_str,
-            invested_amount,
-            current_amount,
-            day_change,
-            None,
-            is_filled,
-        )
+            self.check_for_current_date_investment_history_and_update_it(
+                "ALL",
+                current_date_str,
+                invested_amount,
+                current_amount,
+                day_change,
+                None,
+                is_filled,
+            )
 
     # async def addToUnits(self, mutualfund_id, date, name: str) -> None:
     #     if mutualfund_id in self.Orders:
@@ -361,6 +367,23 @@ class MutualFund:
     #                 )
 
     async def add_to_units_db(self, mfid: str, date: str, name: str) -> None:
+        """
+        Update the units database with unconsumed order histories for a given mutual fund ID up to a specified date.
+
+        This method retrieves all unconsumed order histories associated with the provided mutual fund ID (`mfid`), 
+        and for each order, if its date is less than or equal to the specified `date`, it updates the units 
+        and total invested amounts in the units repository. It also marks the order as consumed and logs the update. 
+        The updated data is then uploaded asynchronously to Google Drive.
+
+        Args:
+            mfid (str): The mutual fund ID for which to update units.
+            date (str): The cutoff date up to which order histories should be considered, in the format specified by `self.formatString`.
+            name (str): The name of the mutual fund for logging purposes.
+
+        Returns:
+            None
+        """
+
         dtime_date = datetime.strptime(date, self.formatString).date()
 
         order_histories: list[OrderHistory] = (
@@ -486,7 +509,6 @@ class MutualFund:
     def summaryTableEdit(self) -> None:
         try:
 
-            # latest_investment_history = investment_history_repo.find_first_by_mfid_order_by("ALL", "date", "desc")
             all_inv_his_latest = list(
                 filter(
                     lambda x: x.mfid != "ALL",
@@ -507,18 +529,26 @@ class MutualFund:
                 invested += latest_investment_history.invested_amount
                 totalDaychange += latest_investment_history.day_change
 
+            current = round(current, 3)
+
             lastUpdated = latest_date.strftime(self.formatString + " %X")
 
             totalProfit = current - invested
             totalProfitPercentage = totalProfit / invested * 100
 
+            Investment_history_second_latest_by_nav_date = (
+                investment_history_repo.find_second_latest_by_mfid("ALL")
+            )
 
-            Investment_history_second_latest_by_nav_date =  investment_history_repo.find_second_latest_by_mfid("ALL")
+            current_amount_second_latest_by_nav_date = (
+                Investment_history_second_latest_by_nav_date.current_amount
+                if Investment_history_second_latest_by_nav_date
+                else invested
+            )
 
-
-            current_amount_second_latest_by_nav_date = Investment_history_second_latest_by_nav_date.current_amount  if Investment_history_second_latest_by_nav_date else invested
-
-            totalDaychangePercentage = totalDaychange / current_amount_second_latest_by_nav_date * 100
+            totalDaychangePercentage = (
+                totalDaychange / current_amount_second_latest_by_nav_date * 100
+            )
 
             logging.debug(
                 "Total Profit: %s, Total Profit Percentage: %s, Total Day Change: %s, Total Day Change Percentage: %s",
@@ -562,10 +592,12 @@ class MutualFund:
                 investment_history_repo.find_first_by_mfid_order_by(id_, "date", "desc")
             )
             ihis_second_last = investment_history_repo.find_second_latest_by_mfid(id_)
-            current_amount_second_latest_by_nav_date = ihis_second_last.current_amount  if ihis_second_last else invested
+            current_amount_second_latest_by_nav_date = (
+                ihis_second_last.current_amount if ihis_second_last else invested
+            )
 
             SchemeName = ihis.mfname
-            dayChange = ihis.day_change
+            dayChange = ihis.day_change if ihis.day_change else 0
             current = ihis.current_amount
             invested = ihis.invested_amount
             date = ihis.date.strftime(self.formatString)
@@ -591,11 +623,11 @@ class MutualFund:
             self.console.print(error_occurred.__cause__)
 
             exit(256)
-        if dayChange != -1:
-            dayChangePercentage: float = roundUp3(dayChange / current_amount_second_latest_by_nav_date * 100)
-            dayChangeString = f"{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]"
-        else:
-            dayChangeString = "N.A.\n\n[b]N.A.[/b]"
+
+        dayChangePercentage: float = roundUp3(
+            dayChange / current_amount_second_latest_by_nav_date * 100
+        )
+        dayChangeString = f"{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]"
 
         returns = roundUp3(current - invested)
 
@@ -793,14 +825,24 @@ class MutualFund:
 
         return True
 
-    @retry(retries=3, delay=1, fail_after_retry_exhausted=False)
+    @retry(retries=3, delay=1, fail_after_retry_exhausted=True)
     async def download_all_nav_file(self) -> bool:
         logging.info("--downloading the NAV file from server--")
 
         async with aiohttp.client.ClientSession() as client:
             start_time = time.time()
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Referer": "https://www.amfiindia.com/",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
             res = await client.get(
-                "https://www.amfiindia.com/spages/navopen.txt", timeout=20
+                "https://www.amfiindia.com/spages/navopen.txt",
+                timeout=50,
+                headers=headers,
             )
             status = res.status
             text = await res.text()
