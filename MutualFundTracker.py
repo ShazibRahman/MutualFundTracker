@@ -10,13 +10,12 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
-import datetime as dtime
 import aiohttp
 import pytz
 import ujson as json
 
 
-import logs.log_config as log_config  # type: ignore # noqa
+import logs.log_config as log_config  # pylint: disable=unused-import
 from models.Investment_history import OrderHistory
 from models.day_change import InvestmentData, NavData, get_investment_data
 from util.DesktopNotification import DesktopNotification
@@ -303,7 +302,7 @@ class MutualFund:
             investmentHistories: list[InvestmentHistory] = (
                 investment_history_repo.find_all_by_date(current_date)
             )
-            if len(investmentHistories) ==len(self.unitsKeyList):
+            if len(investmentHistories) == len(self.unitsKeyList):
                 for investmentHistory in investmentHistories:
                     invested_amount += investmentHistory.invested_amount
                     current_amount += investmentHistory.current_amount
@@ -370,9 +369,9 @@ class MutualFund:
         """
         Update the units database with unconsumed order histories for a given mutual fund ID up to a specified date.
 
-        This method retrieves all unconsumed order histories associated with the provided mutual fund ID (`mfid`), 
-        and for each order, if its date is less than or equal to the specified `date`, it updates the units 
-        and total invested amounts in the units repository. It also marks the order as consumed and logs the update. 
+        This method retrieves all unconsumed order histories associated with the provided mutual fund ID (`mfid`),
+        and for each order, if its date is less than or equal to the specified `date`, it updates the units
+        and total invested amounts in the units repository. It also marks the order as consumed and logs the update.
         The updated data is then uploaded asynchronously to Google Drive.
 
         Args:

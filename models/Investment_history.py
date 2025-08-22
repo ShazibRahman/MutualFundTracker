@@ -20,7 +20,7 @@ class InvestmentHistory(SQLModel, table=True):
 
     is_filled: Optional[bool] = Field(default=False)
 
-    
+
     created_at: datetime = Field(
         sa_column=Column(DateTime, default=datetime.now, nullable=True)
     )
@@ -29,7 +29,7 @@ class InvestmentHistory(SQLModel, table=True):
     )
 
 class OrderHistory(SQLModel, table=True):
-    __tablename__ = "order_history"
+    __tablename__:str = "order_history"
     __table_args__ = (
         UniqueConstraint("mfid", "nav_date", name="uix_mfid_date"),
     )
@@ -41,7 +41,7 @@ class OrderHistory(SQLModel, table=True):
     amount: float
     unit: float
     nav: Optional[float] = None
-    consumed: Optional[bool] = Field(default=False) 
+    consumed: Optional[bool] = Field(default=False)
 
     created_at: datetime = Field(
         sa_column=Column(DateTime, default=datetime.now, nullable=True)
