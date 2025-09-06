@@ -7,9 +7,10 @@ clearing logs, rendering tables, drawing graphs, and more.
 import argparse
 import asyncio
 import os
+from decorator_utils import LockManager
+
 
 from MutualFundTracker import MutualFund, lock_file
-from util.lock_manager import LockManager
 
 git_dir = os.path.dirname(__file__)
 index_path = os.path.join(git_dir, "dashBoard", "index.py")
@@ -99,7 +100,6 @@ async def main():
     parser.add_argument("--logs", type=str, choices=["show", "clear", "n"], default="n")
     parser.add_argument("-dash", type=str, choices=choices, default="n")
     parser.add_argument("-ic", type=str, choices=choices, default="n")
-
 
     args = parser.parse_args()
     await call_mutual_fund(args)

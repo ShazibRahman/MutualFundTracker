@@ -14,19 +14,23 @@ import aiohttp
 import pytz
 import ujson as json
 
+from decorator_utils import check_connection_decorator
+from decorator_utils import retry
+from gdrive.GDrive import GDrive
+
 
 import logs.log_config as log_config  # pylint: disable=unused-import
-from models.Investment_history import OrderHistory
 from models.day_change import InvestmentData, NavData, get_investment_data
+from models import InvestmentHistory, OrderHistory, Units
+
 from util.DesktopNotification import DesktopNotification
 
 from repository import (
     InvestmentHistoryRepository,
     OrderHistoryRepository,
     UnitsRepository,
+    db_path,
 )
-from models import InvestmentHistory, OrderHistory, Units
-from repository import db_path
 
 try:
     import plotext as plt
@@ -39,8 +43,6 @@ except ImportError as e:
     from rich.console import Console
     from rich.table import Table
 
-from util.retry import retry
-from gdrive.GDrive import GDrive
 
 download = False
 
@@ -299,15 +301,15 @@ class MutualFund:
 
             is_filled = False
 
-            investmentHistories: list[InvestmentHistory] = (
+            investment_histories: list[InvestmentHistory] = (
                 investment_history_repo.find_all_by_date(current_date)
             )
-            if len(investmentHistories) == len(self.unitsKeyList):
-                for investmentHistory in investmentHistories:
-                    invested_amount += investmentHistory.invested_amount
-                    current_amount += investmentHistory.current_amount
-                    day_change += investmentHistory.day_change
-                    is_filled = investmentHistory.is_filled
+            if len(investment_histories) == len(self.unitsKeyList):
+                for investment_history in investment_histories:
+                    invested_amount += investment_history.invested_amount
+                    current_amount += investment_history.current_amount
+                    day_change += investment_history.day_change
+                    is_filled = investment_history.is_filled
             else:
                 logging.debug(
                     "Investment histories do not match the number of units. for date %s",
@@ -824,8 +826,10 @@ class MutualFund:
 
         return True
 
+    @check_connection_decorator
     @retry(retries=3, delay=1, fail_after_retry_exhausted=True)
     async def download_all_nav_file(self) -> bool:
+
         logging.info("--downloading the NAV file from server--")
 
         async with aiohttp.client.ClientSession() as client:

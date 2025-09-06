@@ -1,15 +1,13 @@
 import asyncio
 import logging
-import pathlib
-import sys
-from datetime import datetime ,timedelta
-from typing import Any
-
 import nsepy
+import pathlib
 import requests
-from sqlalchemy import Tuple
+import sys
 import ujson as json
+from datetime import datetime, timedelta
 from pandas import DataFrame
+from typing import Any
 
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
@@ -279,6 +277,8 @@ class helper_functions:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         """
+        stamp_duty_factor = 0.005 /100
+
         order_history = order_history_repo.find_by_mfid_and_date(MFID, date)
         investment_history = investment_history_repo.find_by_mfid_and_date(MFID, date) 
 
@@ -288,8 +288,13 @@ class helper_functions:
 
         nav: float = investment_history.nav if investment_history else None
         mfname: str = investment_history.mfname if investment_history else None
-    
-       
+
+        if nav:
+            calculated_investment_amount  =  nav * (1 - stamp_duty_factor) * unit
+
+            if abs(calculated_investment_amount - amount) > 10:
+                print(f"mismatch {calculated_investment_amount=}, {amount=}")
+                raise Exception("mismatch in the amont and the units entered")
 
         if order_history:
             order_history.unit += unit

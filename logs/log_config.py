@@ -77,7 +77,7 @@ def log_uncaught_exceptions(exctype, value, traceback):
         return
 
     logger.exception("Uncaught exception", exc_info=(exctype, value, traceback))
-    DesktopNotification("Error", f"{exctype} : {value}")
+    DesktopNotification("Error occured in MutualFundTracker", f"{exctype} : {value}")
 
 
 # Set the exception hook
