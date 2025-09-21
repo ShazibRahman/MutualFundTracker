@@ -10,21 +10,18 @@ from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
 from typing import Tuple
+
 import aiohttp
 import pytz
 import ujson as json
-
 from decorator_utils import check_connection_decorator
 from decorator_utils import retry
-from gdrive.GDrive import GDrive
+from gdrive_tool import GDrive
+from common_util import DesktopNotification
 
-
-import logs.log_config as log_config  # pylint: disable=unused-import
+import logs.log_config as log_config  # pylint: disable=unused-import # import log  # noqa: F401
 from models.day_change import InvestmentData, NavData, get_investment_data
 from models import InvestmentHistory, OrderHistory, Units
-
-from util.DesktopNotification import DesktopNotification
-
 from repository import (
     InvestmentHistoryRepository,
     OrderHistoryRepository,
@@ -59,15 +56,15 @@ order_history_repo = OrderHistoryRepository()
 units_repo = UnitsRepository()
 
 
-def roundUp3(number: float) -> float:
+def round_up3(number: float) -> float:
     return round(number, 3)
 
 
 def getfv(number: float) -> str:
     return (
-        f"[green]+₹{roundUp3(number)}[/green]"
+        f"[green]+₹{round_up3(number)}[/green]"
         if number >= 0
-        else f"[red]-₹{abs(roundUp3(number))}[/red]"
+        else f"[red]-₹{abs(round_up3(number))}[/red]"
     )
 
 
@@ -81,9 +78,9 @@ def get_colored_string_based_digit_being_positive_or_negative(
 
 def getfp(percentage: float) -> str:
     return (
-        f"[green]({roundUp3(percentage)}%)[/green]"
+        f"[green]({round_up3(percentage)}%)[/green]"
         if percentage >= 0
-        else f"[red]({roundUp3(percentage)})%[/red]"
+        else f"[red]({round_up3(percentage)})%[/red]"
     )
 
 
@@ -317,9 +314,9 @@ class MutualFund:
                 )
                 return
 
-            current_amount = roundUp3(current_amount)
+            current_amount = round_up3(current_amount)
 
-            day_change = roundUp3(day_change)
+            day_change = round_up3(day_change)
 
             logging.debug(
                 "Total invested amount: %s, Total current amount: %s, Total day change: %s for date %s",
@@ -507,7 +504,7 @@ class MutualFund:
         self.TableMutualFund.add_column("NAV", justify="center")
         # self.TableMutualFund.add_column("LAST UPDDATED", justify="center")
 
-    def summaryTableEdit(self) -> None:
+    def summary_table_edit(self) -> None:
         try:
 
             all_inv_his_latest = list(
@@ -594,7 +591,7 @@ class MutualFund:
             )
             ihis_second_last = investment_history_repo.find_second_latest_by_mfid(id_)
             current_amount_second_latest_by_nav_date = (
-                ihis_second_last.current_amount if ihis_second_last else invested
+                ihis_second_last.current_amount if ihis_second_last else ihis.invested_amount
             )
 
             SchemeName = ihis.mfname
@@ -625,12 +622,12 @@ class MutualFund:
 
             exit(256)
 
-        dayChangePercentage: float = roundUp3(
+        dayChangePercentage: float = round_up3(
             dayChange / current_amount_second_latest_by_nav_date * 100
         )
         dayChangeString = f"{dayChangePercentage}%\n\n[b]{getfv(dayChange)}[/b]"
 
-        returns = roundUp3(current - invested)
+        returns = round_up3(current - invested)
 
         returnsPercentage = returns / invested * 100
 
@@ -650,10 +647,10 @@ class MutualFund:
         all_daily_table = Table(title="Day Change Total", show_lines=True, expand=True)
         all_daily_table.add_column("NAV", justify="center", no_wrap=True)
         all_daily_table.add_column("DayChange", justify="center", no_wrap=True)
-        sum_daychange_sorted_keys = sorted(
+        sum_changed_sorted_keys = sorted(
             dic.keys(), key=lambda x: datetime.strptime(x, "%d-%b-%Y")
         )
-        dic = {k: dic[k] for k in sum_daychange_sorted_keys}
+        dic = {k: dic[k] for k in sum_changed_sorted_keys}
 
         nav_col = ""
         dayChange_col = ""
@@ -665,7 +662,7 @@ class MutualFund:
         self.console.print(all_daily_table)
 
         print(end="\n\n")
-        dates: list = sum_daychange_sorted_keys
+        dates: list = sum_changed_sorted_keys
         dayChangeList: list = list(dic.values())
         plt.clear_figure()
         plt.plot_size(100, 30)
@@ -697,7 +694,7 @@ class MutualFund:
             unit_entity = units_repo.find_by_mfid(key)
             units: float = unit_entity.total_units
             nav_col = ""
-            daychange_col = ""
+            changed_col = ""
             i = True
             prev_day_change = 0.0
 
@@ -715,10 +712,10 @@ class MutualFund:
                     sum_day_change[nav] = daychange_data
                 nav_col += f"[yellow]{nav}[/yellow]\n"
 
-                daychange_col += f"{getfv(daychange_data)}\n"
+                changed_col += f"{getfv(daychange_data)}\n"
                 prev_day_change = daychange
 
-            daily_table.add_row(name, nav_col, daychange_col)
+            daily_table.add_row(name, nav_col, changed_col)
 
         if not self.console:
             self.console = Console()
@@ -730,7 +727,7 @@ class MutualFund:
     def draw_table(self):
         self.initializeTables()
         self.console = Console()
-        self.summaryTableEdit()
+        self.summary_table_edit()
         self.console.print(self.summaryTable)
         self.UpdateKeyList()
         sortedKeys = sorted(
