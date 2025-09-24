@@ -1,4 +1,3 @@
-
 import logging as log
 import pathlib
 import sys
@@ -77,8 +76,11 @@ def log_uncaught_exceptions(exctype, value, traceback):
         return
 
     logger.exception("Uncaught exception", exc_info=(exctype, value, traceback))
-    DesktopNotification("Error occured in MutualFundTracker", f"{exctype} : {value}")
+    DesktopNotification("Error occurred in MutualFundTracker", f"{exctype} : {value}")
 
 
 # Set the exception hook
 sys.excepthook = log_uncaught_exceptions
+
+
+log.info("logger initialized")

@@ -1,7 +1,9 @@
-from sqlmodel import Session, select
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Sequence
 from datetime import date
+
+from sqlmodel import Session, select
 from sqlalchemy import asc, desc, func
+
 from models import InvestmentHistory
 from .db import engine
 
@@ -9,27 +11,29 @@ OrderType = Literal["asc", "desc"]
 
 class InvestmentHistoryRepository:
 
-    def save(self, record: InvestmentHistory) -> InvestmentHistory:
+    @staticmethod
+    def save(record: InvestmentHistory) -> InvestmentHistory:
         with Session(engine) as session:
             session.add(record)
             session.commit()
             session.refresh(record)
+            session.flush()
             return record
-
-    def find_by_mfid_and_date(self, mfid: str, entry_date: date) -> Optional[InvestmentHistory]:
+    @staticmethod
+    def find_by_mfid_and_date(mfid: str, entry_date: date) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
             statement = select(InvestmentHistory).where(
                 InvestmentHistory.mfid == mfid,
                 InvestmentHistory.date == entry_date
             )
-            return session.exec(statement).first()
 
+            return session.exec(statement).first()
+    @staticmethod
     def find_all_by_mfid(
-        self,
-        mfid: str,
+            mfid: str,
         order_by: str = "date",
         direction: OrderType = "asc"
-    ) -> List[InvestmentHistory]:
+    ) -> Sequence[InvestmentHistory]:
         with Session(engine) as session:
             order_column = getattr(InvestmentHistory, order_by)
             order_func = asc if direction == "asc" else desc
@@ -40,15 +44,14 @@ class InvestmentHistoryRepository:
             )
             return session.exec(statement).all()
         
-
+    @staticmethod
     def find_by_mfid_and_date_range(
-        self,
         mfid: str,
         start_date: date,
         end_date: date,
         order_by: str = "date",
         direction: OrderType = "asc"
-    ) -> List[InvestmentHistory]:
+    ) -> Sequence[InvestmentHistory]:
         with Session(engine) as session:
             order_column = getattr(InvestmentHistory, order_by)
             order_func = asc if direction == "asc" else desc
@@ -62,13 +65,14 @@ class InvestmentHistoryRepository:
                 .order_by(order_func(order_column))
             )
             return session.exec(statement).all() 
-
-    def find_all(self) -> List[InvestmentHistory]:
+    @staticmethod
+    def find_all() -> Sequence[InvestmentHistory]:
         with Session(engine) as session:
             return session.exec(select(InvestmentHistory)).all()
 
-        
-    def find_first_by_mfid_order_by_date_desc(self, mfid: str) -> Optional[InvestmentHistory]:
+
+    @staticmethod
+    def find_first_by_mfid_order_by_date_desc(mfid: str) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
             order_column = getattr(InvestmentHistory, "date")
             statement = (
@@ -79,8 +83,9 @@ class InvestmentHistoryRepository:
             )
             result = session.exec(statement).first()
             return result
-        
-    def find_first_by_mfid_order_by_updated_at_desc(self, mfid: str) -> Optional[InvestmentHistory]:
+
+    @staticmethod
+    def find_first_by_mfid_order_by_updated_at_desc(mfid: str) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
             order_column = getattr(InvestmentHistory, "updated_at")
             statement = (
@@ -91,8 +96,8 @@ class InvestmentHistoryRepository:
             )
             result = session.exec(statement).first()
             return result
-        
-    def find_first_by_mfid_order_by_date_asc(self, mfid: str) -> Optional[InvestmentHistory]:
+    @staticmethod
+    def find_first_by_mfid_order_by_date_asc(mfid: str) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
             order_column = getattr(InvestmentHistory, "date")
             statement = (
@@ -103,24 +108,24 @@ class InvestmentHistoryRepository:
             )
             result = session.exec(statement).first()
             return result
-    
-    def find_by_mfid_and_date(self, mfid: str, entry_date: date) -> Optional[InvestmentHistory]:
+    @staticmethod
+    def find_by_mfid_and_date(mfid: str, entry_date: date) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
             statement = select(InvestmentHistory).where(
                 InvestmentHistory.mfid == mfid,
                 InvestmentHistory.date == entry_date
             )
             return session.exec(statement).first()
-        
-    def find_all_by_date(self, entry_date: date) -> List[InvestmentHistory]:
+    @staticmethod
+    def find_all_by_date(entry_date: date) -> Sequence[InvestmentHistory]:
         with Session(engine) as session:
             statement = select(InvestmentHistory).where(
                 InvestmentHistory.date == entry_date
             )
             return session.exec(statement).all()
         
-
-    def find_all_distinct_mfids_and_name(self) -> List[dict[str, str]]:
+    @staticmethod
+    def find_all_distinct_mfids_and_name() -> List[dict[str, str]]:
         with Session(engine) as session:
             statement = (
                 select(
@@ -135,25 +140,8 @@ class InvestmentHistoryRepository:
             return [dict(row._mapping) for row in results]
         
 
+    @staticmethod
     def find_first_by_mfid_order_by(
-            self,
-            mfid: str,
-            order_by: str = "nav_date",
-            direction: OrderType = "asc"
-    ) -> Optional[InvestmentHistory]:
-        with Session(engine) as session:
-            order_column = getattr(InvestmentHistory, order_by)
-            order_func = asc if direction == "asc" else desc
-            statement = (
-                select(InvestmentHistory)
-                .where(InvestmentHistory.mfid == mfid)
-                .order_by(order_func(order_column))
-            )
-            return session.exec(statement).first()
-        
-
-    def find_first_by_mfid_order_by(
-            self,
             mfid: str,
             order_by: str = "date",
             direction: OrderType = "asc"
@@ -167,8 +155,8 @@ class InvestmentHistoryRepository:
                 .order_by(order_func(order_column))
             )
             return session.exec(statement).first()
-        
-    def find_latest_records_for_all_mfids(self) -> List[InvestmentHistory]:
+    @staticmethod
+    def find_latest_records_for_all_mfids() -> Sequence[InvestmentHistory]:
         """Fetch the latest record for each MFID."""
         with Session(engine) as session:
             subquery = (
@@ -190,10 +178,9 @@ class InvestmentHistoryRepository:
             )
 
             return session.exec(statement).all()
-
+    @staticmethod
     def find_second_latest_by_mfid(
-    self,
-    mfid: str
+            mfid: str
 ) -> Optional[InvestmentHistory]:
         with Session(engine) as session:
             # Subquery to filter and order records by date in descending order

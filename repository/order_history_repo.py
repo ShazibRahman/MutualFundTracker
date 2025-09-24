@@ -1,21 +1,26 @@
-from models import OrderHistory
-from sqlmodel import Session, select
-from typing import List, Literal, Optional
+from typing import Literal, Optional, Sequence
 from datetime import date
-from sqlalchemy import asc, desc, func
+
+from sqlmodel import Session, select
+from sqlalchemy import asc, desc
+
+from models import OrderHistory
 from .db import engine
 
 OrderType = Literal["asc", "desc"]
 
 class OrderHistoryRepository:
-    def save(self, record: OrderHistory) -> OrderHistory:
+    @staticmethod
+    def save(record: OrderHistory) -> OrderHistory:
         with Session(engine) as session:
             session.add(record)
             session.commit()
             session.refresh(record)
+            session.flush()
             return record
-    
-    def find_by_mfid_and_date(self, mfid: str, entry_date: date) -> Optional[OrderHistory]:
+
+    @staticmethod
+    def find_by_mfid_and_date(mfid: str, entry_date: date) -> Optional[OrderHistory]:
         with Session(engine) as session:
             statement = select(OrderHistory).where(
                 OrderHistory.mfid == mfid,
@@ -24,18 +29,18 @@ class OrderHistoryRepository:
             return session.exec(statement).first()
             
 
-    
-    def find_all(self) -> List[OrderHistory]:
+    @staticmethod
+    def find_all() -> Sequence[OrderHistory]:
         with Session(engine) as session:
             statement = select(OrderHistory)
             return session.exec(statement).all()
-        
+
+    @staticmethod
     def find_by_mfid(
-        self,
-        mfid: str,
+            mfid: str,
         order_by: str = "nav_date",
         direction: OrderType = "asc"
-    ) -> List[OrderHistory]:
+    ) -> Sequence[OrderHistory]:
         with Session(engine) as session:
             order_column = getattr(OrderHistory, order_by)
             order_func = asc if direction == "asc" else desc
@@ -46,8 +51,8 @@ class OrderHistoryRepository:
             )
             return session.exec(statement).all()
         
-
-    def delete_by_id(self, record_id: int) -> bool:
+    @staticmethod
+    def delete_by_id(record_id: int) -> bool:
         with Session(engine) as session:
             obj = session.get(OrderHistory, record_id)
             if obj:
@@ -56,10 +61,9 @@ class OrderHistoryRepository:
                 return True
             return False
         
-
+    @staticmethod
     def find_first_by_mfid(
-        self,
-        mfid: str,
+            mfid: str,
         order_by: str = "nav_date",
         direction: OrderType = "asc"
     ) -> Optional[OrderHistory]:
@@ -73,10 +77,9 @@ class OrderHistoryRepository:
             )
             return session.exec(statement).first()
 
-
+    @staticmethod
     def find_first_by_mfid_order_by_date(
-        self,
-        mfid: str,
+            mfid: str,
         order_by: str = "nav_date",
         direction: OrderType = "asc"
     ) -> Optional[OrderHistory]:
@@ -89,10 +92,9 @@ class OrderHistoryRepository:
                 .order_by(order_func(order_column))
             )
             return session.exec(statement).first()
-        
+    @staticmethod
     def find_first_by_mfid_order_by_updated_at_desc(
-        self,
-        mfid: str,
+            mfid: str,
     ) -> Optional[OrderHistory]:
         with Session(engine) as session:
             order_column = getattr(OrderHistory, "updated_at")
@@ -104,10 +106,9 @@ class OrderHistoryRepository:
             )
             return session.exec(statement).first()
         
-
+    @staticmethod
     def find_first_by_mfid_order_by_updated_at_asc(
-        self,
-        mfid: str,
+            mfid: str,
     ) -> Optional[OrderHistory]:
         with Session(engine) as session:
             order_column = getattr(OrderHistory, "updated_at")
@@ -117,40 +118,45 @@ class OrderHistoryRepository:
                 .order_by(asc(order_column))
             )
             return session.exec(statement).first()
-        
-    def find_all_by_date(self, nav_date: date) -> List[OrderHistory]:
+    @staticmethod
+    def find_all_by_date(nav_date: date) -> Sequence[OrderHistory]:
         with Session(engine) as session:
             statement = select(OrderHistory).where(
                 OrderHistory.nav_date == nav_date
             )
             return session.exec(statement).all()
-        
+    @staticmethod
     def find_all_by_nav_is_null(
-        self,
-    ) -> List[OrderHistory]:
+    ) -> Sequence[OrderHistory]:
         with Session(engine) as session:
             statement = select(OrderHistory).where(
                 OrderHistory.nav.is_(None)
             )
             return session.exec(statement).all()
-        
+    @staticmethod
+    def find_all_consumed_is(consumed:bool=False)  -> Sequence[OrderHistory]:
+        with Session(engine) as session:
+            statement = select(OrderHistory).where(
+                OrderHistory.consumed.is_(consumed)
+            )
+            return session.exec(statement).all()
 
+    @staticmethod
     def find_all_by_mfid_and_consumed(
-        self,
-        mfid: str,
+            mfid: str,
         consumed: bool = False
-    ) -> List[OrderHistory]:
+    ) -> Sequence[OrderHistory]:
         with Session(engine) as session:
             statement = select(OrderHistory).where(
                 OrderHistory.mfid == mfid,
                 OrderHistory.consumed.is_(consumed)
             )
             return session.exec(statement).all()
-        
+
+    @staticmethod
     def find_all_by_consumed(
-        self,
-        consumed: bool = False
-    ) -> List[OrderHistory]:
+            consumed: bool = False
+    ) -> Sequence[OrderHistory]:
         with Session(engine) as session:
             consumed_value = int(consumed)  # Converts True -> 1, False -> 0
 
@@ -159,8 +165,8 @@ class OrderHistoryRepository:
             )
             return session.exec(statement).all()
 
+    @staticmethod
     def find_first_by_mfid_order_by(
-            self,
             mfid: str,
             order_by: str = "nav_date",
             direction: OrderType = "asc"

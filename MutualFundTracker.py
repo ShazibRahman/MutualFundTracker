@@ -9,7 +9,7 @@ import time
 from dataclasses import asdict
 from datetime import datetime, timedelta
 from json.decoder import JSONDecodeError
-from typing import Tuple
+from typing import Sequence
 
 import aiohttp
 import pytz
@@ -19,7 +19,7 @@ from decorator_utils import retry
 from gdrive_tool import GDrive
 from common_util import DesktopNotification
 
-import logs.log_config as log_config  # pylint: disable=unused-import # import log  # noqa: F401
+import logs.log_config as log_config  # pylint: disable=unused-import # import log  # noqa: F401 # noqa: all
 from models.day_change import InvestmentData, NavData, get_investment_data
 from models import InvestmentHistory, OrderHistory, Units
 from repository import (
@@ -132,7 +132,8 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
 class MutualFund:
     def __init__(self, is_downloadable: bool) -> None:
 
-        self.formatString = ""
+        self.formatString = "%d-%b-%Y"
+        self.dd_mm_yyyy = "%d-%m-%Y"
         self.is_downloadable = is_downloadable
         global download
         download = self.is_downloadable
@@ -165,13 +166,13 @@ class MutualFund:
     async def initialize(self):
         logging.debug("----initializing----")
 
-        daychange_tasks = asyncio.create_task(
+        day_change_tasks = asyncio.create_task(
             readJsonFileAsynchronously(self.dayChangeJsonFileString), name="daychange"
         )
 
         db_task = asyncio.create_task(download_file(db_path), name="db")
 
-        results = await asyncio.gather(daychange_tasks, db_task)
+        results = await asyncio.gather(day_change_tasks, db_task)
         try:
             temp_data = results[0]
             self.json_data: InvestmentData = get_investment_data(temp_data)
@@ -181,8 +182,7 @@ class MutualFund:
         self.unitsKeyList = units_repo.find_all_distinct_mfids()
         self.TableMutualFund = Table()
         self.summaryTable = Table()
-        self.formatString = "%d-%b-%Y"
-        self.dd_mm_yyyy = "%d-%m-%Y"
+
         plt.datetime.set_datetime_form(date_form=self.formatString)
 
     def check_past_dates(self, NavDate: str, orderDate) -> bool:
@@ -210,7 +210,7 @@ class MutualFund:
         invested_amount: float,
         current_amount: float,
         day_change: float,
-        nav: float,
+        nav: float | None,
         is_filled: bool = False,
     ) -> None:
         """
@@ -222,11 +222,11 @@ class MutualFund:
             investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
         )
 
-        mfname: str = (
+        mf_name: str = (
             lastest_investment_history.mfname if lastest_investment_history else None
         )
 
-        date: datetime.date = datetime.strptime(date_str, self.formatString).date()
+        date = datetime.strptime(date_str, self.formatString).date()
         existing_record = investment_history_repo.find_by_mfid_and_date(mfid, date)
         if existing_record:
             existing_record.invested_amount = invested_amount
@@ -238,7 +238,7 @@ class MutualFund:
         else:
             new_record = InvestmentHistory(
                 mfid=mfid,
-                mfname=mfname,
+                mfname=mf_name,
                 date=date,
                 invested_amount=invested_amount,
                 current_amount=current_amount,
@@ -250,7 +250,7 @@ class MutualFund:
 
             logging.info(
                 "Saving investment history for %s on %s with invested amount %s and current amount %s",
-                mfname,
+                mf_name,
                 date,
                 invested_amount,
                 current_amount,
@@ -298,7 +298,7 @@ class MutualFund:
 
             is_filled = False
 
-            investment_histories: list[InvestmentHistory] = (
+            investment_histories: Sequence[InvestmentHistory] = (
                 investment_history_repo.find_all_by_date(current_date)
             )
             if len(investment_histories) == len(self.unitsKeyList):
@@ -364,7 +364,7 @@ class MutualFund:
     #                     ]
     #                 )
 
-    async def add_to_units_db(self, mfid: str, date: str, name: str) -> None:
+    async def add_to_units_db(self, mfid: str, date: str) -> None:
         """
         Update the units database with unconsumed order histories for a given mutual fund ID up to a specified date.
 
@@ -376,15 +376,13 @@ class MutualFund:
         Args:
             mfid (str): The mutual fund ID for which to update units.
             date (str): The cutoff date up to which order histories should be considered, in the format specified by `self.formatString`.
-            name (str): The name of the mutual fund for logging purposes.
-
         Returns:
             None
         """
 
         dtime_date = datetime.strptime(date, self.formatString).date()
 
-        order_histories: list[OrderHistory] = (
+        order_histories: Sequence[OrderHistory] = (
             order_history_repo.find_all_by_mfid_and_consumed(mfid, False)
         )
 
@@ -440,8 +438,8 @@ class MutualFund:
 
     async def add_to_units_not_pre_existing(self) -> None:
 
-        order_histories: list[OrderHistory] = (
-            order_history_repo.find_all_by_mfid_and_consumed(False)
+        order_histories: Sequence[OrderHistory] = (
+            order_history_repo.find_all_consumed_is(False)
         )
         for order_history in order_histories:
             if order_history.mfid not in self.unitsKeyList:
@@ -516,7 +514,7 @@ class MutualFund:
 
             invested = 0
             current = 0
-            totalDaychange = 0
+            total_day_change = 0
             latest_date: datetime = all_inv_his_latest[0].updated_at
 
             for latest_investment_history in all_inv_his_latest:
@@ -525,7 +523,7 @@ class MutualFund:
 
                 current += latest_investment_history.current_amount
                 invested += latest_investment_history.invested_amount
-                totalDaychange += latest_investment_history.day_change
+                total_day_change += latest_investment_history.day_change
 
             current = round(current, 3)
 
@@ -544,20 +542,20 @@ class MutualFund:
                 else invested
             )
 
-            totalDaychangePercentage = (
-                totalDaychange / current_amount_second_latest_by_nav_date * 100
+            total_day_change_percentage = (
+                total_day_change / current_amount_second_latest_by_nav_date * 100
             )
 
             logging.debug(
                 "Total Profit: %s, Total Profit Percentage: %s, Total Day Change: %s, Total Day Change Percentage: %s",
                 totalProfit,
                 totalProfitPercentage,
-                totalDaychange,
-                totalDaychangePercentage,
+                total_day_change,
+                total_day_change_percentage,
             )
 
-        except Exception as e:
-            print(str(e))
+        except Exception as err:
+            print(str(err))
             self.console.print(
                 "Incomplete info in Json file try [b][yellow]-d y[/yellow][/b] option"
             )
@@ -574,7 +572,7 @@ class MutualFund:
             "[yellow]•[/yellow]Total Returns\n\n[bold]"
             + f"{getfv(totalProfit)} {getfp(totalProfitPercentage)}[/bold]"
         )
-        dailyReturnString = f"[yellow]•[/yellow][bold]{getfv(totalDaychange)} {getfp(totalDaychangePercentage)}[/bold]"
+        dailyReturnString = f"[yellow]•[/yellow][bold]{getfv(total_day_change)} {getfp(total_day_change_percentage)}[/bold]"
         lastUpdatedString = f"Last Updated\n\n[b][yellow]{lastUpdated}[/yellow][/b]"
         self.summaryTable.add_row(
             investedString,
@@ -586,21 +584,21 @@ class MutualFund:
     def MutualFundTableEdit(self, id_: str) -> None:
         try:
 
-            ihis: InvestmentHistory = (
+            latest_investment_history: InvestmentHistory = (
                 investment_history_repo.find_first_by_mfid_order_by(id_, "date", "desc")
             )
-            ihis_second_last = investment_history_repo.find_second_latest_by_mfid(id_)
+            second_latest_investment_history = investment_history_repo.find_second_latest_by_mfid(id_)
             current_amount_second_latest_by_nav_date = (
-                ihis_second_last.current_amount if ihis_second_last else ihis.invested_amount
+                second_latest_investment_history.current_amount if second_latest_investment_history else latest_investment_history.invested_amount
             )
 
-            SchemeName = ihis.mfname
-            dayChange = ihis.day_change if ihis.day_change else 0
-            current = ihis.current_amount
-            invested = ihis.invested_amount
-            date = ihis.date.strftime(self.formatString)
-            nav = ihis.nav
-            updated_at = ihis.updated_at.strftime(self.formatString + " %X")
+            SchemeName = latest_investment_history.mfname
+            dayChange = latest_investment_history.day_change if latest_investment_history.day_change else 0
+            current = latest_investment_history.current_amount
+            invested = latest_investment_history.invested_amount
+            date = latest_investment_history.date.strftime(self.formatString)
+            nav = latest_investment_history.nav
+            updated_at = latest_investment_history.updated_at.strftime(self.formatString + " %X")
 
             logging.debug(
                 "Retrieved values - Scheme Name: %s, Day Change: %s, Current: %s, Invested: %s, Date: %s, Updated At: %s",
@@ -698,22 +696,22 @@ class MutualFund:
             i = True
             prev_day_change = 0.0
 
-            for nav, daychange in value.items():
+            for nav, day_change in value.items():
                 if i:
-                    prev_day_change = units * daychange
+                    prev_day_change = units * day_change
                     i = False
                     continue
-                daychange *= units
-                daychange_data: float = round(daychange - prev_day_change, 3)
+                day_change *= units
+                day_change_data: float = round(day_change - prev_day_change, 3)
 
                 if nav in sum_day_change:
-                    sum_day_change[nav] += daychange_data
+                    sum_day_change[nav] += day_change_data
                 else:
-                    sum_day_change[nav] = daychange_data
+                    sum_day_change[nav] = day_change_data
                 nav_col += f"[yellow]{nav}[/yellow]\n"
 
-                changed_col += f"{getfv(daychange_data)}\n"
-                prev_day_change = daychange
+                changed_col += f"{getfv(day_change_data)}\n"
+                prev_day_change = day_change
 
             daily_table.add_row(name, nav_col, changed_col)
 
@@ -765,9 +763,10 @@ class MutualFund:
             plt.clear_figure()
         print()
 
-    def draw_graph_current_vs_invested(self) -> None:
+    @staticmethod
+    def draw_graph_current_vs_invested() -> None:
         print()
-        data: list[InvestmentHistory] = investment_history_repo.find_all_by_mfid("ALL")
+        data: Sequence[InvestmentHistory] = investment_history_repo.find_all_by_mfid("ALL")
 
         dates: list = []
         invested_amounts: list = []
@@ -890,7 +889,7 @@ class MutualFund:
             else:
                 prev_day_nav_date = key_list[-1]
 
-        await self.add_to_units_db(ids, prev_day_nav_date, name)
+        await self.add_to_units_db(ids, prev_day_nav_date)
         units_entity = units_repo.find_by_mfid(ids)
         units: float = units_entity.total_units
 
@@ -919,7 +918,7 @@ class MutualFund:
             writeToFileAsync(self.dayChangeJsonFileString, asdict(self.json_data))
         )
 
-    async def read_my_nav_file(self) -> Tuple[float, float, float]:
+    async def read_my_nav_file(self) -> tuple[int, int, int, str | None]:
         """
         returns subtotal, total_invested , totaldaychange
         """
@@ -973,7 +972,7 @@ class MutualFund:
             if not await self.update_my_nav_file():  # type: ignore
                 return
 
-        sum_total, total_invested, total_daychange, latest_date = (
+        sum_total, total_invested, total_day_change, latest_date = (
             await self.read_my_nav_file()
         )
 
@@ -982,14 +981,14 @@ class MutualFund:
 
         total_profit_percentage = round(total_profit_percentage, 3)
         total_profit = round(total_profit, 3)
-        total_daychange = round(total_daychange, 3)
+        total_day_change = round(total_day_change, 3)
 
         self.json_data.totalProfit = total_profit
         self.json_data.sumTotal = round(sum_total, 3)
         self.json_data.totalInvested = total_invested
         self.json_data.totalProfitPercentage = total_profit_percentage
 
-        self.json_data.totalDaychange = total_daychange
+        self.json_data.total_day_change = total_day_change
 
         self.check_for_current_date_investment_history_and_update_it_for_all()
 

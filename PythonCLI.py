@@ -3,12 +3,14 @@ This script provides a command-line interface (CLI) for managing mutual funds.
 It allows users to perform various operations such as adding orders, viewing logs,
 clearing logs, rendering tables, drawing graphs, and more.
 """
+import logs.log_config as log_config  # pylint: disable=unused-import # import log  # noqa: F401 # noqa: all
+
 
 import argparse
 import asyncio
 import os
-from decorator_utils import LockManager
 
+from decorator_utils import LockManager
 
 from MutualFundTracker import MutualFund, lock_file
 
