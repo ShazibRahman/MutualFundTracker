@@ -1,23 +1,13 @@
-
-import dash_bootstrap_components as dbc
-import dash_core_components as dcc
-import dash_html_components as html
-
 from app import app
-from dash.dependencies import Input, Output
 from helper.helperFunctions import helper_functions
 
 from dash import dcc, html, Input, Output
 import dash_bootstrap_components as dbc
-import pandas as pd
-from datetime import datetime, timedelta
 
 helper = helper_functions()
 
 
-
 # Sample helper function to simulate fetching data
-
 
 
 layout = dbc.Container(
@@ -62,19 +52,18 @@ layout = dbc.Container(
     style={"padding": "20px"},  # Add padding to the container
 )
 
+
 # Callback to update the graph based on the selected filter
 @app.callback(
     Output("my-cur-inv-graph", "figure"),
     Input("time-filter", "value"),
     Input("fund-name-filter", "value"),
 )
-
 def update_graph(selected_filter, selected_fund_name):
     # Fetch the full dataset
     data = helper.get_current_invest_data(selected_filter, selected_fund_name)
 
     # Define the date range based on the selected filter
- 
 
     # Filter the data based on the date range
 
@@ -91,6 +80,7 @@ def update_graph(selected_filter, selected_fund_name):
             "clickmode": "event+select",
         },
     }
+
 
 # Run the app
 if __name__ == "__main__":

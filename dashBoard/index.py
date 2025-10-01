@@ -9,8 +9,8 @@ from dash.dependencies import Input, Output
 # autopep8 : off
 sys.path.append(pathlib.Path(__file__).parent.resolve().as_posix())
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.resolve().as_posix())
-from app import app, server
-from apps import addOrder, dashBoard, stocks,graphs
+from app import app
+from apps import addOrder, dashBoard, stocks, graphs
 
 # connect to your app pages
 
@@ -84,7 +84,7 @@ def display_page(pathname: str):
         "/apps/dashBoard": dashBoard.layout,
         "/apps/addOrder": addOrder.layout,
         "/apps/stocks": stocks.layout,
-        "/apps/graphs": graphs.layout, 
+        "/apps/graphs": graphs.layout,
     }
     # Generate data for the routes
     data = generate_data(routes, active_Style, inactive_Style)
@@ -92,28 +92,25 @@ def display_page(pathname: str):
 
     if pathname == "/":
         return data["/apps/dashBoard"]
-    
+
     return data[pathname]
 
 
 def generate_data(routes, active_Style, inactive_Style):
     data = {}
     all_routes = list(routes.keys())  # List of all routes
-    
+
     for i, route in enumerate(all_routes):
         # Create a list of styles with all inactive styles
         styles = [inactive_Style] * len(all_routes)
-        
+
         # Set the active style for the current route
         styles[i] = active_Style
-        
+
         # Add the route and its corresponding layout and styles to the data dictionary
         data[route] = (routes[route], *styles)
-    
+
     return data
-
-
-
 
 
 if __name__ == "__main__":

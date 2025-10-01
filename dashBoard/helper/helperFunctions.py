@@ -1,13 +1,14 @@
 import asyncio
 import logging
-import nsepy
 import pathlib
-import requests
 import sys
-import ujson as json
 from datetime import datetime, timedelta
-from pandas import DataFrame
 from typing import Any
+
+import nsepy
+import requests
+import ujson as json
+from pandas import DataFrame
 
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
@@ -18,18 +19,19 @@ from repository import InvestmentHistoryRepository, OrderHistoryRepository
 investment_history_repo = InvestmentHistoryRepository()
 order_history_repo = OrderHistoryRepository()
 
-from gdrive.GDrive import (
-    GDrive,
-)
-from models.day_change import (
-    InvestmentData,
-    get_investment_data
-)
+from gdrive_tool import GDrive
+from models.day_change import InvestmentData, get_investment_data
 
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
 )
-LOGGER_PATH = pathlib.Path(data_path).parent.joinpath("logs").resolve().joinpath("logger.log").as_posix()
+LOGGER_PATH = (
+    pathlib.Path(data_path)
+    .parent.joinpath("logs")
+    .resolve()
+    .joinpath("logger.log")
+    .as_posix()
+)
 
 formatter = logging.Formatter(
     "%(levelname)s - (%(asctime)s): %(message)s (Line: %(lineno)d [%(filename)s])"
@@ -73,7 +75,7 @@ async def readJsonFileAsynchronously(filename: str | pathlib.Path):
         return json.load(f)
 
 
-def calculate_date_range(filter:str):
+def calculate_date_range(filter: str):
     if filter == "1M":
         start_date = datetime.now() - timedelta(days=30)
     elif filter == "3M":
@@ -89,6 +91,7 @@ def calculate_date_range(filter:str):
     else:
         start_date = datetime(2000, 1, 1)  # Default to a very old date
     return start_date.date(), datetime.now().date()
+
 
 def readJsonFromDataFolder(filename):
     file_path = pathlib.Path(data_path).joinpath(filename).resolve()
@@ -118,9 +121,7 @@ def writeRawDataToFile(file_name: str, data: str) -> None:
         file.write(data)
 
 
-async def write_to_file_async(
-        filename: pathlib.Path, data: dict, indent=4
-) -> None:
+async def write_to_file_async(filename: pathlib.Path, data: dict, indent=4) -> None:
     logging.info(f"writing asynchronously to {filename=}")
     with open(filename, mode="w") as f:
         # f.write(json.dumps(obj=data, indent=indent))
@@ -163,7 +164,7 @@ class helper_functions:
         self.mutual_funds_dic = None
         self.stock_data = None
         self.stock_order = None
-        self.daychange_json:InvestmentData = None
+        self.daychange_json: InvestmentData = None
         self.unit_json = None
         self.mutual_funds = None
         self.order = None
@@ -201,9 +202,7 @@ class helper_functions:
             self.stock_data_file_path,
         ]
         self.tasks = [
-            asyncio.create_task(
-                readJsonFileAsynchronously(file), name=file.as_posix()
-            )
+            asyncio.create_task(readJsonFileAsynchronously(file), name=file.as_posix())
             for file in file_list
         ]
         self.tasks.append(
@@ -271,26 +270,24 @@ class helper_functions:
             value = "new"
 
         writeToFile(self.order_file_path, self.order)
-        return value,self.order
-    
+        return value, self.order
+
     def add_order_db(self, MFID, unit, amount, date) -> OrderHistory:
         """
         mfid , unit : float , amount :float , date : for ex 07-May-2022
         """
-        stamp_duty_factor = 0.005 /100
+        stamp_duty_factor = 0.005 / 100
 
         order_history = order_history_repo.find_by_mfid_and_date(MFID, date)
-        investment_history = investment_history_repo.find_by_mfid_and_date(MFID, date) 
+        investment_history = investment_history_repo.find_by_mfid_and_date(MFID, date)
 
         print(f"{MFID=}, {unit=}, {amount=}, {date=}")
-
-    
 
         nav: float = investment_history.nav if investment_history else None
         mfname: str = investment_history.mfname if investment_history else None
 
         if nav:
-            calculated_investment_amount  =  nav * (1 - stamp_duty_factor) * unit
+            calculated_investment_amount = nav * (1 - stamp_duty_factor) * unit
 
             if abs(calculated_investment_amount - amount) > 10:
                 print(f"mismatch {calculated_investment_amount=}, {amount=}")
@@ -308,11 +305,9 @@ class helper_functions:
                 amount=amount,
                 nav_date=date,
                 nav=nav,
-                consumed=False
+                consumed=False,
             )
             return order_history_repo.save(order_history)
-
-
 
     def getDailyChange(self):
         sumDayChange: dict = {}
@@ -497,10 +492,14 @@ class helper_functions:
 
     def get_all_stock_dic(self):
         return self.stock_data
-    
-    def get_current_invest_data(self,filter:str,fund:str):
+
+    def get_current_invest_data(self, filter: str, fund: str):
         start_date, end_date = calculate_date_range(filter)
-        data: list[InvestmentHistory] = investment_history_repo.find_by_mfid_and_date_range(fund, start_date=start_date, end_date=end_date)
+        data: list[InvestmentHistory] = (
+            investment_history_repo.find_by_mfid_and_date_range(
+                fund, start_date=start_date, end_date=end_date
+            )
+        )
 
         x = [x.date for x in data]
 
@@ -508,13 +507,13 @@ class helper_functions:
         current_data = [x.current_amount for x in data]
 
         return [
-                {
-                    "x": x,
-                    "y": invested_data,
-                    "type": "line",
-                    "name": "Investment History",
-                },
-                {
+            {
+                "x": x,
+                "y": invested_data,
+                "type": "line",
+                "name": "Investment History",
+            },
+            {
                 "x": x,
                 "y": current_data,
                 "type": "line",
@@ -522,33 +521,33 @@ class helper_functions:
                 "line": {
                     "dash": "dot",  # Dotted line
                     "color": "red",  # Line color
-                }
-            }
+                },
+            },
         ]
-    
+
     def get_all_mfid_mfname(self):
-        data: list[dict[str, str]] = investment_history_repo.find_all_distinct_mfids_and_name()
+        data: list[dict[str, str]] = (
+            investment_history_repo.find_all_distinct_mfids_and_name()
+        )
         return data
-    
+
     def get_fund_name_options(self):
         data = self.get_all_mfid_mfname()
         data_to_return = [{"label": x["mfname"], "value": x["mfid"]} for x in data]
         data_to_return = [x for x in data_to_return if x["label"] is not None]
         data_to_return.append({"label": "ALL", "value": "ALL"})
-        return data_to_return   
-    
+        return data_to_return
+
     def get_mfid_by_id_order_by_date_desc(self, mfid: str):
-        data: InvestmentHistory = investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
+        data: InvestmentHistory = (
+            investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
+        )
         return data
-    
+
     def get_all_open_orders(self):
         data: list[OrderHistory] = order_history_repo.find_all_by_consumed(False)
         print("Fetching all open orders...")
         return data
-    
-
-       
-    
 
 
 if __name__ == "__main__":

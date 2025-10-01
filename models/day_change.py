@@ -41,6 +41,5 @@ def get_investment_data(data: Dict[str, Any]) -> InvestmentData:
     funds: Dict[str, Dict[str, Any]] = data.pop("funds") if "funds" in data else {}
     return InvestmentData(
         **data,
-        funds={fund_id: NavData(**fund_data)
-               for fund_id, fund_data in funds.items()}
+        funds={fund_id: NavData(**fund_data) for fund_id, fund_data in funds.items()}
     )

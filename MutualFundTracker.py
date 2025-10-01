@@ -46,6 +46,7 @@ download = False
 INDIAN_TIMEZONE = pytz.timezone("Asia/Kolkata")
 DATA_PATH = pathlib.Path(__file__).parent.resolve().joinpath("data")
 lock_file = os.path.join(DATA_PATH, "lock_file.lock")
+ICON_IMAGE = os.path.join(DATA_PATH, "icon.jpg")
 
 # lock_manager = LockManager(lock_file)
 
@@ -54,6 +55,8 @@ FOLDER_NAME = "MutualFund"
 investment_history_repo = InvestmentHistoryRepository()
 order_history_repo = OrderHistoryRepository()
 units_repo = UnitsRepository()
+
+logging = logging.getLogger(__name__)
 
 
 def round_up3(number: float) -> float:
@@ -587,18 +590,28 @@ class MutualFund:
             latest_investment_history: InvestmentHistory = (
                 investment_history_repo.find_first_by_mfid_order_by(id_, "date", "desc")
             )
-            second_latest_investment_history = investment_history_repo.find_second_latest_by_mfid(id_)
+            second_latest_investment_history = (
+                investment_history_repo.find_second_latest_by_mfid(id_)
+            )
             current_amount_second_latest_by_nav_date = (
-                second_latest_investment_history.current_amount if second_latest_investment_history else latest_investment_history.invested_amount
+                second_latest_investment_history.current_amount
+                if second_latest_investment_history
+                else latest_investment_history.invested_amount
             )
 
             SchemeName = latest_investment_history.mfname
-            dayChange = latest_investment_history.day_change if latest_investment_history.day_change else 0
+            dayChange = (
+                latest_investment_history.day_change
+                if latest_investment_history.day_change
+                else 0
+            )
             current = latest_investment_history.current_amount
             invested = latest_investment_history.invested_amount
             date = latest_investment_history.date.strftime(self.formatString)
             nav = latest_investment_history.nav
-            updated_at = latest_investment_history.updated_at.strftime(self.formatString + " %X")
+            updated_at = latest_investment_history.updated_at.strftime(
+                self.formatString + " %X"
+            )
 
             logging.debug(
                 "Retrieved values - Scheme Name: %s, Day Change: %s, Current: %s, Invested: %s, Date: %s, Updated At: %s",
@@ -766,7 +779,9 @@ class MutualFund:
     @staticmethod
     def draw_graph_current_vs_invested() -> None:
         print()
-        data: Sequence[InvestmentHistory] = investment_history_repo.find_all_by_mfid("ALL")
+        data: Sequence[InvestmentHistory] = investment_history_repo.find_all_by_mfid(
+            "ALL"
+        )
 
         dates: list = []
         invested_amounts: list = []
@@ -818,7 +833,11 @@ class MutualFund:
                     await readJsonFileAsynchronously(self.dayChangeJsonFileString),
                 )
             )
-            DesktopNotification("Mutual Fund Tracker", f"Updated at {lastUpdated}")
+            DesktopNotification(
+                "Mutual Fund Tracker",
+                f"Updated at {lastUpdated}",
+                icon_image=ICON_IMAGE,
+            )
 
         return True
 
@@ -840,7 +859,7 @@ class MutualFund:
             }
             res = await client.get(
                 "https://www.amfiindia.com/spages/navopen.txt",
-                timeout=50,
+                timeout=100,
                 headers=headers,
             )
             status = res.status

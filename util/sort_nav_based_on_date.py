@@ -33,7 +33,7 @@ def writeJson(fileName: str, data: dict) -> None:
         fileName (str): The name of the file to be written.
         data (dict): The data to be written to the file.
     """
-    with open(fileName, "w",encoding="utf-8") as file:
+    with open(fileName, "w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
 
 

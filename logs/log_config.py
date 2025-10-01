@@ -3,11 +3,11 @@ import pathlib
 import sys
 from logging.handlers import TimedRotatingFileHandler
 
-from util.DesktopNotification import DesktopNotification
+from common_util import DesktopNotification
 
 logger_path = (
     pathlib.Path(__file__)
-    .parent.parent.joinpath( "logs", "logger.log")
+    .parent.parent.joinpath("logs", "logger.log")
     .resolve()
     .as_posix()
 )
@@ -39,8 +39,9 @@ handler.addFilter(ExcludeAESFilter())
 
 # Define the log format
 formatter = log.Formatter(
-        "%(levelname)s - (%(asctime)s): [PID: %(process)d] %(message)s (Line: %(lineno)d [%(filename)s])"
+    "%(levelname)s - (%(asctime)s): [PID: %(process)d] %(message)s (Line: %(lineno)d [%(name)s/%(filename)s])"
 )
+
 formatter.datefmt = "%m/%d/%Y %I:%M:%S %p"
 
 # Set the formatter for the file handler
@@ -81,6 +82,3 @@ def log_uncaught_exceptions(exctype, value, traceback):
 
 # Set the exception hook
 sys.excepthook = log_uncaught_exceptions
-
-
-log.info("logger initialized")

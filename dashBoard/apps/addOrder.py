@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from datetime import date, datetime
 
 import dash_bootstrap_components as dbc
@@ -6,13 +5,15 @@ import dash_core_components as dcc
 import dash_html_components as html
 from app import app
 from dash.dependencies import Input, Output, State
+from dash.html import Span
 from helper.helperFunctions import helper_functions
+
 from models import InvestmentHistory
 
 helper = helper_functions()
 
 
-def get_all_order() -> dbc.Table:
+def get_all_order() -> Span:
     children = [
         html.Thead(
             html.Tr(
@@ -28,8 +29,8 @@ def get_all_order() -> dbc.Table:
     body = []
     # get all orders
     orders = helper.get_all_open_orders()
-    print("printing all order",orders)
-    for order in orders:    
+    print("printing all order", orders)
+    for order in orders:
         # id , dic
         body.append(
             html.Tr(
@@ -43,17 +44,15 @@ def get_all_order() -> dbc.Table:
         )
     children.append(html.Tbody(body))
 
-    return (
-       html.Span(
-            [
-                html.H1("All Orders"),
-                dbc.Table(
-                    children=children,
-                    className="table table-striped table-bordered  justify-content-center",
-                    responsive=True
-                )
-                ]
-       )
+    return html.Span(
+        [
+            html.H1("All Orders"),
+            dbc.Table(
+                children=children,
+                className="table table-striped table-bordered  justify-content-center",
+                responsive=True,
+            ),
+        ]
     )
 
 
@@ -123,12 +122,10 @@ layout = html.Div(
             style={"padding": "0px"},
         ),
         html.Div(id="output", className="output"),
-        html.Div(
-                    id = "output-2", className="output",style={"margin-top": "20px"}
-                ),
+        html.Div(id="output-2", className="output", style={"margin-top": "20px"}),
         html.Div(
             id="view-order", style={"margin-top": "300px"}, children=[get_all_order()]
-        )
+        ),
     ],
     className="container",
 )
@@ -163,12 +160,9 @@ def add_order(n_clicks, units, amount, date_input, product):
     date_object = datetime.strptime(date_input, "%Y-%m-%d").date()
     # _, order = helper.add_order(product, float(units), amount, date_object)
 
-
-    order_history = helper.add_order_db(
-    
-        product, float(units), amount, date_object
-    )
+    order_history = helper.add_order_db(product, float(units), amount, date_object)
     return f"Order added for {order_history.mfname} on {order_history.nav_date} with amount {order_history.amount} and units {order_history.unit} and nav {order_history.nav}"
+
 
 @app.callback(
     Output("output-2", "children"),
@@ -190,10 +184,9 @@ def update_output(value):
     # fund = funds[value]
     # return f"Invested {fund['invested']} Current {fund['current']} Day Change {fund['dayChange']}"
 
-    investment_history: InvestmentHistory = helper.get_mfid_by_id_order_by_date_desc(value)
+    investment_history: InvestmentHistory = helper.get_mfid_by_id_order_by_date_desc(
+        value
+    )
     if investment_history is None:
         return "No data available for this fund"
     return f"Fund Name: {investment_history.mfname}, Invested Amount: {investment_history.invested_amount}, Current Amount: {investment_history.current_amount}"
-
-
-
