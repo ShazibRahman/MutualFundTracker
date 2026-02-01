@@ -1,3 +1,5 @@
+# flake8: noqa: E402
+
 import asyncio
 import logging
 import pathlib
@@ -14,6 +16,7 @@ sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix(
 
 from models import InvestmentHistory, OrderHistory
 from repository import InvestmentHistoryRepository, OrderHistoryRepository
+from repository import db_path
 
 
 investment_history_repo = InvestmentHistoryRepository()
@@ -21,6 +24,9 @@ order_history_repo = OrderHistoryRepository()
 
 from gdrive_tool import GDrive
 from models.day_change import InvestmentData, get_investment_data
+
+FOLDER_NAME = "MutualFund"
+
 
 data_path = (
     pathlib.Path(__file__).parent.parent.parent.joinpath("data").resolve().as_posix()
@@ -283,8 +289,8 @@ class helper_functions:
 
         print(f"{MFID=}, {unit=}, {amount=}, {date=}")
 
-        nav: float = investment_history.nav if investment_history else None
-        mfname: str = investment_history.mfname if investment_history else None
+        nav: float|None = investment_history.nav if investment_history else None
+        mfname: str|None = investment_history.mfname if investment_history else None
 
         if nav:
             calculated_investment_amount = nav * (1 - stamp_duty_factor) * unit
@@ -296,7 +302,7 @@ class helper_functions:
         if order_history:
             order_history.unit += unit
             order_history.amount += amount
-            return order_history_repo.save(order_history)
+            order_history_repo.save(order_history)
         else:
             order_history = OrderHistory(
                 mfid=MFID,
@@ -307,7 +313,12 @@ class helper_functions:
                 nav=nav,
                 consumed=False,
             )
-            return order_history_repo.save(order_history)
+
+            order_history_repo.save(order_history)
+
+        GDrive(FOLDER_NAME).upload(db_path)
+
+        return order_history
 
     def getDailyChange(self):
         sumDayChange: dict = {}
@@ -538,10 +549,11 @@ class helper_functions:
         data_to_return.append({"label": "ALL", "value": "ALL"})
         return data_to_return
 
-    def get_mfid_by_id_order_by_date_desc(self, mfid: str):
-        data: InvestmentHistory = (
+    def get_mfid_by_id_order_by_date_desc(self, mfid: str)->InvestmentHistory|None:
+        data: InvestmentHistory |None= (
             investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
         )
+        
         return data
 
     def get_all_open_orders(self):

@@ -19,7 +19,7 @@ from decorator_utils import retry
 from gdrive_tool import GDrive
 from common_util import DesktopNotification
 
-import logs.log_config as log_config  # pylint: disable=unused-import # import log  # noqa: F401 # noqa: all
+import logs.log_config as log_config  # pylint: disable=unused-import # import log  # bb # noqa: all
 from models.day_change import InvestmentData, NavData, get_investment_data
 from models import InvestmentHistory, OrderHistory, Units
 from repository import (
@@ -33,7 +33,7 @@ try:
     import plotext as plt
     from rich.console import Console
     from rich.table import Table
-except ImportError as e:
+except ImportError:
     print("Installing requirements for you")
     os.system("pip3 install -r requirements.txt")
     import plotext as plt
@@ -847,7 +847,7 @@ class MutualFund:
 
         logging.info("--downloading the NAV file from server--")
 
-        async with aiohttp.client.ClientSession() as client:
+        async with aiohttp.client.ClientSession(raise_for_status=True) as client:
             start_time = time.time()
             headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0",
@@ -859,14 +859,14 @@ class MutualFund:
             }
             res = await client.get(
                 "https://www.amfiindia.com/spages/navopen.txt",
-                timeout=100,
+                timeout=20,
                 headers=headers,
+                raise_for_status=True,
             )
             status = res.status
             text = await res.text()
 
             if status != 200:
-                logging.error(f"HTTP status: {status}")
                 raise ValueError(f"HTTP status: {status}")
 
             else:

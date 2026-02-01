@@ -1,3 +1,5 @@
+# flake8: noqa : W503
+
 from datetime import date, datetime
 
 import dash_bootstrap_components as dbc
