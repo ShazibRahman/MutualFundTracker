@@ -7,6 +7,8 @@ from sqlalchemy import asc, desc, func
 from models import InvestmentHistory
 from .db import engine
 
+import logging
+
 OrderType = Literal["asc", "desc"]
 
 
@@ -19,6 +21,7 @@ class InvestmentHistoryRepository:
             session.commit()
             session.refresh(record)
             session.flush()
+            logging.info(record)
             return record
 
     @staticmethod
@@ -194,4 +197,11 @@ class InvestmentHistoryRepository:
 
             # Execute the query and return the result
             result = session.exec(subquery).first()
+            return result
+
+    @staticmethod
+    def find_latest_nav_date() -> date:
+        with Session(engine) as session:
+            query = select(func.max(InvestmentHistory.date))
+            result = session.exec(query).first()
             return result

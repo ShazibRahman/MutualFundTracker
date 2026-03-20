@@ -6,6 +6,7 @@ from sqlalchemy import asc, desc
 
 from models import OrderHistory
 from .db import engine
+import logging
 
 OrderType = Literal["asc", "desc"]
 
@@ -18,6 +19,7 @@ class OrderHistoryRepository:
             session.commit()
             session.refresh(record)
             session.flush()
+            logging.info(record)
             return record
 
     @staticmethod

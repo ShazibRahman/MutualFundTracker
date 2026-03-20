@@ -214,7 +214,9 @@ class MutualFund:
         current_amount: float,
         day_change: float,
         nav: float | None,
+        name: str = "",
         is_filled: bool = False,
+
     ) -> None:
         """
         Check if the current date is already in the investment history for the given MFID.
@@ -228,6 +230,9 @@ class MutualFund:
         mf_name: str = (
             lastest_investment_history.mfname if lastest_investment_history else None
         )
+        if name !="":
+            mf_name =name
+
 
         date = datetime.strptime(date_str, self.formatString).date()
         existing_record = investment_history_repo.find_by_mfid_and_date(mfid, date)
@@ -338,6 +343,7 @@ class MutualFund:
                 current_amount,
                 day_change,
                 None,
+                "",
                 is_filled,
             )
 
@@ -508,6 +514,8 @@ class MutualFund:
     def summary_table_edit(self) -> None:
         try:
 
+            latest_date_nav = investment_history_repo.find_latest_nav_date()
+
             all_inv_his_latest = list(
                 filter(
                     lambda x: x.mfid != "ALL",
@@ -526,7 +534,7 @@ class MutualFund:
 
                 current += latest_investment_history.current_amount
                 invested += latest_investment_history.invested_amount
-                total_day_change += latest_investment_history.day_change
+                total_day_change += latest_investment_history.day_change if latest_investment_history.date == latest_date_nav else 0
 
             current = round(current, 3)
 
@@ -859,7 +867,7 @@ class MutualFund:
             }
             res = await client.get(
                 "https://www.amfiindia.com/spages/navopen.txt",
-                timeout=20,
+                timeout=10,
                 headers=headers,
                 raise_for_status=True,
             )
@@ -975,7 +983,7 @@ class MutualFund:
             cur_json_id.invested = invested
             cur_json_id.dayChange = dayChange
             self.check_for_current_date_investment_history_and_update_it(
-                _id, date, invested, current, dayChange, nav
+                _id, date, invested, current, dayChange, nav, name
             )
 
         return sum_total, total_invested, total_day_change, latest_date

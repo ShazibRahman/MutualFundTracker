@@ -218,7 +218,11 @@ class helper_functions:
             )
         )
 
-        results, _ = await asyncio.wait(self.tasks)
+        results, _ = await asyncio.wait(self.tasks,timeout=30,return_when=asyncio.ALL_COMPLETED)
+
+        print(_)
+        if _ :
+            sys.exit()
 
         for result in results:
             print(result.get_name())
@@ -314,7 +318,9 @@ class helper_functions:
                 consumed=False,
             )
 
-            order_history_repo.save(order_history)
+
+
+        order_history_repo.save(order_history)
 
         GDrive(FOLDER_NAME).upload(db_path)
 
