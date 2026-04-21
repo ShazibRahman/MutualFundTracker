@@ -21,6 +21,7 @@ from common_util import DesktopNotification
 
 import logs.log_config as log_config  # pylint: disable=unused-import # import log  # bb # noqa: all
 from models.day_change import InvestmentData, NavData, get_investment_data
+
 from models import InvestmentHistory, OrderHistory, Units
 from repository import (
     InvestmentHistoryRepository,
@@ -227,12 +228,11 @@ class MutualFund:
             investment_history_repo.find_first_by_mfid_order_by_date_desc(mfid)
         )
 
-        mf_name: str = (
+        mf_name: str | None = (
             lastest_investment_history.mfname if lastest_investment_history else None
         )
-        if name !="":
-            mf_name =name
-
+        if name != "":
+            mf_name = name
 
         date = datetime.strptime(date_str, self.formatString).date()
         existing_record = investment_history_repo.find_by_mfid_and_date(mfid, date)
@@ -275,7 +275,7 @@ class MutualFund:
                         date=new_date,
                         invested_amount=lastest_investment_history.invested_amount,
                         current_amount=lastest_investment_history.current_amount,
-                        day_change=0,
+                        day_change=0.0,
                         nav=lastest_investment_history.nav,
                         is_filled=True,
                     )
@@ -300,9 +300,9 @@ class MutualFund:
 
             current_date = current_date + timedelta(days=1)
 
-            invested_amount = 0
-            current_amount = 0
-            day_change = 0
+            invested_amount = 0.0
+            current_amount = 0.0
+            day_change = 0.0
 
             is_filled = False
 
@@ -523,9 +523,9 @@ class MutualFund:
                 )
             )
 
-            invested = 0
-            current = 0
-            total_day_change = 0
+            invested = 0.0
+            current = 0.0
+            total_day_change = 0.0
             latest_date: datetime = all_inv_his_latest[0].updated_at
 
             for latest_investment_history in all_inv_his_latest:
@@ -534,7 +534,14 @@ class MutualFund:
 
                 current += latest_investment_history.current_amount
                 invested += latest_investment_history.invested_amount
-                total_day_change += latest_investment_history.day_change if latest_investment_history.date == latest_date_nav else 0
+                total_day_change += latest_investment_history.day_change if latest_investment_history.date == latest_date_nav else 0.0
+
+                unconsumed_order_histories = order_history_repo.find_all_by_mfid_and_consumed(latest_investment_history.mfid, False)
+
+                for unconsumed_order_history in unconsumed_order_histories:
+                    if unconsumed_order_history.consumed == 0:
+                        current += unconsumed_order_history.amount
+                        invested += unconsumed_order_history.amount
 
             current = round(current, 3)
 
@@ -620,6 +627,14 @@ class MutualFund:
             updated_at = latest_investment_history.updated_at.strftime(
                 self.formatString + " %X"
             )
+
+            unconsumed_order_histories = order_history_repo.find_all_by_mfid_and_consumed(latest_investment_history.mfid, False)
+
+            for unconsumed_order_history in unconsumed_order_histories:
+                if unconsumed_order_history.consumed == 0:
+                    current += unconsumed_order_history.amount
+                    invested += unconsumed_order_history.amount
+                print("in the unconsumed block")
 
             logging.debug(
                 "Retrieved values - Scheme Name: %s, Day Change: %s, Current: %s, Invested: %s, Date: %s, Updated At: %s",
