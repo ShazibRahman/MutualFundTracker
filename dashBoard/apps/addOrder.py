@@ -68,7 +68,21 @@ layout = html.Div(
                     options=helper.get_index_all_mutual_fund(),
                     value="",
                     multi=False,
-                    placeholder="Select a product",
+                    placeholder="Select a new Mutual fund order",
+                    className="dropdown",
+                    style={"width": "100%", "margin-bottom": "20px"},
+                ),
+            ]
+        ),
+        dbc.Col(
+            [
+                dcc.Dropdown(
+                    id="new-dropdown",
+                    optionHeight=60,
+                    options=helper.get_new_dropdown_options(),  # Replace with your logic to generate options for the new dropdown
+                    value="",
+                    multi=False,
+                    placeholder="Select an already exisiting Mutual fund order",
                     className="dropdown",
                     style={"width": "100%", "margin-bottom": "20px"},
                 ),
@@ -133,6 +147,20 @@ layout = html.Div(
 )
 
 
+def validateProduct(product: str , new_product: str):
+    if (product is None or product == "") and (new_product is None or new_product == ""):
+        return False,"Please select a product"
+    
+    if (product is not None and product != "") and (new_product is not None and new_product != ""):
+        return False,"Please select only one product"
+    
+    if new_product is not None and new_product != "":
+        product = new_product
+    
+    return True,product  
+
+    
+
 @app.callback(
     Output("output", "children"),
     [
@@ -141,18 +169,26 @@ layout = html.Div(
         State("amount", "value"),
         State("date", "date"),
         State("dropdown", "value"),
+        State("new-dropdown", "value"),
     ],
     prevent_initial_call=True,
 )
-def add_order(n_clicks, units, amount, date_input, product):
+def add_order(n_clicks, units, amount, date_input, product,new_product):
     global helper
     if helper is None:
         helper = helper_functions()
-    print(product, units, amount, date_input)
+   
+    sucess,final_product = validateProduct(product, new_product)
+
+    print(f"{product=} {new_product=} {units=} {amount=} {date_input=} {final_product=}")
+
+
+    if not sucess:
+        return final_product
+
     if (
-        product is None
-        or product == ""
-        or units is None
+    
+        units is None
         or float(units) <= 0
         or amount is None
         or amount < 1
@@ -160,9 +196,8 @@ def add_order(n_clicks, units, amount, date_input, product):
     ):
         return "Please fill all the fields"
     date_object = datetime.strptime(date_input, "%Y-%m-%d").date()
-    # _, order = helper.add_order(product, float(units), amount, date_object)
 
-    order_history = helper.add_order_db(product, float(units), amount, date_object)
+    order_history = helper.add_order_db(final_product, float(units), amount, date_object)
     return f"Order added for {order_history.mfname} on {order_history.nav_date} with amount {order_history.amount} and units {order_history.unit} and nav {order_history.nav}"
 
 
@@ -192,3 +227,5 @@ def update_output(value):
     if investment_history is None:
         return "No data available for this fund"
     return f"Fund Name: {investment_history.mfname}, Invested Amount: {investment_history.invested_amount}, Current Amount: {investment_history.current_amount}"
+
+

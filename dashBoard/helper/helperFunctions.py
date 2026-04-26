@@ -14,13 +14,14 @@ from pandas import DataFrame
 
 sys.path.append(pathlib.Path(__file__).parent.parent.parent.absolute().as_posix())
 
-from models import InvestmentHistory, OrderHistory
-from repository import InvestmentHistoryRepository, OrderHistoryRepository
+from models import InvestmentHistory, OrderHistory, Units
+from repository import InvestmentHistoryRepository, OrderHistoryRepository , UnitsRepository
 from repository import db_path
 
 
 investment_history_repo = InvestmentHistoryRepository()
 order_history_repo = OrderHistoryRepository()
+unit_repo = UnitsRepository()
 
 from gdrive_tool import GDrive
 from models.day_change import InvestmentData, get_investment_data
@@ -566,6 +567,18 @@ class helper_functions:
         data: list[OrderHistory] = order_history_repo.find_all_by_consumed(False)
         print("Fetching all open orders...")
         return data
+
+    def get_all_mfid(self)->list[str]:
+        return unit_repo.find_all_distinct_mfids()
+
+
+    def get_new_dropdown_options(self):
+        data = self.get_all_mfid_mfname()
+        data_to_return = [{"label": x["mfname"], "value": x["mfid"]} for x in data]
+        data_to_return = [x for x in data_to_return if x["label"] is not None]
+    
+        return data_to_return
+    
 
 
 if __name__ == "__main__":
