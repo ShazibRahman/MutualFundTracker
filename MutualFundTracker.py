@@ -150,9 +150,9 @@ class MutualFund:
         self.nav_all_file = ""
         self.nav_my_file = ""
         self.past_nav_data: dict = {}
-        logging.info("Initializing MutualFundTracker")
-        logging.info("--Application has started---")
-        logging.info("--Logged in as %s --", os.environ.get("USER"))
+        logging.debug("Initializing MutualFundTracker")
+        logging.debug("--Application has started---")
+        logging.debug("--Logged in as %s --", os.environ.get("USER"))
 
         self.logging = logging
 
@@ -712,7 +712,7 @@ class MutualFund:
         self.unitsKeyList = units_repo.find_all_distinct_mfids()
 
     async def day_change_table(self):
-        logging.info("--rendering day change table--")
+        # logging.info("--rendering day change table--")
         daily_table = Table(title="Day Change table", show_lines=True, expand=True)
         daily_table.add_column("SCHEME NAME", justify="center", no_wrap=True)
         daily_table.add_column("NAV", justify="center", no_wrap=True)
@@ -1005,7 +1005,7 @@ class MutualFund:
 
     async def get_current_values(self) -> None:
 
-        logging.info("--Main calculation--")
+        # logging.info("--Main calculation--")
         if self.is_downloadable:
             await self.add_to_units_not_pre_existing()
             if not await self.download_all_nav_file():

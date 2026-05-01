@@ -58,7 +58,12 @@ stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
 
-# Define the function to log uncaught exceptions
+def supress_log_from_certain_loggers():
+    log.getLogger("httpx").setLevel(log.WARNING)
+    log.getLogger("httpcore").setLevel(log.WARNING)
+    log.getLogger("googleapiclient.discovery_cache").setLevel(log.WARNING)
+
+
 def log_uncaught_exceptions(exctype, value, traceback):
     """
     Log uncaught exceptions
@@ -82,3 +87,4 @@ def log_uncaught_exceptions(exctype, value, traceback):
 
 # Set the exception hook
 sys.excepthook = log_uncaught_exceptions
+supress_log_from_certain_loggers()

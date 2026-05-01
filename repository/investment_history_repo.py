@@ -21,7 +21,6 @@ class InvestmentHistoryRepository:
             session.commit()
             session.refresh(record)
             session.flush()
-            logging.info(record)
             return record
 
     @staticmethod
