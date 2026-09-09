@@ -297,6 +297,9 @@ class helper_functions:
         nav: float|None = investment_history.nav if investment_history else None
         mfname: str|None = investment_history.mfname if investment_history else None
 
+        if mfname is None:
+            print("----printing json data----")
+            mfname = self.get_id_name_dic(MFID)
         if nav:
             calculated_investment_amount = nav * (1 - stamp_duty_factor) * unit
 

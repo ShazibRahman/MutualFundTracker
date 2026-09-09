@@ -59,9 +59,11 @@ logger.addHandler(stream_handler)
 
 
 def supress_log_from_certain_loggers():
+    
     log.getLogger("httpx").setLevel(log.WARNING)
     log.getLogger("httpcore").setLevel(log.WARNING)
     log.getLogger("googleapiclient.discovery_cache").setLevel(log.WARNING)
+    log.getLogger("oauth2client.client").setLevel(log.WARNING)
 
 
 def log_uncaught_exceptions(exctype, value, traceback):

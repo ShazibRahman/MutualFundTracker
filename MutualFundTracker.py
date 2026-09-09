@@ -933,16 +933,19 @@ class MutualFund:
 
         await self.add_to_units_db(ids, prev_day_nav_date)
         units_entity = units_repo.find_by_mfid(ids)
-        units: float = units_entity.total_units
+        units: float|int = 0.0
+        if units_entity is not None:
+            units = units_entity.total_units
 
-        prevDaySum: float = data[prev_day_nav_date] * units
-        dayChange: float = round(today_nav * units - prevDaySum, 3)
+
+        prevDaySum: float|int = data[prev_day_nav_date] * units
+        dayChange: float|int = round(today_nav * units - prevDaySum, 3)
         self.json_data.funds[ids].dayChange = dayChange
         data[latest_nav_date] = today_nav
         return dayChange
 
     def is_existing_id(
-        self, ids: str, name: str, latest_nav_date: str, today_nav: float
+        self, ids: str, name: str, latest_nav_date: str, today_nav: float| int
     ) -> None:
         if not self.json_data.funds.__contains__(ids):
             self.json_data.funds[ids] = NavData()
@@ -972,12 +975,25 @@ class MutualFund:
         for line in self.nav_my_file.splitlines():
             print(line)
             temp = line.strip().split(";")
-            _id, name, nav, date = (
-                temp[0],
-                temp[3].split("-")[0].strip(),
-                float(temp[4]),
-                temp[5],
-            )
+
+            _id = temp[0]
+            name = temp[3].split("-")[0].strip()
+
+            # Find NAV after index 3
+            nav_index = 4
+
+            while nav_index < len(temp):
+                try:
+                    nav = float(temp[nav_index])
+                    break
+                except ValueError:
+                    nav_index += 1
+
+            # Date is immediately after NAV
+            date = temp[nav_index + 1]
+
+            print(_id, name, nav, date)
+
             latest_date = date
 
             # type: ignore
